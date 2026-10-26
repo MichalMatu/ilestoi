@@ -1,7 +1,7 @@
 # Project Instructions
 
 - Do not add or preserve redundant backward-compatibility paths. When replacing an internal API, configuration shape, flag, request field, or UI contract, migrate current callers and remove old inputs, branches, constants, comments, and fallbacks in the same change unless explicitly requested otherwise.
-- The development server has an autostart watcher. To reload it, kill the existing `server.py` process and wait briefly for it to come back; do not start a second server instance manually.
+- Current Android Termux production uses one runit-supervised `wreckscanner` service (see `docs/TERMUX.md`). Use `sv restart "$PREFIX/var/service/wreckscanner"`; do not start a second `server.py` process. Other development hosts may use the existing watcher.
 - In this workspace the sandbox can see the `server.py` process ID, but process control and localhost checks must be done outside the sandbox. Use escalated commands for killing `server.py` and for health checks such as `curl http://127.0.0.1:8001/` or API requests.
 - Cloudflare Tunnel routing is locally managed on the backend host, not from the Cloudflare dashboard. Add or change public hostnames in `/etc/cloudflared/config.yml`, validate with `cloudflared tunnel --config /etc/cloudflared/config.yml ingress validate`, then restart `cloudflared.service`; create matching proxied Tunnel/CNAME DNS records in Cloudflare for each hostname.
 - Git flow: `main` is the release-only branch. It should advance through squashed commits named `Release vX.Y baseline` and matching tags such as `v3.1`. Daily or messy development happens on `work/dirty`; finish there, verify, then squash that state onto `main` for the next release baseline.
