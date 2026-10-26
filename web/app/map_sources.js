@@ -3,6 +3,8 @@
 let currentMapSourceIndex = Math.max(0, MAP_SOURCES.findIndex(source => source.key === DEFAULT_MAP_SOURCE_KEY));
 let mapSourceLayer = null;
 let mapSourceSwapToken = 0;
+let mapSourcePendingLayer = null;
+let mapSourceStableIndex = currentMapSourceIndex;
 let mapLabelLayer = null;
 let mapSourceSliderVisible = true;
 try {
@@ -300,31 +302,55 @@ function updateMapSourceUi() {
     updateMapLabelLayer();
 }
 
-function swapMapSourceLayer(nextLayer, previousLayer) {
+function swapMapSourceLayer(nextLayer) {
     const swapToken = ++mapSourceSwapToken;
-    mapSourceLayer = nextLayer;
-    nextLayer.addTo(map);
-    const finishSwap = () => {
-        if (previousLayer) map.removeLayer(previousLayer);
-        if (swapToken === mapSourceSwapToken) {
-            mapSourceLayer = nextLayer;
-        } else if (map.hasLayer(nextLayer)) {
-            map.removeLayer(nextLayer);
+    const previousLayer = mapSourceLayer;
+    if (mapSourcePendingLayer && map.hasLayer(mapSourcePendingLayer)) {
+        map.removeLayer(mapSourcePendingLayer);
+    }
+    mapSourcePendingLayer = nextLayer;
+    let successfulTile = false;
+    let finished = false;
+    const onTileLoad = event => {
+        // A proxy placeholder counts as a Leaflet tile, but not as a usable map.
+        if (!event.tile?.classList?.contains('leaflet-tile--retrying')) {
+            successfulTile = true;
         }
     };
-    nextLayer.once('load', finishSwap);
+    const cleanup = () => {
+        nextLayer.off('tileload', onTileLoad);
+        nextLayer.off('load', onLayerLoad);
+    };
+    const onLayerLoad = () => {
+        if (finished || swapToken !== mapSourceSwapToken || !successfulTile) return;
+        finished = true;
+        cleanup();
+        mapSourcePendingLayer = null;
+        mapSourceLayer = nextLayer;
+        mapSourceStableIndex = currentMapSourceIndex;
+        if (previousLayer && map.hasLayer(previousLayer)) map.removeLayer(previousLayer);
+    };
+    nextLayer.on('tileload', onTileLoad);
+    nextLayer.on('load', onLayerLoad);
+    nextLayer.addTo(map);
+    // On failure keep the last working map rather than removing it unconditionally.
     setTimeout(() => {
-        finishSwap();
-    }, ORTHO_LAYER_SWAP_FALLBACK_MS);
+        if (finished || swapToken !== mapSourceSwapToken) return;
+        finished = true;
+        cleanup();
+        if (map.hasLayer(nextLayer)) map.removeLayer(nextLayer);
+        mapSourcePendingLayer = null;
+        currentMapSourceIndex = mapSourceStableIndex;
+        updateMapSourceUi();
+    }, Math.max(12000, ORTHO_LAYER_SWAP_FALLBACK_MS));
 }
 
 function setMapSource(index) {
     const nextIndex = Math.max(0, Math.min(MAP_SOURCES.length - 1, parseInt(index, 10)));
     if (!Number.isFinite(nextIndex) || nextIndex === currentMapSourceIndex || !mapSourceAllowed(MAP_SOURCES[nextIndex])) return;
     currentMapSourceIndex = nextIndex;
-    const previousLayer = mapSourceLayer;
     const nextLayer = buildMapSourceLayer(activeMapSource());
-    swapMapSourceLayer(nextLayer, previousLayer);
+    swapMapSourceLayer(nextLayer);
     updateMapSourceUi();
 }
 
@@ -347,16 +373,14 @@ function updateMapSourceAvailability() {
         return;
     }
     currentMapSourceIndex = fallbackMapSourceIndex();
-    const previousLayer = mapSourceLayer;
     const nextLayer = buildMapSourceLayer(activeMapSource());
-    swapMapSourceLayer(nextLayer, previousLayer);
+    swapMapSourceLayer(nextLayer);
     updateMapSourceUi();
 }
 
 function refreshOrthoLayer() {
-    const previousLayer = mapSourceLayer;
     const nextLayer = buildMapSourceLayer(activeMapSource());
-    swapMapSourceLayer(nextLayer, previousLayer);
+    swapMapSourceLayer(nextLayer);
 }
 
 mapSourceLayer = buildMapSourceLayer(activeMapSource()).addTo(map);
