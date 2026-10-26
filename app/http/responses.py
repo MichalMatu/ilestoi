@@ -30,7 +30,7 @@ def security_response_headers() -> dict[str, str]:
             "script-src 'self' 'unsafe-inline' https://unpkg.com; "
             "style-src 'self' 'unsafe-inline' https://unpkg.com; "
             "img-src 'self' data: blob: https://unpkg.com https://*.openstreetmap.org "
-            "https://*.basemaps.cartocdn.com https://integracja.gugik.gov.pl "
+            "https://mapy.geoportal.gov.pl https://integracja.gugik.gov.pl "
             "https://integracja01.gugik.gov.pl; "
             "connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; "
             "frame-ancestors 'self'"
