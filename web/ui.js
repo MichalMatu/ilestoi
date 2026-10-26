@@ -67,6 +67,11 @@ function syncPageIsolation() {
             document.getElementById('app-menu'),
             document.getElementById('app-menu-scrim'),
             document.getElementById('app-menu-drawer'),
+            // The guided tour is an accessible dialog above the menu, not inert background.
+            ...(() => {
+                const tour = document.getElementById('onboarding-tour');
+                return tour && !tour.hidden ? [tour] : [];
+            })(),
         ].filter(Boolean));
     }
     if (!allowed) return;
