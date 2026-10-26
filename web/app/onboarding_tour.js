@@ -12,6 +12,7 @@ const onboardingTourState = {
     returnFocus: null,
     dismissedThisSession: false,
     positionFrame: null,
+    stepRevision: 0,
 };
 
 function onboardingTourSeen() {
@@ -29,6 +30,13 @@ function onboardingTourTarget(selector) {
     if (!(target instanceof HTMLElement) || target.closest('[hidden]')) return null;
     if (!target.isConnected || !target.getClientRects().length) return null;
     return target;
+}
+
+/* The Leaflet icon is a 34px anchor; at low zoom its visible dot is
+   translated inside that box. Measure the actual rendered pin, not the anchor. */
+function onboardingTourMarkerTarget(marker) {
+    const icon = marker?.getElement?.() || marker?._icon;
+    return icon?.querySelector('.vehicle-pin') || icon || null;
 }
 
 function onboardingTourExampleMarker() {
@@ -50,7 +58,7 @@ function onboardingTourSteps(marker) {
             title: 'tour.mapTitle',
             description: marker ? 'tour.mapBody' : 'tour.mapEmptyBody',
             focusMarker: Boolean(marker),
-            target: () => marker?._icon || document.getElementById('map'),
+            target: () => onboardingTourMarkerTarget(marker) || document.getElementById('map'),
         },
     ];
     if (marker) {
@@ -166,6 +174,7 @@ function showOnboardingTourStep(index) {
     const state = onboardingTourState;
     state.index = Math.max(0, Math.min(index, state.steps.length - 1));
     const step = state.steps[state.index];
+    const revision = ++state.stepRevision;
     if (step.menu) {
         if (state.previewOpened) {
             map.closePopup();
@@ -202,22 +211,26 @@ function showOnboardingTourStep(index) {
 
     if (typeof syncPageIsolation === 'function') syncPageIsolation();
     requestAnimationFrame(() => {
-        if (!state.active) return;
+        if (!state.active || state.stepRevision !== revision) return;
         const target = step.target ? onboardingTourTarget(step.target) : null;
         if (target && step.menu) target.scrollIntoView({ behavior: 'instant', block: 'nearest' });
         requestAnimationFrame(() => {
-            if (!state.active) return;
+            if (!state.active || state.stepRevision !== revision) return;
             positionOnboardingTour();
             next.focus({ preventScroll: true });
         });
     });
 }
 
-function finishOnboardingTour() {
+function finishOnboardingTour(event) {
+    // Never allow Skip / Finish clicks to reach map or underlying controls.
+    event?.preventDefault();
+    event?.stopPropagation();
     const state = onboardingTourState;
     if (!state.active) return;
     onboardingTourRemember();
     state.active = false;
+    ++state.stepRevision;
     if (state.positionFrame !== null) cancelAnimationFrame(state.positionFrame);
     state.positionFrame = null;
     onboardingTourRoot.hidden = true;
@@ -246,7 +259,10 @@ function startOnboardingTour() {
     if (typeof topOpenModalBackdrop === 'function' && topOpenModalBackdrop()) return false;
     const state = onboardingTourState;
     state.originalView = { center: map.getCenter(), zoom: map.getZoom() };
-    state.originalPopup = map._popup || null;
+    // Leaflet retains map._popup after it closes: only restore an actually
+    // visible popup, otherwise Skip would unexpectedly open a vehicle card.
+    const popup = map._popup;
+    state.originalPopup = popup && map.hasLayer(popup) ? popup : null;
     state.returnFocus = document.activeElement;
     state.marker = onboardingTourExampleMarker();
     state.steps = onboardingTourSteps(state.marker);
