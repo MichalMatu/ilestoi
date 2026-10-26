@@ -9,7 +9,7 @@ while :; do
         "$HOME/WreckScanner/WreckScanner/.venv/bin/python" \
         scripts/backup_data.py run \
         --repo .backups/wreckscanner-restic \
-        --password-file .restic_password --strict \
+        --password-file .restic_password --strict --no-image-check \
         >> "$HOME/wreckscanner-backup.log" 2>&1; then
         # Keep one week of daily and several months of older restore points.
         if [ "$(date +%u)" = "7" ]; then
