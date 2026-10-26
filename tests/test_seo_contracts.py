@@ -22,7 +22,7 @@ class SeoContractTests(unittest.TestCase):
         self.assertIn('<link rel="icon" href="/favicon.svg" type="image/svg+xml" sizes="any">', head)
         self.assertIn('<link rel="manifest" href="/site.webmanifest">', head)
         self.assertNotIn("data:image/svg+xml", head)
-        self.assertIn("<h1>IleStoi.pl</h1>", html)
+        self.assertIn('<h1 class="visually-hidden">IleStoi.pl</h1>', html)
         self.assertIn('<main id="map" tabindex="0"', html)
         self.assertNotIn('<main id="map" role=', html)
 
