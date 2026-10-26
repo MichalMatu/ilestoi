@@ -32,6 +32,16 @@ class PublicMapOverlayContracts(unittest.TestCase):
         self.assertNotIn("basemaps.cartocdn.com", csp)
         self.assertIn("connect-src 'self'", csp)
 
+    def test_osm_source_sends_allowed_origin_referer_and_displays_license(self):
+        headers = security_response_headers()
+        self.assertEqual(headers["Referrer-Policy"], "strict-origin-when-cross-origin")
+        self.assertIn("https://*.openstreetmap.org", headers["Content-Security-Policy"])
+        config_js = (ROOT / "web/config.js").read_text(encoding="utf-8")
+        self.assertIn("https://tile.openstreetmap.org/{z}/{x}/{y}.png", config_js)
+        self.assertIn('https://www.openstreetmap.org/copyright', config_js)
+        self.assertIn("labelsOverlay: false", config_js)
+        self.assertNotIn('Referrer-Policy": "same-origin"', (ROOT / "app/http/responses.py").read_text(encoding="utf-8"))
+
     def test_password_form_has_hidden_autocomplete_username(self):
         html = render_web_template("index.html")
         start = html.index('id="admin-login-form"')
