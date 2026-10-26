@@ -38,7 +38,7 @@ def security_response_headers() -> dict[str, str]:
         "Permissions-Policy": "camera=(), geolocation=(), microphone=()",
         "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
         "X-Content-Type-Options": "nosniff",
-        "Referrer-Policy": "same-origin",
+        "Referrer-Policy": "strict-origin-when-cross-origin",
         "X-Frame-Options": "SAMEORIGIN",
     }
 
