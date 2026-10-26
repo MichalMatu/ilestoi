@@ -4,9 +4,9 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const rootDir = dirname(dirname(fileURLToPath(import.meta.url)));
-const eslintBin = join(rootDir, "node_modules", ".bin", process.platform === "win32" ? "eslint.cmd" : "eslint");
+const eslintCli = join(rootDir, "node_modules", "eslint", "bin", "eslint.js");
 
-if (!existsSync(eslintBin)) {
+if (!existsSync(eslintCli)) {
   console.error("Local ESLint is not installed. Run `npm install` before `npm run lint:web`.");
   process.exit(1);
 }
@@ -22,7 +22,7 @@ function collectJsFiles(relativeDir) {
 
 const jsFiles = collectJsFiles("web");
 
-const result = spawnSync(eslintBin, jsFiles, {
+const result = spawnSync(process.execPath, [eslintCli, ...jsFiles], {
   cwd: rootDir,
   stdio: "inherit",
 });
