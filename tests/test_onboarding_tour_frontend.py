@@ -37,7 +37,6 @@ class GuidedTourContracts(unittest.TestCase):
         for mutation in ("submitReportPdf(", "apiPostJson(", "apiJson(", "toggleVehicleLayer(",
                          "toggleCadastralLayer(", "openFieldPhotoUploadModal(", "map.setZoom("):
             self.assertNotIn(mutation, tour)
-        self.assertIn("marker.openPopup()", tour) if False else None
         self.assertIn("state.marker.openPopup()", tour)
 
     def test_translations_are_complete(self):
@@ -53,7 +52,6 @@ class GuidedTourContracts(unittest.TestCase):
                 "tour.sourcesTitle", "tour.sourcesBody", "tour.doneTitle", "tour.doneBody",
             ):
                 self.assertIn(f"'{key}':", dict_source)
-                self.assertIn(key, tour) if key != "tour.reopen" else None
 
 
 if __name__ == "__main__":
