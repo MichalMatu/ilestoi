@@ -42,6 +42,16 @@ class PublicMapOverlayContracts(unittest.TestCase):
         self.assertIn("labelsOverlay: false", config_js)
         self.assertNotIn('Referrer-Policy": "same-origin"', (ROOT / "app/http/responses.py").read_text(encoding="utf-8"))
 
+    def test_map_swap_retains_last_good_map_on_failed_tile_load(self):
+        js = (ROOT / "web/app/map_sources.js").read_text(encoding="utf-8")
+        self.assertIn("let mapSourcePendingLayer = null;", js)
+        self.assertIn("let mapSourceStableIndex = currentMapSourceIndex;", js)
+        self.assertIn("successfulTile = true;", js)
+        self.assertIn("leaflet-tile--retrying", js)
+        self.assertIn("if (finished || swapToken !== mapSourceSwapToken || !successfulTile) return;", js)
+        self.assertIn("currentMapSourceIndex = mapSourceStableIndex;", js)
+        self.assertNotIn("setTimeout(() => {\\n        finishSwap();", js)
+
     def test_password_form_has_hidden_autocomplete_username(self):
         html = render_web_template("index.html")
         start = html.index('id="admin-login-form"')
