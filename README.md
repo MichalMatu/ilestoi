@@ -43,7 +43,7 @@ nakladu, a nie dla samego domkniecia wszystkich mozliwych usprawnien.
 
 ## Start
 
-CI sprawdza Python `3.11` i `3.13`; obecny Termux z Pythonem `3.14` przeszedł pełne testy jednostkowe. Oficjalne macierze CI pozostają na 3.11/3.13. Node.js `20+` jest potrzebny tylko do
+Wspierany runtime to Python `3.11-3.13` (sprawdzany w CI). Termux z Pythonem `3.14` przeszedł pełne testy jednostkowe, ale nie należy do macierzy CI. Node.js `20+` jest potrzebny tylko do
 kontroli frontendu; CI uzywa Node.js 22. Przygotowanie lokalnego srodowiska:
 
 ```bash
