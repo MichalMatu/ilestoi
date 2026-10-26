@@ -73,7 +73,7 @@ const MAP_SOURCES = [
         type: 'tile',
         url: OSM_TILE_URL,
         maxNativeZoom: 19,
-        attribution: 'OpenStreetMap contributors',
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap contributors</a>',
         labelsOverlay: false,
         publicLayerKey: PUBLIC_LAYER_KEYS.baseMapOsm,
     },
