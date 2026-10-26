@@ -58,21 +58,22 @@ function restorePageIsolation() {
 function syncPageIsolation() {
     restorePageIsolation();
     const topModal = topOpenModalBackdrop();
+    const tour = document.getElementById('onboarding-tour');
+    const tourOpen = tour && !tour.hidden;
     let allowed = null;
     if (topModal) {
         topModal.setAttribute('aria-hidden', 'false');
         allowed = new Set([topModal]);
     } else if (isAppMenuOpen()) {
+        // Keep both the active menu and its guided tour reachable by assistive technology.
         allowed = new Set([
             document.getElementById('app-menu'),
             document.getElementById('app-menu-scrim'),
             document.getElementById('app-menu-drawer'),
-            // The guided tour is an accessible dialog above the menu, not inert background.
-            ...(() => {
-                const tour = document.getElementById('onboarding-tour');
-                return tour && !tour.hidden ? [tour] : [];
-            })(),
+            tourOpen ? tour : null,
         ].filter(Boolean));
+    } else if (tourOpen) {
+        allowed = new Set([tour]);
     }
     if (!allowed) return;
     Array.from(document.body?.children || []).forEach(element => {
