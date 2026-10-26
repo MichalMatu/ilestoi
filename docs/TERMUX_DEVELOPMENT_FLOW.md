@@ -74,13 +74,19 @@ python3 -m unittest discover -s tests -p 'test_onboarding_tour_frontend.py'
 npm ci --prefer-offline --ignore-scripts --no-audit --no-fund
 npm run lint:web
 npm run test:web
+# Broad Python frontend suite: use the existing application's venv as a
+# read-only interpreter, but run code/tests from the isolated worktree.
+"$live/.venv/bin/python" -B -m unittest discover -s tests -p 'test_*frontend*.py'
 ```
 
 `node`, `npm`, Python 3.14 and Git exist on Termux. Chromium and
 Playwright are **not installed on the phone** as of the 2026-10-26 preflight;
 do not silently install large browser toolchains or assume macOS-equivalent
 native dependencies. Escalate the *specific browser test* to the Mac only
-when needed and report it separately.
+when needed and report it separately. The system Python 3.14 currently lacks
+Pillow; the application's existing `.venv/bin/python` has Pillow and can run
+Python test imports without installing packages or changing the runtime, as
+long as the test working directory remains the isolated worktree.
 
 ## Running site and safeguards
 
@@ -105,3 +111,24 @@ local readiness and public HTTP success. Avoid auto-deploy on every Git push.
   workflows. Do not infer a universal default from this document.
 - Host selection is manual and explicit. No automatic scheduling, cross-host
   failover or background performance telemetry is introduced.
+
+## Verified real-phone receipt — 2026-10-26
+
+On Samsung host `android-termux-10520`, Local Agent created
+`~/.local/state/ilestoi-dev/worktrees/onboarding-20261026` from the
+existing production Git object store and fetched feature source
+`33e0abcba63d35b865d4deacdada1f85c6d7af17`. No Local Agent project
+binding was created. Tests in this worktree:
+
+- Tour JS: 6 PASS; tour Python: 4 PASS.
+- `npm ci --prefer-offline --ignore-scripts`: 87 packages, PASS.
+- `npm run lint:web`: PASS.
+- `npm run test:web`: 16 PASS.
+- Python frontend suite using the existing production venv **only as a
+  read-only interpreter**: 37 PASS. System Python by itself lacks Pillow;
+  that is an environment difference, not an application test failure.
+
+Production nested checkout remained clean at
+`cd96f2ec8845c49cf8988e70a32bac6957e9d1c8` throughout, and runit
+services for WreckScanner, Cloudflared and Mosquitto remained online. These
+checks are source QA only, not proof of a deployed interactive tour.
