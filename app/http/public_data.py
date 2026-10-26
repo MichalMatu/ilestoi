@@ -41,7 +41,11 @@ def handle_field_photos(handler) -> None:
     try:
         photos = list_field_photos(core_config.FIELD_PHOTOS_DIR)
         if not http_admin_session.is_admin(handler):
-            photos = [photo for photo in photos if access.public_field_photo_allowed(handler, photo)]
+            layer_settings = access.public_layer_settings()
+            photos = [
+                photo for photo in photos
+                if access.public_field_photo_allowed(handler, photo, layer_settings=layer_settings)
+            ]
         http_responses.send_json(handler, 200, {"status": "ok", "photos": photos})
     except Exception as exc:
         http_responses.send_internal_error(
