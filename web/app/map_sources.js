@@ -210,9 +210,15 @@ function buildMapSourceLayer(source) {
 }
 
 function buildMapLabelLayer() {
-    return L.tileLayer(CARTO_LABELS_TILE_URL, {
+    return L.tileLayer.wms(STREET_LABELS_WMS_URL, {
+        layers: 'A08_Ulice',
+        styles: '',
+        format: 'image/png',
+        transparent: true,
+        version: '1.3.0',
         maxZoom: MAX_MAP_ZOOM,
         pane: 'overlayPane',
+        attribution: 'GUGiK · Państwowy Rejestr Granic – ulice',
     });
 }
 
