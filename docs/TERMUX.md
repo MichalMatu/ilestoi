@@ -25,6 +25,24 @@ Nie restartuj całego telefonu, procesu Local Agent ani tunelu Cloudflare
 w ramach zwykłego wdrożenia. Aby zastosować nowy kod Pythona:
 `sv restart "$PREFIX/var/service/wreckscanner"`.
 
+## Automatyczne kopie po włączeniu Restic
+
+Usługa runit `$PREFIX/var/service/wreckscanner-backup` uruchamia
+`deploy/termux/wreckscanner-backup.run`. Po pierwszym potwierdzonym
+snapshotcie wykonuje kopię raz na 24 godziny, ponawia nieudane próby
+co godzinę, a w niedzielę stosuje retencję 7 dziennych,
+8 tygodniowych i 6 miesięcznych punktów odtworzenia.
+Plik blokady `~/.local/state/ilestoi-restic.lock` zabezpiecza przed
+równoległymi uruchomieniami tego harmonogramu.
+
+```sh
+sv status "$PREFIX/var/service/wreckscanner-backup"
+tail -n 30 "$HOME/wreckscanner-backup.log"
+```
+
+Przy alarmie sprawdź najnowszy snapshot i wykonaj próbę odtworzenia
+do katalogu tymczasowego; nie nadpisuj działającej bazy.
+
 ## Kopie zapasowe
 
 Restic powinien używać lokalnego repozytorium
