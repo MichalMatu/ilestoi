@@ -23,7 +23,7 @@ class GuidedTourContracts(unittest.TestCase):
         self.assertIn("ONBOARDING_TOUR_STORAGE_KEY", tour)
         self.assertIn("function maybeStartOnboardingTour()", tour)
         self.assertIn("function startOnboardingTour()", tour)
-        self.assertIn("function finishOnboardingTour()", tour)
+        self.assertIn("function finishOnboardingTour(event)", tour)
         self.assertIn("loadFieldPhotos().finally(", startup)
         self.assertIn('id="app-menu-open-tour"', shell)
         self.assertIn('id="onboarding-tour-skip"', markup)
