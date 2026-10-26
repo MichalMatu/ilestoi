@@ -70,3 +70,31 @@ test('centered welcome dialog is clamped inside the viewport', () => {
     assert.ok(result.top > 0);
     assert.ok(result.left + 344 <= 375);
 });
+
+test('marker spotlight targets rendered vehicle dot instead of Leaflet anchor box', () => {
+    const context = tourContext();
+    const dot = { id: 'actual-visible-dot' };
+    context.marker = { getElement: () => ({ querySelector: selector =>
+        selector === '.vehicle-pin' ? dot : null }) };
+    const result = vm.runInContext('onboardingTourMarkerTarget(marker)', context);
+    assert.equal(result, dot);
+});
+
+test('fallback to marker icon if there is no visible inner pin', () => {
+    const context = tourContext();
+    const icon = { id: 'icon', querySelector: () => null };
+    context.marker = { getElement: () => icon };
+    assert.equal(vm.runInContext('onboardingTourMarkerTarget(marker)', context), icon);
+});
+
+test('reopen only a popup that was visible before guided tour started', () => {
+    // In Leaflet, map._popup is an internal last-popup reference even after close.
+    assert.match(src, /state\.originalPopup = popup && map\.hasLayer\(popup\) \? popup : null/);
+    assert.match(src, /if \(state\.originalPopup\) map\.openPopup\(state\.originalPopup\)/);
+});
+
+test('finishing invalidates pending animation callbacks', () => {
+    assert.match(src, /\+\+state\.stepRevision/);
+    assert.match(src, /state\.stepRevision !== revision/);
+    assert.match(src, /event\?\.stopPropagation\(\)/);
+});
