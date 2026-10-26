@@ -125,7 +125,7 @@ class ConfigModuleContractTests(unittest.TestCase):
         )
         self.assertEqual(
             app_config.CADASTRAL_WMS_FALLBACK_URL,
-            "https://integracja01.gugik.gov.pl/cgi-bin/KrajowaIntegracjaEwidencjiGruntow",
+            "https://services.gugik.gov.pl/cgi-bin/KrajowaIntegracjaEwidencjiGruntow",
         )
         self.assertEqual(app_config.CADASTRAL_WMS_TIMEOUT, (10, 30))
         self.assertNotIn("const FIELD_PHOTO_GROUP_RADIUS_M", app_js)
