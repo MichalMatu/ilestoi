@@ -76,6 +76,43 @@ class CadastralFeatureInfoTests(unittest.TestCase):
         self.assertEqual(parcel["parcel_number"], "2351")
         self.assertEqual(parcel["district"], "Południe")
 
+    def test_cadastral_falls_back_to_verified_official_gugik_service(self):
+        from app import config
+
+        self.assertIn("services.gugik.gov.pl", config.CADASTRAL_WMS_FALLBACK_URL)
+
+        class Response:
+            headers = {"Content-Type": "text/html"}
+            encoding = "ISO-8859-1"
+
+            def raise_for_status(self):
+                return None
+
+            def iter_content(self, chunk_size):
+                del chunk_size
+                yield (
+                    "<table><tr><td>Identyfikator działki</td><td>026401_1.0022.2351</td></tr>"
+                    "<tr><td>Numer działki</td><td>2351</td></tr></table>"
+                ).encode("utf-8")
+
+            def close(self):
+                return None
+
+        urls = []
+
+        class Session:
+            def get(self, url, **_kwargs):
+                urls.append(url)
+                if len(urls) == 1:
+                    raise OSError("Main WMS unavailable")
+                return Response()
+
+        with patch.object(public_data.map_downloads, "get_http_session", return_value=Session()):
+            parcel = public_data.lookup_cadastral_parcel(51.08803145, 17.03804076)
+
+        self.assertEqual(urls, [config.CADASTRAL_WMS_URL, config.CADASTRAL_WMS_FALLBACK_URL])
+        self.assertEqual(parcel["parcel_number"], "2351")
+
     def test_cadastral_code_label_expands_land_type_codes(self):
         self.assertEqual(cadastral_code_label("B"), "B - tereny mieszkaniowe")
         self.assertEqual(cadastral_code_label("Bi"), "Bi - inne tereny zabudowane")
