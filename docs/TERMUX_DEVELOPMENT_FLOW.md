@@ -9,7 +9,7 @@ the authority for this choice.
 Choose the existing Local Agent host task namespace directly:
 `android-termux-10520` (installation
 `6be16f1d-194b-4f07-b377-3d4bb218fcd7`). Normal host-task intake is
-part of the **Local Agent installation**, not an IloStoi project binding.
+part of the **Local Agent installation**, not an IleStoi project binding.
 
 For read, build and tests, publish immutable exactly addressed task JSON through
 `MichalMatu/local-agent`, branch `agent-control`, at:
