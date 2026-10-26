@@ -1,0 +1,28 @@
+#!/data/data/com.termux/files/usr/bin/sh
+# One Restic backup per day while Termux runsvdir supervises this process.
+set -eu
+umask 077
+cd "$HOME/WreckScanner/WreckScanner"
+mkdir -p "$HOME/.local/state"
+while :; do
+    if flock -n "$HOME/.local/state/ilestoi-restic.lock" \
+        "$HOME/WreckScanner/WreckScanner/.venv/bin/python" \
+        scripts/backup_data.py run \
+        --repo .backups/wreckscanner-restic \
+        --password-file .restic_password --strict \
+        >> "$HOME/wreckscanner-backup.log" 2>&1; then
+        # Keep one week of daily and several months of older restore points.
+        if [ "$(date +%u)" = "7" ]; then
+            flock -n "$HOME/.local/state/ilestoi-restic.lock" \
+                "$HOME/WreckScanner/WreckScanner/.venv/bin/python" \
+                scripts/backup_data.py forget \
+                --repo .backups/wreckscanner-restic \
+                --password-file .restic_password \
+                --keep-daily 7 --keep-weekly 8 --keep-monthly 6 --prune \
+                >> "$HOME/wreckscanner-backup.log" 2>&1 || :
+        fi
+        sleep 86400
+    else
+        sleep 3600
+    fi
+done
