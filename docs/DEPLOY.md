@@ -1,5 +1,7 @@
 # Deploy Produkcyjny
 
+Dla aktualnego serwera Android Termux użyj [docs/TERMUX.md](TERMUX.md); poniżej opisano alternatywny wdrożeniowy tryb systemd na Raspberry Pi.
+
 Ten runbook opisuje lokalny deploy IleStoi.pl na Raspberry Pi za tunelem
 Cloudflare. Aktywnym stanem aplikacji jest SQLite oraz pliki zdjec na dysku.
 
