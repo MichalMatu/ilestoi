@@ -156,6 +156,9 @@
                 </button>
             </div>
             <div class="app-menu-footer-links">
+                <button type="button" class="app-menu-footer-link" id="app-menu-open-tour"
+                    onclick="closeAppMenu({ restoreFocus: false }); startOnboardingTour()"
+                    data-i18n="tour.reopen">Samouczek</button>
                 <button type="button" class="app-menu-footer-link"
                     onclick="openModal('modal-privacy-info'); closeAppMenu()"
                     data-i18n="footer.privacy">Prywatność</button>
