@@ -14,6 +14,9 @@
             </div>
             <div class="modal-body admin-login-body">
                 <section class="modal-section">
+                    <!-- Existing password-only admin account; username is for browser password managers. -->
+                    <input type="text" name="username" autocomplete="username" value="admin"
+                        hidden tabindex="-1" aria-hidden="true">
                     <label class="report-field">
                         <span data-i18n="modal.admin.password">Hasło administratora</span>
                         <input type="password" class="modal-input" id="admin-password-input"
