@@ -96,6 +96,7 @@ Haslo administratora pochodzi z `WRECKSCANNER_ADMIN_PASSWORD` albo z lokalnego p
 - [docs/PUBLIC_RUNTIME.md](docs/PUBLIC_RUNTIME.md) - porty publicznych uslug i konfiguracja Cloudflare Tunnel.
 - [docs/BACKUP.md](docs/BACKUP.md) - lokalny backup i restore danych.
 - [docs/DEPLOY.md](docs/DEPLOY.md) - produkcyjny deploy, sekrety, systemd i rollback.
+- [docs/TERMUX.md](docs/TERMUX.md) - aktualny host Android, runit, backup i restart.
 
 ## Git Flow
 
