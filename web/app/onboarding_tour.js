@@ -181,7 +181,7 @@ function showOnboardingTourStep(index) {
     if (step.popup && state.marker && map.hasLayer(state.marker)) {
         state.marker.openPopup();
         state.previewOpened = true;
-    } else if (!step.focusMarker && state.previewOpened && !step.popup) {
+    } else if (state.previewOpened && !step.popup) {
         map.closePopup();
         state.previewOpened = false;
     }
