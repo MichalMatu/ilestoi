@@ -1,13 +1,20 @@
 User-agent: OAI-SearchBot
 Allow: /
+Allow: /api/field-photos$
+Allow: /api/field-photos/*/public-image$
+Allow: /api/field-photos/*/public-thumb$
 Disallow: /api/
 Disallow: /tile_proxy/
 Disallow: /wms_proxy/
 
 User-agent: *
 Allow: /
+Allow: /api/field-photos$
+Allow: /api/field-photos/*/public-image$
+Allow: /api/field-photos/*/public-thumb$
 Disallow: /api/
 Disallow: /tile_proxy/
 Disallow: /wms_proxy/
 
 Sitemap: https://ilestoi.pl/sitemap.xml
+Sitemap: https://ilestoi.pl/sitemap-observations.xml
