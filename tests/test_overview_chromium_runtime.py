@@ -104,4 +104,3 @@ class OverviewChromiumRuntimeTests(unittest.TestCase):
         self.assertIn("/api/field-photos/clusters?bbox=", result["requests"][0])
         self.assertEqual(len(result["fits"]), 1)
         self.assertTrue(result["loadState"])
-
