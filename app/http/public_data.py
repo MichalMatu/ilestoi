@@ -1,4 +1,7 @@
+import base64
+import binascii
 import json
+import math
 from functools import lru_cache
 from typing import Any
 from urllib.parse import parse_qs, urlsplit
@@ -9,7 +12,8 @@ from app.http import admin_session as http_admin_session
 from app.http import responses as http_responses
 from core import config as core_config
 from core.cadastral import cadastral_feature_info_params, parse_cadastral_feature_info
-from core.field_photos import list_field_photos
+from core.field_photo_map_query import list_map_field_photos
+from core.field_photo_store import validate_photo_id
 from core.geo import validate_coordinates
 from core.http_response import read_limited_response_bytes, response_content_type
 from core.prg_addresses import parse_prg_address_features, prg_address_wfs_params
@@ -37,16 +41,97 @@ def _upstream_text(
         raise ValueError("Nie udało się odczytać kodowania odpowiedzi upstreamu.") from exc
 
 
+def _field_photo_list_query(path: str) -> tuple[
+    tuple[float, float, float, float] | None, int | None, tuple[str, str] | None
+]:
+    params = parse_qs(urlsplit(path).query, keep_blank_values=True)
+    bbox = None
+    if "bbox" in params:
+        if len(params["bbox"]) != 1:
+            raise ValueError("Parametr bbox musi wystąpić dokładnie raz.")
+        values = params["bbox"][0].split(",")
+        if len(values) != 4:
+            raise ValueError("bbox musi zawierać west,south,east,north.")
+        try:
+            west, south, east, north = (float(item) for item in values)
+        except ValueError as exc:
+            raise ValueError("Nieprawidłowe współrzędne bbox.") from exc
+        if not (all(map(math.isfinite, (west, south, east, north)))
+                and -180 <= west <= 180 and -180 <= east <= 180
+                and -90 <= south <= north <= 90):
+            raise ValueError("Nieprawidłowy zakres bbox.")
+        # A west > east box intentionally crosses the 180th meridian.
+        bbox = west, south, east, north
+
+    limit = None
+    if "limit" in params:
+        if len(params["limit"]) != 1:
+            raise ValueError("Parametr limit musi wystąpić dokładnie raz.")
+        raw = params["limit"][0]
+        if not raw.isascii() or not raw.isdecimal():
+            raise ValueError("Nieprawidłowy limit.")
+        limit = int(raw)
+        if not 1 <= limit <= 500:
+            raise ValueError("Limit musi być w zakresie 1–500.")
+
+    after = None
+    if "cursor" in params:
+        if limit is None or len(params["cursor"]) != 1:
+            raise ValueError("Cursor wymaga pojedynczego parametru limit.")
+        token = params["cursor"][0]
+        if not token or len(token) > 256:
+            raise ValueError("Nieprawidłowy cursor.")
+        try:
+            decoded = base64.b64decode(
+                token + "=" * (-len(token) % 4), altchars=b"-_", validate=True
+            )
+            value = json.loads(decoded)
+            if (not isinstance(value, list) or len(value) != 2
+                    or not isinstance(value[0], str)
+                    or not 1 <= len(value[0]) <= 80
+                    or any(ord(char) < 32 for char in value[0])
+                    or not isinstance(value[1], str)):
+                raise ValueError
+            after = value[0], validate_photo_id(value[1])
+        except (ValueError, UnicodeDecodeError, binascii.Error, json.JSONDecodeError) as exc:
+            raise ValueError("Nieprawidłowy cursor.") from exc
+    return bbox, limit, after
+
+
+def _field_photo_cursor(key: tuple[str, str]) -> str:
+    payload = json.dumps(list(key), ensure_ascii=True, separators=(",", ":")).encode("ascii")
+    return base64.urlsafe_b64encode(payload).decode("ascii").rstrip("=")
+
+
 def handle_field_photos(handler) -> None:
     try:
-        photos = list_field_photos(core_config.FIELD_PHOTOS_DIR)
-        if not http_admin_session.is_admin(handler):
-            layer_settings = access.public_layer_settings()
-            photos = [
-                photo for photo in photos
-                if access.public_field_photo_allowed(handler, photo, layer_settings=layer_settings)
-            ]
-        http_responses.send_json(handler, 200, {"status": "ok", "photos": photos})
+        bounds, limit, after = _field_photo_list_query(handler.path)
+    except ValueError as exc:
+        http_responses.send_json(handler, 400, {"status": "error", "error": str(exc)})
+        return
+    try:
+        is_admin = http_admin_session.is_admin(handler)
+        approved_types = None
+        pending_visible = True
+        if not is_admin:
+            layers = access.public_layer_settings()
+            approved_types = tuple(
+                issue for issue in core_config.FIELD_PHOTO_ISSUE_TYPES
+                if layers.get(access.field_photo_issue_layer_key(issue), True)
+            )
+            pending_visible = layers.get("field_photo_pending", True)
+        photos, next_key = list_map_field_photos(
+            core_config.FIELD_PHOTOS_DIR,
+            bounds=bounds,
+            limit=limit,
+            after=after,
+            approved_types=approved_types,
+            pending_visible=pending_visible,
+        )
+        payload = {"status": "ok", "photos": photos}
+        if limit is not None:
+            payload["next_cursor"] = _field_photo_cursor(next_key) if next_key else None
+        http_responses.send_json(handler, 200, payload)
     except Exception as exc:
         http_responses.send_internal_error(
             handler,
