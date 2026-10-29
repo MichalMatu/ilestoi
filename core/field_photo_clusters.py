@@ -22,7 +22,8 @@ def list_map_photo_clusters(
     """Return at most 256 synthetic geographic cell centers and safe counts."""
     west, south, east, north = bounds
     n = OVERVIEW_GRID_SIZE
-    lat_step = (north - south) / n or 1.0
+    lat_span = north - south
+    lat_step = lat_span / n or 1.0
     lon_span = east - west if west <= east else east + 360 - west
     lon_step = lon_span / n or 1.0
     crossing = west > east
@@ -65,12 +66,12 @@ def list_map_photo_clusters(
     result = []
     for row in rows:
         lat_cell, lon_cell = int(row["lat_cell"]), int(row["lon_cell"])
-        lon = west + (lon_cell + 0.5) * lon_step
+        lon = west + (lon_cell + 0.5) * lon_step if lon_span else west
         if lon > 180:
             lon -= 360
         result.append(
             {
-                "lat": min(90.0, south + (lat_cell + 0.5) * lat_step),
+                "lat": min(90.0, south + (lat_cell + 0.5) * lat_step) if lat_span else south,
                 "lon": lon,
                 "total": int(row["total"]),
                 "vehicles": int(row["vehicles"]),

@@ -230,6 +230,26 @@ class MapQueryTests(unittest.TestCase):
         self.assertEqual(sum(c["total"] for c in clusters), 332)
         self.assertEqual(sum(c["pending"] for c in clusters), 331)
 
+    def test_exact_point_bounds_never_move_the_synthetic_center_outside_bbox(self):
+        response = self._cluster_request(
+            "/api/field-photos/clusters?bbox=17,51,17,51", is_admin=True
+        )
+        self.assertEqual(response.status, 200)
+        clusters = response.payload()["clusters"]
+        self.assertEqual(len(clusters), 1)
+        self.assertEqual(clusters[0]["total"], 2)
+        self.assertEqual((clusters[0]["lat"], clusters[0]["lon"]), (51, 17))
+
+    def test_cluster_endpoint_is_registered_with_the_safe_get_dispatch(self):
+        from app.http import dispatch
+
+        handler = Handler("/api/field-photos/clusters?bbox=0,0,1,1")
+        with patch.object(public_data, "handle_field_photo_clusters") as cluster_route:
+            self.assertTrue(
+                dispatch.handle_static_api_get(handler, "/api/field-photos/clusters")
+            )
+        cluster_route.assert_called_once_with(handler)
+
     def test_empty_viewport_never_leaks_an_unbounded_list(self):
         response = self._cluster_request("/api/field-photos/clusters?bbox=0,0,1,1", is_admin=True)
         self.assertEqual(response.status, 200)
