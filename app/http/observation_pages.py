@@ -15,7 +15,8 @@ from app.http import access
 from app.http import responses as http_responses
 from app.http import static_files as http_static_files
 from core import config as core_config
-from core.field_photos import list_field_photos
+from core.field_photos import list_field_photos, load_field_photo_record
+from core.field_photo_serialization import field_photo_summary
 
 PHOTO_ID = re.compile(r"[A-Za-z0-9_-]{3,96}\Z")
 DISCLAIMER = (
@@ -24,20 +25,35 @@ DISCLAIMER = (
 )
 
 
+def _is_public_observation(photo: dict, layers: dict[str, bool]) -> bool:
+    if (photo.get("public_review_status") != "approved"
+            or not photo.get("public_image")
+            or not photo.get("public_thumb")
+            or photo.get("vehicle_resolution_status") == "removed"):
+        return False
+    layer_key = access.field_photo_issue_layer_key(photo.get("issue_type"))
+    return layers.get(layer_key, True)
+
+
 def public_observations() -> list[dict]:
     """Never use admin session privileges for crawler-facing pages."""
     layers = access.public_layer_settings()
-    result = []
-    for photo in list_field_photos(core_config.FIELD_PHOTOS_DIR):
-        if (photo.get("public_review_status") != "approved"
-                or not photo.get("public_image")
-                or not photo.get("public_thumb")
-                or photo.get("vehicle_resolution_status") == "removed"):
-            continue
-        layer_key = access.field_photo_issue_layer_key(photo.get("issue_type"))
-        if layers.get(layer_key, True):
-            result.append(photo)
-    return result
+    return [
+        photo
+        for photo in list_field_photos(core_config.FIELD_PHOTOS_DIR)
+        if _is_public_observation(photo, layers)
+    ]
+
+
+def public_observation_by_id(photo_id: str) -> dict | None:
+    """Use SQLite's primary-key lookup instead of scanning the entire map."""
+    try:
+        record = load_field_photo_record(photo_id, core_config.FIELD_PHOTOS_DIR)
+    except (OSError, ValueError, FileNotFoundError):
+        # Missing or unpreparable records were also absent from list_field_photos.
+        return None
+    photo = field_photo_summary(record)
+    return photo if _is_public_observation(photo, access.public_layer_settings()) else None
 
 
 def _base(title: str, description: str, path: str, body: str, *,
@@ -148,7 +164,7 @@ def _detail(handler, photo_id: str, *, include_body: bool) -> None:
     if not PHOTO_ID.fullmatch(photo_id):
         http_responses.send_text_error(handler, 404, "Nie znaleziono obserwacji.", include_body=include_body)
         return
-    photo = next((p for p in public_observations() if p.get("id") == photo_id), None)
+    photo = public_observation_by_id(photo_id)
     if photo is None:
         http_responses.send_text_error(handler, 404, "Nie znaleziono obserwacji.", include_body=include_body)
         return

@@ -59,7 +59,9 @@ class ObservationPagesTests(unittest.TestCase):
     def test_server_rendered_observation_has_public_image_metadata_and_manual_oc(self):
         a, b = self._patch()
         h = Handler("/observations/" + self.approved["id"])
-        with a, b:
+        with a, b, patch.object(
+            observation_pages, "load_field_photo_record", return_value=self.approved
+        ):
             self.assertTrue(observation_pages.handle_public_route(h, h.path))
         txt = h.wfile.getvalue().decode()
         self.assertEqual(h.status, 200)
@@ -69,6 +71,46 @@ class ObservationPagesTests(unittest.TestCase):
         self.assertIn("nie jest sprawdzany na żywo", txt)
         self.assertNotIn("owner-original", txt)
         self.assertNotIn("admin/photos", txt)
+
+    def test_detail_looks_up_one_record_without_scanning_photo_list(self):
+        h = Handler("/observations/" + self.approved["id"])
+        with (
+            patch.object(observation_pages, "list_field_photos", side_effect=AssertionError("full scan")) as scan,
+            patch.object(observation_pages, "load_field_photo_record", return_value=self.approved) as lookup,
+            patch.object(observation_pages.access, "public_layer_settings", return_value={"vehicles": True}),
+        ):
+            self.assertTrue(observation_pages.handle_public_route(h, h.path))
+        self.assertEqual(h.status, 200)
+        scan.assert_not_called()
+        lookup.assert_called_once_with(self.approved["id"], observation_pages.core_config.FIELD_PHOTOS_DIR)
+
+    def test_detail_hides_unapproved_removed_and_disabled_observations(self):
+        cases = [
+            ({**self.approved, "public_review_status": "draft"}, {"vehicles": True}),
+            ({**self.approved, "public_review_status": "pending"}, {"vehicles": True}),
+            ({**self.approved, "public_review_status": "rejected"}, {"vehicles": True}),
+            ({**self.approved, "vehicle_resolution_status": "removed"}, {"vehicles": True}),
+            ({**self.approved, "issue_type": "smoke"}, {"field_photo_smoke": False}),
+        ]
+        for record, layers in cases:
+            with self.subTest(record=record["public_review_status"], layers=layers):
+                h = Handler("/observations/" + self.approved["id"])
+                with (
+                    patch.object(observation_pages, "load_field_photo_record", return_value=record),
+                    patch.object(observation_pages.access, "public_layer_settings", return_value=layers),
+                ):
+                    observation_pages.handle_public_route(h, h.path)
+                self.assertEqual(h.status, 404)
+                self.assertNotIn(b"owner-original", h.wfile.getvalue())
+
+    def test_detail_missing_record_returns_404_without_full_scan(self):
+        h = Handler("/observations/" + self.approved["id"])
+        with (
+            patch.object(observation_pages, "list_field_photos", side_effect=AssertionError("full scan")),
+            patch.object(observation_pages, "load_field_photo_record", side_effect=FileNotFoundError),
+        ):
+            observation_pages.handle_public_route(h, h.path)
+        self.assertEqual(h.status, 404)
 
     def test_geo_query_and_head(self):
         a, b = self._patch()
@@ -94,7 +136,9 @@ class ObservationPagesTests(unittest.TestCase):
         self.assertNotIn(">pending<", xml)
         a, b = self._patch()
         h2 = Handler("/observations/pending")
-        with a, b:
+        with a, b, patch.object(
+            observation_pages, "load_field_photo_record", return_value=self.pending
+        ):
             observation_pages.handle_public_route(h2, h2.path)
         self.assertEqual(h2.status, 404)
 
