@@ -41,8 +41,9 @@ it is not an HTTP or browser-rendering benchmark.
 
 ## Release
 
-This change is isolated to JS and this document, with no database migration.
-Run `npm run test:web` and `npm run lint:web` in an isolated worktree
-before the guarded browser smoke test. Future viewport pagination (prepared
-separately by PR #3) and reducing marker re-creation will be needed for
-nationwide scale. Keep `main` at the actual accepted production version.
+The spatial index itself has no database migration. The combined PR #9
+also includes viewport pagination and bounded server-side overview clusters;
+national zoom therefore avoids building an individual marker for every photo.
+Focused JS/lint and browser QA are recorded for the unified candidate.
+Guarded production smoke and backup/rollback verification remain open.
+Keep `main` at the actual accepted production version.
