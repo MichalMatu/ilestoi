@@ -34,9 +34,10 @@ Kandydat integracyjny w oddzielnym Termux worktree:
 
 1. Ustalić jeden niezmienny commit release candidate zawierający wszystkie
    wymagane PR i ponownie potwierdzić stan bazy produkcyjnej.
-2. Sprawdzić spójny snapshot SQLite, szyfrowany Restic ze zdjęciami,
-   miejsce na dysku, rollback i **potwierdzoną kopię off-host**. Nie zakładać,
-   że lokalny backup na telefonie wystarczy.
+2. Zweryfikować spójny snapshot SQLite w oddzielnym folderze Samsunga,
+   lokalny szyfrowany Restic ze zdjęciami, miejsce na dysku i rollback.
+   Właściciel 29.10.2026 odstąpił od wymogu kopii off-host; akceptuje ryzyko
+   utraty wszystkich kopii w razie utraty telefonu.
 3. Zaplanować indeks z `database/migrations/006_field_photo_map_seek.sql`
    i kontrolowany cutover w runit bez drugiej instancji aplikacji.
 4. Smoke: publiczne przełączniki warstw, zoom 10↔11, skupiska, link do
@@ -44,5 +45,13 @@ Kandydat integracyjny w oddzielnym Termux worktree:
 5. Dopiero po przyjęciu wydania: awansować `main` do identycznego SHA,
    oznaczyć tagiem i zabezpieczyć historię. Bez GitHub Actions/Work/Codex.
 
-**Nie wykonano tutaj** produkcyjnego wdrożenia ani potwierdzenia off-host
-backupu. Patrz `docs/TERMUX_DEVELOPMENT_FLOW.md` i `docs/BACKUP.md`.
+**W chwili zapisu tej części checkpointu** nie było jeszcze produkcyjnego
+wdrożenia. Późniejszy preflight z 29.10.2026 przez Local Agent wykazał:
+czysty `main@666d9db7`, sześć usług runit działających, live/ready 200,
+SQLite w `~/IleStoi-Backups/pre-release-20261029-104843/` (SHA256,
+quick_check, FK PASS; 306 rekordów), `restic check` PASS oraz selektywny
+restore SQLite i próbę migracji `006`/rollbacku na duplikacie PASS.
+Kopia SQLite pozostaje w oddzielnym folderze Samsunga, lokalny Restic
+zachowuje zdjęcia. Zewnętrzna kopia nie jest bramką wydania zgodnie z
+nową decyzją właściciela. Wynik właściwego cutoveru trzeba zapisać osobno.
+Patrz `docs/TERMUX_DEVELOPMENT_FLOW.md` i `docs/BACKUP.md`.
