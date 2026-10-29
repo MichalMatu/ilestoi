@@ -75,3 +75,9 @@ function pendingFieldPhotoPopup(group) {
             ${popupActions([ownerButton])}
     `, 'map-popup--pending-submission');
 }
+
+// Aggregate markers deliberately use a different symbol from a vehicle pin.
+function overviewPhotoIcon(count) {
+    const html = `<div class="map-overview-cluster">${Math.floor(count)}</div>`;
+    return L.divIcon({ html, className: 'map-pin-icon', iconSize: [46, 46], iconAnchor: [23, 23] });
+}

@@ -497,7 +497,7 @@ function updateVehicleFilterButton({ buttonId, labelSelector, dotSelector, count
     }
     if (labelEl) labelEl.textContent = label;
     if (dotEl) dotEl.className = dotClass;
-    updateVehicleFilterCount(countId, count, label);
+    updateVehicleFilterCount(countId, fieldPhotoOverviewActive ? null : count, label);
 }
 
 function vehicleMarkerTooltip(group) {
@@ -594,7 +594,7 @@ function vehicleGroupPopup(group) {
 
 function placeVehicleMarkers() {
     clearVehicleMarkers();
-    if (!vehicleLayerAllowed()) return;
+    if (fieldPhotoOverviewActive || !vehicleLayerAllowed()) return;
     prioritizedVehicleGroups().forEach(group => {
         const canDrag = adminAuthenticated && group.photos.length > 0;
         const markerTooltip = vehicleMarkerTooltip(group);
@@ -632,7 +632,15 @@ function placeVehicleMarkers() {
 }
 
 function refreshVehicleLayer() {
-    placeVehicleMarkers();
+    if (fieldPhotoLoadMode() === 'overview' !== fieldPhotoOverviewActive) {
+        loadFieldPhotos();
+        return;
+    }
+    if (fieldPhotoOverviewActive) {
+        placeFieldPhotos(fieldPhotoLayerData);
+    } else {
+        placeVehicleMarkers();
+    }
     updateLayerCounters();
 }
 

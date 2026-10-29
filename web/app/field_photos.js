@@ -43,7 +43,8 @@ function fieldPhotoViewportQuery() {
 function scheduleFieldPhotoViewportLoad() {
     window.clearTimeout(fieldPhotoViewportDebounceTimer);
     const viewport = fieldPhotoViewportQuery();
-    if (viewport.key === fieldPhotoLoadedViewportKey || viewport.key === fieldPhotoRequestedViewportKey) return;
+    const key = `${fieldPhotoLoadMode()}:${viewport.key}`;
+    if (key === fieldPhotoLoadedViewportKey || key === fieldPhotoRequestedViewportKey) return;
     fieldPhotoViewportDebounceTimer = window.setTimeout(() => {
         fieldPhotoViewportDebounceTimer = null;
         loadFieldPhotos();
@@ -269,9 +270,12 @@ function countPendingFieldPhotoLayerGroups() {
 function updateLayerCountBadge(id, count, tooltipKey) {
     const badge = document.getElementById(id);
     if (!badge) return;
+    const overview = fieldPhotoOverviewActive;
     const safeCount = Number.isFinite(count) ? count : 0;
-    const tooltip = `${t(tooltipKey, { n: safeCount })} ${t('layers.viewportCountSuffix')}`;
-    badge.textContent = String(safeCount);
+    const tooltip = overview
+        ? t('map.overviewCountsUnavailable')
+        : `${t(tooltipKey, { n: safeCount })} ${t('layers.viewportCountSuffix')}`;
+    badge.textContent = overview ? '–' : String(safeCount);
     badge.title = tooltip;
     badge.setAttribute('aria-label', tooltip);
 }
@@ -298,6 +302,11 @@ function updateLayerCounters() {
 
 function placeFieldPhotos(photos = fieldPhotoLayerData) {
     clearFieldPhotoMarkers();
+    clearFieldPhotoOverviewMarkers();
+    if (fieldPhotoOverviewActive) {
+        placeFieldPhotoOverviewMarkers();
+        return;
+    }
     const approvedVehicleGroups = vehicleLayerAllowed() ? visibleVehicleGroups(photos) : [];
     groupFieldPhotos(filteredFieldPhotos(photos, { approvedVehicleGroups })).forEach(group => {
         const reviewStatus = fieldPhotoGroupReviewStatus(group);
@@ -326,16 +335,26 @@ async function loadFieldPhotos() {
     let viewportKey = '';
     try {
         const viewport = fieldPhotoViewportQuery();
-        viewportKey = viewport.key;
-        fieldPhotoRequestedViewportKey = viewport.key;
-        const photos = await fetchFieldPhotoViewportPages(viewport, requestController.signal);
+        const mode = fieldPhotoLoadMode();
+        viewportKey = `${mode}:${viewport.key}`;
+        fieldPhotoRequestedViewportKey = viewportKey;
+        const data = mode === 'overview'
+            ? await fetchFieldPhotoOverview(viewport, requestController.signal)
+            : await fetchFieldPhotoViewportPages(viewport, requestController.signal);
         if (requestRevision !== fieldPhotoLoadRevision) return;
-        fieldPhotoLayerData = photos;
-        fieldPhotoLoadedViewportKey = viewport.key;
+        if (mode !== fieldPhotoLoadMode()) {
+            await loadFieldPhotos();
+            return;
+        }
+        fieldPhotoOverviewActive = mode === 'overview';
+        fieldPhotoOverviewCells = fieldPhotoOverviewActive ? data : [];
+        fieldPhotoOverviewBbox = fieldPhotoOverviewActive ? viewport.bbox : '';
+        fieldPhotoLayerData = fieldPhotoOverviewActive ? [] : data;
+        fieldPhotoLoadedViewportKey = viewportKey;
         placeFieldPhotos(fieldPhotoLayerData);
         placeVehicleMarkers();
         updateLayerCounters();
-        setFieldPhotoLoadState(fieldPhotoLayerData.length ? 'ready' : 'empty');
+        setFieldPhotoLoadState(data.length ? 'ready' : 'empty');
     } catch (error) {
         if (requestRevision !== fieldPhotoLoadRevision || error?.payload?.code === 'cancelled') return;
         setFieldPhotoLoadState('error');

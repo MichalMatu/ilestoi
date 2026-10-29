@@ -1,0 +1,21 @@
+/* Aggregate photo counts are not car counts; keep them visually distinct. */
+.map-overview-cluster {
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    border: 2px solid var(--pin-field-ring);
+    background: var(--glass-panel-bg-strong);
+    box-shadow: var(--pin-shadow), 0 0 0 3px var(--pin-field-ring-soft);
+    color: var(--text-strong);
+    font: 800 0.84rem var(--font);
+    white-space: nowrap;
+}
+
+.leaflet-marker-icon:focus-visible .map-overview-cluster {
+    outline: 3px solid var(--pin-field-ring);
+    outline-offset: 4px;
+}

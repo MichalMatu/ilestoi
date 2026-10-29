@@ -29,3 +29,23 @@ handle truly national-scale overview levels.
 
 QA must cover pagination, invalid/repeating cursors, abort and stale responses,
 dateline/full-world bounds, and a real-browser viewport pan, before release.
+
+## Overview UI (PR #8)
+
+For guest map navigation at zoom **10 or below**, the frontend switches from
+paginated individual photos to the bounded overview endpoint from PR #7.
+Clicking an aggregate marker fits its geographic grid cell. Repeated
+selection zooms into the cell until the map reaches detail zoom 11 or above,
+where the original individual markers and per-vehicle controls return.
+
+An overview represents **photo counts**, not individual vehicles or cases.
+Thus the existing category and advanced vehicle *group counters* display an
+em dash, with a translated tooltip explaining why. Map layer switches still
+hide corresponding aggregate counts locally. The overview is disabled for
+administrators, direct photo links and advanced vehicle filters, because the
+aggregate API cannot represent their detailed workflows. Those retain the
+previous paginated individual mode.
+
+The overview uses the same abort/revision/debounce/complete-response
+safeguards as detail requests. The frontend never calls an undefined
+aggregate API silently: PR #7 must be deployed before this change.

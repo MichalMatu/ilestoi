@@ -110,6 +110,8 @@ const TRANSLATIONS_EN = {
         'layers.vehicleResolutionCycleRemoved': 'Removed: only',
         'layers.vehicleFilterCountLabel': '{label}: {n}',
         'layers.viewportCountSuffix': '(in the map area)',
+        'map.overviewPhotoCount': 'Photos in area: {n}. Select to zoom in.',
+        'map.overviewCountsUnavailable': 'The overview shows photo counts in clusters. Zoom in to see the number of places and vehicles.',
         'layers.countVehiclesTooltip': 'Visible cars documented with field photos: {n}',
         'layers.countFieldPhotoInfrastructureTooltip': 'Grouped unsafe infrastructure points: {n}',
         'layers.countFieldPhotoSmokeTooltip': 'Grouped polluted air points: {n}',
