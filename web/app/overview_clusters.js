@@ -30,11 +30,19 @@ function visibleOverviewPhotoCount(cell) {
     return count;
 }
 
+function overviewDisplayLongitude(lon, bbox = fieldPhotoOverviewBbox) {
+    const [west, , east] = bbox.split(',').map(Number);
+    const longitudeSpan = east >= west ? east - west : east + 360 - west;
+    const mapLongitude = map.getCenter?.().lng;
+    const reference = Number.isFinite(mapLongitude) ? mapLongitude : west + longitudeSpan / 2;
+    return lon + 360 * Math.round((reference - lon) / 360);
+}
+
 function overviewCellBounds(cell, bbox = fieldPhotoOverviewBbox) {
     const [west, south, east, north] = bbox.split(',').map(Number);
     const latStep = (north - south) / FIELD_PHOTO_OVERVIEW_GRID_SIZE;
     const lonStep = (east >= west ? east - west : east + 360 - west) / FIELD_PHOTO_OVERVIEW_GRID_SIZE;
-    const longitude = cell.lon < west ? cell.lon + 360 : cell.lon;
+    const longitude = overviewDisplayLongitude(cell.lon, bbox);
     const centerLat = cell.lat;
     return [
         [centerLat - latStep / 2, longitude - lonStep / 2],
@@ -61,7 +69,7 @@ function placeFieldPhotoOverviewMarkers() {
         const count = visibleOverviewPhotoCount(cell);
         if (!count) return;
         const tooltip = t('map.overviewPhotoCount', { n: count });
-        const marker = L.marker([cell.lat, cell.lon], {
+        const marker = L.marker([cell.lat, overviewDisplayLongitude(cell.lon)], {
             icon: overviewPhotoIcon(count),
             keyboard: true,
             alt: tooltip,
