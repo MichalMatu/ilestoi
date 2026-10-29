@@ -89,9 +89,9 @@ Nie tworzono nowej funkcji ani dodatkowego API w sprincie zamykającym.
 - Repozytorium GitHub: 280 pozycji w drzewie głównym przed końcowym
   checkpointem; brak śledzonych plików cache, prywatnych backupów,
   WAL, logów testowych czy snapshotów bazy.
-- Usunięto **8 czystych lokalnych worktree** ze zintegrowaną historią.
-  Dodatkowy worktree kandydata można usunąć po zakończeniu ostatnich testów;
-  nie usuwać nieopublikowanych / rozbieżnych commitów.
+- Usunięto **9 czystych lokalnych worktree** ze zintegrowaną historią,
+  w tym ostatni worktree wydania po zakończeniu regresji. Pozostały wyłącznie
+  trzy lokalne worktree z historią niezawartą w `main`; zachowano je celowo.
 - Opublikowano tag wydania `v2026.10.29-map-scalability`, wskazujący
   oryginalny, wdrożony SHA `ecc14c1591fac142db1888917714dbb312bef3aa`.
 - Usunięto **8 zdalnych gałęzi** w pełni zawartych w `main`,
@@ -100,6 +100,10 @@ Nie tworzono nowej funkcji ani dodatkowego API w sprincie zamykającym.
   `work/dirty`, `work/interactive-onboarding-20261026`,
   `work/ai-public-observations-20261028`, a także niepołączone
   lokalne worktree, aby nie utracić unikalnej historii.
+- **Końcowa synchronizacja dokumentacji:** wyłącznie cztery pliki `docs/`
+  zmienione po tagu wydania; wykonano fast-forward lokalnego `main` na
+  Samsungu do zdalnego `main`, bez restartu procesu. Po operacji produkcyjny
+  Git pozostał czysty, a `wreckscanner` miał `live=200`, `ready=200`.
 - Nie usuwano produkcyjnych SQLite, WAL/SHM, zdjęć, sekretów,
   `.venv`, `node_modules` produkcyjnego, `.backups` ani danych
   Local Agenta. Brak force-push, squash i GitHub Actions.
