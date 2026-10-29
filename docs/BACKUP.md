@@ -287,7 +287,10 @@ Nie jest to katalog projektu, katalog produkcyjny ani magazyn Restic.
 
 - Katalog bazowy: `/data/data/com.termux/files/home/IleStoi-Backups/`
   (skrót Termuxa: `~/IleStoi-Backups/`).
-- Konkretna kopia: `~/IleStoi-Backups/pre-release-20261029-104843/`.
+- Zachowana kopia sprzed wydania: `~/IleStoi-Backups/pre-release-20261029-104843/`.
+- Kopia wykonana bezpośrednio przed kontrolowanym wdrożeniem PR #9:
+  `~/IleStoi-Backups/pre-deploy-pr9-20261029/` (spójne SQLite,
+  `manifest.json` i `SHA256SUMS`, 306 rekordów).
 - Baza: `wreckscanner.sqlite3` — spójny snapshot przez SQLite Backup API,
   **nie** surowe kopiowanie działających plików WAL/SHM.
 - `manifest.json` — data, rozmiar, migracje, liczniki i SHA-256.
