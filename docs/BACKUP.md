@@ -10,8 +10,9 @@ wchodza do aktywnego backupu ani restore.
 Lokalne repozytorium restic znajduje sie w `.backups/wreckscanner-restic`, a
 jego haslo w `.restic_password`. Plik hasla ma miec tryb `0600` i musi miec
 osobna, bezpieczna kopie. Repozytorium na tym samym dysku nie chroni przed
-awaria hosta; produkcja wymaga dodatkowej, szyfrowanej kopii off-host oraz
-monitorowanego harmonogramu.
+awaria hosta. Właściciel świadomie akceptuje to ryzyko i 29.10.2026 zniósł
+wymóg kopii off-host dla tego wydania Samsung/Termux. Lokalny harmonogram,
+sprawna kopia SQLite w osobnym folderze telefonu i lokalny Restic pozostają.
 
 Backup restic tworzy najpierw samodzielny snapshot SQLite przez Backup API i
 sprawdza jego integralnosc. Nie kopiuje na zywo plikow DB/WAL/SHM. Zakres:
@@ -108,8 +109,8 @@ Minimalny cel operacyjny przed produkcja:
 - RPO: najwyzej 24 godziny utraconych zmian;
 - RTO: przywrocenie sprawdzonej uslugi w 4 godziny;
 - retencja restic: 14 kopii dziennych, 8 tygodniowych i 12 miesiecznych;
-- codzienny backup off-host, cotygodniowe `forget --prune`, `check` i probny
-  restore co najmniej raz na kwartal.
+- codzienny lokalny backup Restic, cotygodniowe `forget --prune`, `check`
+  i probny restore co najmniej raz na kwartal.
 
 Backup uruchamiaj codziennie z timera systemd z `Persistent=true` i
 `RandomizedDelaySec`, np. `wreckscanner-backup.timer` o 02:30. Jednostka backupu
@@ -161,7 +162,7 @@ lokalny kanal alarmowy. Monitoring ma alarmowac, gdy:
 - jednostka lub readiness konczy sie bledem;
 - najnowszy snapshot ma ponad 26 godzin;
 - `restic check` nie przechodzi;
-- repozytorium off-host nie zostalo zsynchronizowane.
+- lokalna kopia SQLite lub repozytorium Restic są niedostępne.
 
 Cotygodniowa retencja i kontrola:
 
@@ -175,9 +176,10 @@ Cotygodniowa retencja i kontrola:
   --password-file .restic_password
 ```
 
-Sukces lokalnego snapshotu nie spelnia RPO, dopoki zaszyfrowane repozytorium nie
-ma potwierdzonej kopii off-host. Nie kopiuj osobno niezaszyfrowanych prywatnych
-plikow ani pliku hasla razem z repozytorium.
+RPO odnosi się do odzyskania danych z lokalnego snapshotu, pod warunkiem że
+telefon nadal działa i kopie są dostępne. Nie deklarujemy ochrony przed utratą
+samego telefonu. Nie kopiuj niezaszyfrowanych prywatnych plików ani hasła
+razem z repozytorium.
 
 ## Snapshot ZIP V2
 
@@ -278,7 +280,7 @@ Po kazdym restore potwierdz `quick_check: ok`, brak naruszen kluczy obcych,
 komplet migracji, `Brakujace sciezki: 0` i readiness `200` przed dopuszczeniem
 ruchu.
 
-## Ręczny eksport SQLite na Samsungu do przeniesienia poza telefon
+## Osobna kopia SQLite na Samsungu
 
 **Utworzony i zweryfikowany 29.10.2026**, przed wydaniem PR #2–#5.
 Nie jest to katalog projektu, katalog produkcyjny ani magazyn Restic.
@@ -308,14 +310,13 @@ ls -la
 sha256sum -c SHA256SUMS
 ```
 
-Po przeniesieniu folderu poza telefon uruchom `sha256sum -c SHA256SUMS`
-także na docelowym komputerze. **Nie usuwaj** lokalnej kopii do czasu
-potwierdzenia bezpiecznego eksportu.
+Zgodnie z decyzją właściciela kopia **pozostaje w tym osobnym folderze
+na telefonie**. Nie przenoś ani nie usuwaj jej w trakcie wdrażania.
 
 **Ograniczenie:** ta ręczna kopia zawiera *wyłącznie SQLite* — bez
 `zdjecia_terenowe/` i `prywatne_zdjecia/`. Do pełnego odtworzenia serwisu
 potrzebna jest także szyfrowana kopia Restic obu katalogów zdjęć.
-SQLite zawiera dane wrażliwe i **nie jest szyfrowany**. Do kopiowania
-poza telefon użyj zabezpieczonego połączenia/nośnika i zaszyfruj plik
-w miejscu docelowym. Samej kopii na telefonie nie wolno traktować jako
-wykonanego backupu off-host. Hasła Restic trzymaj oddzielnie.
+SQLite zawiera dane wrażliwe i **nie jest szyfrowany**. Folder i plik są
+prywatne dla użytkownika Termuxa (0700/0600). Obie kopie są na tym samym
+telefonie, więc nie zabezpieczają przed utratą urządzenia. Hasło Restic
+przechowuj oddzielnie.
