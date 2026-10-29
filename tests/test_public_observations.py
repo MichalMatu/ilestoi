@@ -90,7 +90,8 @@ class ObservationPagesTests(unittest.TestCase):
             ({**self.approved, "public_review_status": "pending"}, {"vehicles": True}),
             ({**self.approved, "public_review_status": "rejected"}, {"vehicles": True}),
             ({**self.approved, "vehicle_resolution_status": "removed"}, {"vehicles": True}),
-            ({**self.approved, "issue_type": "smoke"}, {"field_photo_smoke": False}),
+            ({**self.approved, "issue_type": "smoke", "vehicle_insurance_status": "unknown",
+              "vehicle_insurance_checked_at": None}, {"field_photo_smoke": False}),
         ]
         for record, layers in cases:
             with self.subTest(record=record["public_review_status"], layers=layers):
