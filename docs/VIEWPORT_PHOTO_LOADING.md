@@ -9,7 +9,10 @@ After admin-session bootstrap, the browser requests a rectangular area around
 the currently visible Leaflet viewport (12.5% padding per side), with pages of
 500. Requests are canceled on later viewport changes and superseded results
 never replace the map. A 250-ms map-movement debounce avoids sending a request
-for each drag frame. Data are committed to the marker layers **only once all
+for each drag frame. The cached padded viewport also prevents unnecessary reloads
+from small pans. While a Leaflet popup is open, a map movement cannot replace
+its marker: scheduled refreshes wait until popup close, and any already in-flight
+response is not published beneath the open popup. Data are committed to the marker layers **only once all
 pages have completed**. Explicit refresh after upload, moderation, position
 change and owner deletion still fetches fresh data.
 
