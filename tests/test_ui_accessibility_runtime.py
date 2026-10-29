@@ -611,14 +611,13 @@ class UiAccessibilityRuntimeTests(unittest.TestCase):
         self.assertEqual(result["storedPhotos"], result["rendered"][-1])
         self.assertTrue(result["loadState"])
 
-
     def test_overview_clusters_render_and_zoom_in_real_chromium(self):
         marker_js = (ROOT_DIR / "web" / "app" / "map_markers.js").read_text(encoding="utf-8")
         photo_js = (ROOT_DIR / "web" / "app" / "field_photos.js").read_text(encoding="utf-8")
         overview_js = (ROOT_DIR / "web" / "app" / "overview_clusters.js").read_text(encoding="utf-8")
-        marker_js = marker_js.replace("</script", "<\/script")
-        photo_js = photo_js.replace("</script", "<\/script")
-        overview_js = overview_js.replace("</script", "<\/script")
+        marker_js = marker_js.replace("</script", r"<\/script")
+        photo_js = photo_js.replace("</script", r"<\/script")
+        overview_js = overview_js.replace("</script", r"<\/script")
         document = (
             """<!doctype html><html><head><title>pending</title></head><body>
             <main id="map"></main>
@@ -700,9 +699,7 @@ class UiAccessibilityRuntimeTests(unittest.TestCase):
                 });
             </script></body></html>"""
         )
-        result = run_chromium_document(
-            document, prefix="ilestoi-overview-browser-", virtual_time_budget=2500
-        )
+        result = run_chromium_document(document, prefix="ilestoi-overview-browser-", virtual_time_budget=2500)
         self.assertTrue(result["overview"])
         self.assertEqual(result["count"], 1)
         self.assertIn("map-overview-cluster", result["html"])
