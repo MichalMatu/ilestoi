@@ -46,9 +46,10 @@ function emptyVehicleGroup(lat, lon) {
     return { lat, lon, photos: [], pendingPhotos: [] };
 }
 
-function nearestVehicleGroup(groups, lat, lon) {
+function nearestVehicleGroup(groups, lat, lon, index = null) {
     let nearest = null;
-    groups.forEach(group => {
+    const candidates = index ? index.candidates(lat, lon) : groups;
+    candidates.forEach(group => {
         const distanceM = metersBetween(group.lat, group.lon, lat, lon);
         if (distanceM > FIELD_PHOTO_GROUP_RADIUS_M) return;
         if (!nearest || distanceM < nearest.distanceM) nearest = { group, distanceM };
@@ -69,13 +70,13 @@ function vehiclePendingPhotoIsVisible(photo) {
         && pendingFieldPhotoLayerAllowed();
 }
 
-function attachPendingVehiclePhotosToGroups(groups, photos = fieldPhotoLayerData) {
+function attachPendingVehiclePhotosToGroups(groups, photos = fieldPhotoLayerData, index = null) {
     if (!groups.length || !pendingFieldPhotoLayerAllowed()) return groups;
     (photos || []).filter(vehiclePendingPhotoIsVisible).forEach(photo => {
         const lat = Number(photo.lat);
         const lon = Number(photo.lon);
         if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
-        const group = nearestVehicleGroup(groups, lat, lon);
+        const group = nearestVehicleGroup(groups, lat, lon, index);
         if (group) group.pendingPhotos.push(photo);
     });
     return groups;
@@ -83,18 +84,21 @@ function attachPendingVehiclePhotosToGroups(groups, photos = fieldPhotoLayerData
 
 function buildVehicleGroups(photos = fieldPhotoLayerData) {
     const groups = [];
+    const index = createFieldPhotoSpatialIndex(groups);
     (photos || []).filter(vehiclePhotoIsApproved).forEach(photo => {
         const lat = Number(photo.lat);
         const lon = Number(photo.lon);
         if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
-        let group = nearestVehicleGroup(groups, lat, lon);
+        let group = nearestVehicleGroup(groups, lat, lon, index);
         if (!group) {
             group = emptyVehicleGroup(lat, lon);
             groups.push(group);
+            index.add(group);
         }
         addVehiclePhotoToGroup(group, photo, lat, lon);
+        index.update(group);
     });
-    return attachPendingVehiclePhotosToGroups(groups, photos);
+    return attachPendingVehiclePhotosToGroups(groups, photos, index);
 }
 
 function vehicleGroupPhotoCount(group) {

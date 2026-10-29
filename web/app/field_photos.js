@@ -145,6 +145,7 @@ function filteredFieldPhotos(photos = fieldPhotoLayerData, options = {}) {
 
 function groupFieldPhotos(photos) {
     const groups = [];
+    const index = createFieldPhotoSpatialIndex(groups);
     (photos || []).forEach(photo => {
         const lat = Number(photo.lat);
         const lon = Number(photo.lon);
@@ -152,7 +153,7 @@ function groupFieldPhotos(photos) {
         const issueType = fieldPhotoIssueType(photo);
         const reviewStatus = fieldPhotoReviewStatus(photo);
         const groupKind = fieldPhotoGroupKind(photo);
-        let group = groups.find(candidate =>
+        let group = index.candidates(lat, lon).find(candidate =>
             candidate.issueType === issueType
             && candidate.groupKind === groupKind
             && metersBetween(candidate.lat, candidate.lon, lat, lon) <= FIELD_PHOTO_GROUP_RADIUS_M
@@ -160,11 +161,13 @@ function groupFieldPhotos(photos) {
         if (!group) {
             group = { lat, lon, issueType, reviewStatus, groupKind, photos: [] };
             groups.push(group);
+            index.add(group);
         }
         group.photos.push(photo);
         const count = group.photos.length;
         group.lat = ((group.lat * (count - 1)) + lat) / count;
         group.lon = ((group.lon * (count - 1)) + lon) / count;
+        index.update(group);
     });
     return groups;
 }
