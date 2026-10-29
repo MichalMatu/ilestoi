@@ -131,12 +131,14 @@ tail -n 30 "$HOME/wreckscanner-backup.log"
 
 ## Osobna kopia SQLite na Samsungu
 
-Aktualna, zweryfikowana kopia przed wydaniem PR #2–#5:
+Zachowana, zweryfikowana kopia sprzed produkcyjnego wydania PR #9:
 
 `~/IleStoi-Backups/pre-release-20261029-104843/wreckscanner.sqlite3`
 
-Manifest, suma SHA-256 i instrukcja przeniesienia znajdują się obok
-tego pliku; pełne szczegóły w [docs/BACKUP.md](BACKUP.md).
+Bezpośrednio przed wdrożeniem wykonano też drugi niezależny snapshot:
+`~/IleStoi-Backups/pre-deploy-pr9-20261029/wreckscanner.sqlite3`.
+Oba pozostają na telefonie, poza katalogiem aplikacji i Restic. Manifesty
+oraz sumy SHA-256 są obok plików. Szczegóły w [docs/BACKUP.md](BACKUP.md).
 Kopia pozostaje na telefonie w oddzielnym folderze; nie przenosić jej
 ani nie usuwać w ramach wdrożenia. Nie zawiera katalogów zdjęć i nie jest
 zaszyfrowana. Zdjęcia obejmuje istniejące lokalne repozytorium Restic.
