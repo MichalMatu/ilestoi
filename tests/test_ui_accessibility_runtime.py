@@ -517,6 +517,8 @@ class UiAccessibilityRuntimeTests(unittest.TestCase):
         photo_js = (ROOT_DIR / "web" / "app" / "field_photos.js").read_text(encoding="utf-8")
         startup_js = (ROOT_DIR / "web" / "app" / "startup.js").read_text(encoding="utf-8")
         photo_js = photo_js.replace("</script", "<\\/script")
+        overview_js = (ROOT_DIR / "web" / "app" / "overview_clusters.js").read_text(encoding="utf-8")
+        overview_js = overview_js.replace("</script", "<\\/script")
         startup_js = startup_js.replace("</script", "<\\/script")
         document = (
             """<!doctype html><html><head><title>pending</title></head><body>
@@ -526,6 +528,7 @@ class UiAccessibilityRuntimeTests(unittest.TestCase):
                 let bounds = { west: 16.9, south: 51.0, east: 17.1, north: 51.2 };
                 const moveHandlers = [];
                 const map = {
+                    getZoom: () => 15,
                     getBounds: () => ({
                         getWest: () => bounds.west,
                         getSouth: () => bounds.south,
@@ -536,6 +539,15 @@ class UiAccessibilityRuntimeTests(unittest.TestCase):
                         if (event === 'moveend') moveHandlers.push(handler);
                     },
                 };
+                let adminAuthenticated = false;
+                let pendingVehiclePhotoFocusId = '';
+                let vehicleInsuranceFilter = 'all';
+                let vehicleStandingFilterDays = 0;
+                let vehiclePhotoFilter = 'off';
+                let vehicleResolutionFilter = 'all';
+                const VEHICLE_FILTER_ALL = 'all';
+                const VEHICLE_STANDING_FILTER_OFF = 0;
+                const VEHICLE_PHOTO_FILTER_OFF = 'off';
                 const requests = [];
                 const rendered = [];
                 function t(key) { return key; }
@@ -554,6 +566,8 @@ class UiAccessibilityRuntimeTests(unittest.TestCase):
                 }
             </script><script>"""
             + photo_js
+            + """</script><script>"""
+            + overview_js
             + """</script><script>
                 placeFieldPhotos = photos => rendered.push(photos.map(photo => photo.id));
                 placeVehicleMarkers = () => {};

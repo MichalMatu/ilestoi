@@ -4,6 +4,7 @@ import { test } from 'node:test';
 import vm from 'node:vm';
 
 const source = readFileSync('web/app/field_photos.js', 'utf8');
+const overviewSource = readFileSync('web/app/overview_clusters.js', 'utf8');
 
 function harness(respond) {
     const requests = [];
@@ -16,11 +17,21 @@ function harness(respond) {
         URLSearchParams,
         AbortController,
         FIELD_PHOTOS_URL: '/api/field-photos',
+        adminAuthenticated: false,
+        pendingVehiclePhotoFocusId: '',
+        vehicleInsuranceFilter: 'all',
+        vehicleStandingFilterDays: 0,
+        vehiclePhotoFilter: 'off',
+        vehicleResolutionFilter: 'all',
+        VEHICLE_FILTER_ALL: 'all',
+        VEHICLE_STANDING_FILTER_OFF: 0,
+        VEHICLE_PHOTO_FILTER_OFF: 'off',
         window: {
             setTimeout(fn) { const id = ++nextTimer; timers.set(id, fn); return id; },
             clearTimeout(id) { timers.delete(id); },
         },
         map: {
+            getZoom: () => 15,
             getBounds() {
                 return {
                     getWest: () => bounds.west,
@@ -37,6 +48,7 @@ function harness(respond) {
         t(key) { return key; },
     });
     vm.runInContext(source, context, { filename: 'web/app/field_photos.js' });
+    vm.runInContext(overviewSource, context, { filename: 'web/app/overview_clusters.js' });
     context.setFieldPhotoLoadState = state => states.push(state);
     context.placeFieldPhotos = photos => updates.push({ layer: 'photos', ids: photos.map(item => item.id) });
     context.placeVehicleMarkers = () => updates.push({ layer: 'vehicles' });
