@@ -15,8 +15,8 @@ from app.http import access
 from app.http import responses as http_responses
 from app.http import static_files as http_static_files
 from core import config as core_config
-from core.field_photos import list_field_photos, load_field_photo_record
 from core.field_photo_serialization import field_photo_summary
+from core.field_photos import list_field_photos, load_field_photo_record
 
 PHOTO_ID = re.compile(r"[A-Za-z0-9_-]{3,96}\Z")
 DISCLAIMER = (
