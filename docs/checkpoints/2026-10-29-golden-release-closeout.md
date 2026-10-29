@@ -96,10 +96,16 @@ Nie tworzono nowej funkcji ani dodatkowego API w sprincie zamykającym.
   oryginalny, wdrożony SHA `ecc14c1591fac142db1888917714dbb312bef3aa`.
 - Usunięto **8 zdalnych gałęzi** w pełni zawartych w `main`,
   z kontrolą aktualnego SHA przed każdą operacją.
-- Celowo zachowano trzy rozbieżne zdalne gałęzie
-  `work/dirty`, `work/interactive-onboarding-20261026`,
-  `work/ai-public-observations-20261028`, a także niepołączone
-  lokalne worktree, aby nie utracić unikalnej historii.
+- **Domknięcie 29.10.2026:** usunięto także trzy rozbieżne zdalne gałęzie
+  `work/dirty`, `work/interactive-onboarding-20261026` oraz
+  `work/ai-public-observations-20261028` po zapisaniu na GitHub dokładnych
+  historycznych HEAD jako lekkich tagów:
+  `archive/2026-10-29/work-dirty` (`f47bff65d046`),
+  `archive/2026-10-29/work-interactive-onboarding-20261026` (`a873af32e3d4`),
+  `archive/2026-10-29/work-ai-public-observations-20261028` (`e8f5627e59d8`).
+  Każdy tag zweryfikowano przed skasowaniem gałęzi; nie utracono historii.
+  Zdalnie pozostaje tylko `main`. Trzy rozbieżne lokalne worktree
+  pozostawiono celowo, bez ingerencji w ich dane.
 - **Końcowa synchronizacja dokumentacji:** wyłącznie cztery pliki `docs/`
   zmienione po tagu wydania; wykonano fast-forward lokalnego `main` na
   Samsungu do zdalnego `main`, bez restartu procesu. Po operacji produkcyjny
