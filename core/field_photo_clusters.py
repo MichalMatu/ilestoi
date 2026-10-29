@@ -68,13 +68,15 @@ def list_map_photo_clusters(
         lon = west + (lon_cell + 0.5) * lon_step
         if lon > 180:
             lon -= 360
-        result.append({
-            "lat": min(90.0, south + (lat_cell + 0.5) * lat_step),
-            "lon": lon,
-            "total": int(row["total"]),
-            "vehicles": int(row["vehicles"]),
-            "infrastructure": int(row["infrastructure"]),
-            "smoke": int(row["smoke"]),
-            "pending": int(row["pending"]),
-        })
+        result.append(
+            {
+                "lat": min(90.0, south + (lat_cell + 0.5) * lat_step),
+                "lon": lon,
+                "total": int(row["total"]),
+                "vehicles": int(row["vehicles"]),
+                "infrastructure": int(row["infrastructure"]),
+                "smoke": int(row["smoke"]),
+                "pending": int(row["pending"]),
+            }
+        )
     return result

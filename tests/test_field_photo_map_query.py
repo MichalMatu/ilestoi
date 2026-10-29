@@ -141,9 +141,7 @@ class MapQueryTests(unittest.TestCase):
         self.assertEqual(sum(c["infrastructure"] for c in clusters), 1)
         self.assertEqual(sum(c["pending"] for c in clusters), 1)
         for cluster in clusters:
-            self.assertEqual(
-                set(cluster), {"lat", "lon", "total", "vehicles", "smoke", "infrastructure", "pending"}
-            )
+            self.assertEqual(set(cluster), {"lat", "lon", "total", "vehicles", "smoke", "infrastructure", "pending"})
             self.assertEqual(
                 cluster["total"],
                 cluster["vehicles"] + cluster["smoke"] + cluster["infrastructure"] + cluster["pending"],
@@ -161,8 +159,10 @@ class MapQueryTests(unittest.TestCase):
         disabled = self._cluster_request(
             "/api/field-photos/clusters?bbox=-180,-90,180,90",
             layers={
-                "vehicles": False, "field_photo_smoke": False,
-                "field_photo_infrastructure": False, "field_photo_pending": False,
+                "vehicles": False,
+                "field_photo_smoke": False,
+                "field_photo_infrastructure": False,
+                "field_photo_pending": False,
             },
         )
         self.assertEqual(disabled.payload()["clusters"], [])
@@ -171,8 +171,10 @@ class MapQueryTests(unittest.TestCase):
         response = self._cluster_request(
             "/api/field-photos/clusters?bbox=16,50,18,52",
             layers={
-                "vehicles": False, "field_photo_smoke": False,
-                "field_photo_infrastructure": False, "field_photo_pending": True,
+                "vehicles": False,
+                "field_photo_smoke": False,
+                "field_photo_infrastructure": False,
+                "field_photo_pending": True,
             },
         )
         self.assertEqual(response.status, 200)
@@ -181,9 +183,7 @@ class MapQueryTests(unittest.TestCase):
         self.assertEqual(sum(c["pending"] for c in clusters), 1)
 
     def test_cross_dateline_both_longitudes_share_one_cell_when_nearby(self):
-        response = self._cluster_request(
-            "/api/field-photos/clusters?bbox=178,50,-178,52", is_admin=True
-        )
+        response = self._cluster_request("/api/field-photos/clusters?bbox=178,50,-178,52", is_admin=True)
         clusters = response.payload()["clusters"]
         self.assertEqual(sum(c["total"] for c in clusters), 2)
         self.assertEqual(sum(c["smoke"] for c in clusters), 1)
@@ -192,8 +192,12 @@ class MapQueryTests(unittest.TestCase):
 
     def test_overview_bbox_is_required_and_invalid_inputs_never_query_sqlite(self):
         for query in (
-            "", "?ts=1", "?bbox=nan,0,1,1", "?bbox=1,2,3",
-            "?bbox=0,2,1,1", "?bbox=1,1,2,2&limit=1",
+            "",
+            "?ts=1",
+            "?bbox=nan,0,1,1",
+            "?bbox=1,2,3",
+            "?bbox=0,2,1,1",
+            "?bbox=1,1,2,2&limit=1",
             "?bbox=1,1,2,2&bbox=1,1,2,2",
             "?bbox=1,1,2,2&cursor=x",
         ):
@@ -220,18 +224,14 @@ class MapQueryTests(unittest.TestCase):
                     )
         finally:
             con.close()
-        response = self._cluster_request(
-            "/api/field-photos/clusters?bbox=16,50,18,52", is_admin=True
-        )
+        response = self._cluster_request("/api/field-photos/clusters?bbox=16,50,18,52", is_admin=True)
         clusters = response.payload()["clusters"]
         self.assertLessEqual(len(clusters), 256)
         self.assertEqual(sum(c["total"] for c in clusters), 332)
         self.assertEqual(sum(c["pending"] for c in clusters), 331)
 
     def test_empty_viewport_never_leaks_an_unbounded_list(self):
-        response = self._cluster_request(
-            "/api/field-photos/clusters?bbox=0,0,1,1", is_admin=True
-        )
+        response = self._cluster_request("/api/field-photos/clusters?bbox=0,0,1,1", is_admin=True)
         self.assertEqual(response.status, 200)
         self.assertEqual(response.payload(), {"status": "ok", "clusters": []})
 

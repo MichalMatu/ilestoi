@@ -133,13 +133,17 @@ def handle_field_photo_clusters(handler) -> None:
         approved_types, pending_visible = _map_visibility(handler)
         clusters = list_map_photo_clusters(
             core_config.FIELD_PHOTOS_DIR,
-            bounds=bounds, approved_types=approved_types,
+            bounds=bounds,
+            approved_types=approved_types,
             pending_visible=pending_visible,
         )
         http_responses.send_json(handler, 200, {"status": "ok", "clusters": clusters})
     except Exception as exc:
         http_responses.send_internal_error(
-            handler, 500, "Field photo clusters lookup failed", exc,
+            handler,
+            500,
+            "Field photo clusters lookup failed",
+            exc,
             public_error="Nie udało się pobrać skupisk zgłoszeń.",
         )
 
