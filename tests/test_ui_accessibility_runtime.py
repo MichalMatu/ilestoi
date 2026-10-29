@@ -514,5 +514,90 @@ class UiAccessibilityRuntimeTests(unittest.TestCase):
         self.assertEqual(result["secureRandomError"], "modal.fieldPhoto.secureRandomUnavailable")
 
 
+    def test_viewport_map_move_fetches_new_area_in_a_real_browser(self):
+        photo_js = (ROOT_DIR / "web" / "app" / "field_photos.js").read_text(encoding="utf-8")
+        startup_js = (ROOT_DIR / "web" / "app" / "startup.js").read_text(encoding="utf-8")
+        photo_js = photo_js.replace("</script", "<\\/script")
+        startup_js = startup_js.replace("</script", "<\\/script")
+        document = (
+            """<!doctype html><html><head><title>pending</title></head><body>
+            <main id="map"></main>
+            <script>
+                const FIELD_PHOTOS_URL = '/api/field-photos';
+                let bounds = { west: 16.9, south: 51.0, east: 17.1, north: 51.2 };
+                const moveHandlers = [];
+                const map = {
+                    getBounds: () => ({
+                        getWest: () => bounds.west,
+                        getSouth: () => bounds.south,
+                        getEast: () => bounds.east,
+                        getNorth: () => bounds.north,
+                    }),
+                    on: (event, handler) => {
+                        if (event === 'moveend') moveHandlers.push(handler);
+                    },
+                };
+                const requests = [];
+                const rendered = [];
+                function t(key) { return key; }
+                function refreshAdminStatus() { return Promise.resolve(); }
+                function maybeStartOnboardingTour() {}
+                function apiJson(url) {
+                    const parsed = new URL(url, document.location.href);
+                    const bbox = parsed.searchParams.get('bbox');
+                    requests.push({ bbox, limit: parsed.searchParams.get('limit') });
+                    return Promise.resolve({
+                        status: 'ok',
+                        photos: [{ id: bbox, issue_type: 'infrastructure',
+                                   public_review_status: 'approved', lat: 51.1, lon: 17 }],
+                        next_cursor: null,
+                    });
+                }
+            </script><script>"""
+            + photo_js
+            + """</script><script>
+                placeFieldPhotos = photos => rendered.push(photos.map(photo => photo.id));
+                placeVehicleMarkers = () => {};
+                updateLayerCounters = () => {};
+            </script><script>"""
+            + startup_js
+            + """</script><script>
+                (async () => {
+                    const delay = ms => new Promise(resolve => window.setTimeout(resolve, ms));
+                    await delay(80);
+                    bounds.east = 17.25;
+                    moveHandlers.forEach(handler => handler());
+                    await delay(50);
+                    bounds.east = 17.35;
+                    moveHandlers.forEach(handler => handler());
+                    await delay(470);
+                    const result = {
+                        handlers: moveHandlers.length,
+                        requests,
+                        rendered,
+                        loadState: document.getElementById('field-photo-load-state').hidden,
+                        storedPhotos: fieldPhotoLayerData.map(photo => photo.id),
+                    };
+                    document.title = 'RESULT:' + btoa(JSON.stringify(result));
+                })().catch(error => {
+                    document.title = 'ERROR:' + btoa(String(error.stack || error));
+                });
+            </script></body></html>"""
+        )
+
+        result = run_chromium_document(
+            document,
+            prefix="ilestoi-viewport-browser-",
+            virtual_time_budget=3500,
+        )
+        self.assertEqual(result["handlers"], 1)
+        self.assertEqual(len(result["requests"]), 2)
+        self.assertEqual(len(result["rendered"]), 2)
+        self.assertEqual([item["limit"] for item in result["requests"]], ["500", "500"])
+        self.assertNotEqual(result["requests"][0]["bbox"], result["requests"][1]["bbox"])
+        self.assertEqual(result["storedPhotos"], result["rendered"][-1])
+        self.assertTrue(result["loadState"])
+
+
 if __name__ == "__main__":
     unittest.main()
