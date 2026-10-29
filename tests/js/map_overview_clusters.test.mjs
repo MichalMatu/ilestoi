@@ -117,7 +117,7 @@ test('switching to detail zoom fetches paginated records, not aggregate position
     assert.ok(!h.requests[1].url.includes('/clusters?'));
     assert.equal(h.run('fieldPhotoOverviewActive'), false);
     assert.deepEqual(Array.from(h.run('fieldPhotoLayerData.map(x => x.id)')), ['real']);
-    assert.deepEqual(h.markers.at(-1).detailIds, ['real']);
+    assert.deepEqual(Array.from(h.markers.at(-1).detailIds), ['real']);
 });
 
 test('admin, deep link and advanced vehicle filter bypass overview mode', () => {
