@@ -1,6 +1,6 @@
 # IleStoi.pl — checkpoint mapy (2026-10-29)
 
-Status: **prace kodowe oraz testy PASS; bez wydania produkcyjnego**.
+Status: **historyczny checkpoint przed wdrożeniem** — stan opisany poniżej dokumentuje etap przedprodukcyjny. Wydanie zostało później wdrożone i zaakceptowane. Aktualny wynik: [końcowy checkpoint golden](2026-10-29-golden-release-closeout.md).
 
 ## Zakres
 
