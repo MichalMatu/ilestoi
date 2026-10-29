@@ -128,8 +128,8 @@ local readiness and public HTTP success. Avoid auto-deploy on every Git push.
 3. **Review and candidate:** create a PR for review, preserve the candidate
    SHA, confirm parent/branch and a clean candidate checkout. Do not alter
    production files or database as an implicit side effect of source tests.
-4. **Guarded deployment:** take a consistent SQLite snapshot and encrypted
-   Restic snapshot that includes photos, verify restorable data and free disk;
+4. **Guarded deployment:** verify the SQLite snapshot in the separate on-phone backup folder and the
+   encrypted local Restic snapshot including photos, verify integrity and free disk;
    preserve previous commit/service definition. Apply the exact candidate in
    a bounded independent release operation, without duplicate processes;
    check runit, `/api/health/live`, `/api/health/ready` and public routes.
@@ -139,10 +139,12 @@ local readiness and public HTTP success. Avoid auto-deploy on every Git push.
    dated production tag, close the PR and delete the temporary feature branch.
    If the candidate cannot fast-forward because another release landed,
    revalidate against current `main`; do not force or fabricate a squash SHA.
-6. **Safety:** preserve prior release tags and encrypted backups; never put
-   private SQLite, photos, credentials or Restic passwords in Git. A successful
-   local Restic snapshot alone is not a disaster-recovery off-host copy.
-   Never delete a branch until its unique commits are integrated or archived.
+6. **Safety:** preserve prior release tags and the separate on-phone SQLite
+   copy plus encrypted local Restic. Never put private SQLite, photos,
+   credentials or Restic passwords in Git. The owner explicitly waived
+   an off-host-copy release requirement on 2026-10-29; losing the phone can
+   still mean losing both backups. Never delete a branch until its unique
+   commits are integrated or archived.
 
 An explicit one-time branch unification/release operation is allowed to
 reconcile a historical diverged checkout with `main`, but must check
