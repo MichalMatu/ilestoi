@@ -8,6 +8,7 @@ from tempfile import TemporaryDirectory
 from unittest.mock import patch
 
 from app.http import public_data
+from core.field_photo_clusters import list_map_photo_clusters
 from core.field_photo_map_query import list_map_field_photos
 from core.field_photo_store import connection_for
 
@@ -104,6 +105,135 @@ class MapQueryTests(unittest.TestCase):
         ):
             public_data.handle_field_photos(h)
         return h
+
+    def _cluster_request(self, path, *, is_admin=False, layers=None):
+        handler = Handler(path)
+        settings = (
+            {
+                "vehicles": True,
+                "field_photo_smoke": True,
+                "field_photo_infrastructure": False,
+                "field_photo_pending": False,
+            }
+            if layers is None
+            else layers
+        )
+        with (
+            patch.object(
+                public_data,
+                "list_map_photo_clusters",
+                side_effect=lambda _storage, **kwargs: list_map_photo_clusters(self.storage, **kwargs),
+            ),
+            patch.object(public_data.http_admin_session, "is_admin", return_value=is_admin),
+            patch.object(public_data.access, "public_layer_settings", return_value=settings),
+        ):
+            public_data.handle_field_photo_clusters(handler)
+        return handler
+
+    def test_overview_is_bounded_and_contains_only_aggregate_fields(self):
+        response = self._cluster_request("/api/field-photos/clusters?bbox=-180,-90,180,90", is_admin=True)
+        self.assertEqual(response.status, 200)
+        clusters = response.payload()["clusters"]
+        self.assertLessEqual(len(clusters), 256)
+        self.assertEqual(sum(c["total"] for c in clusters), 4)
+        self.assertEqual(sum(c["vehicles"] for c in clusters), 1)
+        self.assertEqual(sum(c["smoke"] for c in clusters), 1)
+        self.assertEqual(sum(c["infrastructure"] for c in clusters), 1)
+        self.assertEqual(sum(c["pending"] for c in clusters), 1)
+        for cluster in clusters:
+            self.assertEqual(
+                set(cluster), {"lat", "lon", "total", "vehicles", "smoke", "infrastructure", "pending"}
+            )
+            self.assertEqual(
+                cluster["total"],
+                cluster["vehicles"] + cluster["smoke"] + cluster["infrastructure"] + cluster["pending"],
+            )
+        self.assertNotIn(self.records["vehicle"][0], json.dumps(clusters))
+        self.assertNotIn("https://example.test", json.dumps(clusters))
+
+    def test_guest_overview_respects_every_disabled_public_layer(self):
+        normal = self._cluster_request("/api/field-photos/clusters?bbox=-180,-90,180,90")
+        self.assertEqual(normal.status, 200)
+        clusters = normal.payload()["clusters"]
+        self.assertEqual(sum(c["total"] for c in clusters), 2)
+        self.assertEqual(sum(c["infrastructure"] for c in clusters), 0)
+        self.assertEqual(sum(c["pending"] for c in clusters), 0)
+        disabled = self._cluster_request(
+            "/api/field-photos/clusters?bbox=-180,-90,180,90",
+            layers={
+                "vehicles": False, "field_photo_smoke": False,
+                "field_photo_infrastructure": False, "field_photo_pending": False,
+            },
+        )
+        self.assertEqual(disabled.payload()["clusters"], [])
+
+    def test_pending_can_be_aggregated_only_if_visible_to_guest(self):
+        response = self._cluster_request(
+            "/api/field-photos/clusters?bbox=16,50,18,52",
+            layers={
+                "vehicles": False, "field_photo_smoke": False,
+                "field_photo_infrastructure": False, "field_photo_pending": True,
+            },
+        )
+        self.assertEqual(response.status, 200)
+        clusters = response.payload()["clusters"]
+        self.assertEqual(sum(c["total"] for c in clusters), 1)
+        self.assertEqual(sum(c["pending"] for c in clusters), 1)
+
+    def test_cross_dateline_both_longitudes_share_one_cell_when_nearby(self):
+        response = self._cluster_request(
+            "/api/field-photos/clusters?bbox=178,50,-178,52", is_admin=True
+        )
+        clusters = response.payload()["clusters"]
+        self.assertEqual(sum(c["total"] for c in clusters), 2)
+        self.assertEqual(sum(c["smoke"] for c in clusters), 1)
+        self.assertEqual(sum(c["infrastructure"] for c in clusters), 1)
+        self.assertTrue(all(abs(cluster["lon"]) >= 178 for cluster in clusters))
+
+    def test_overview_bbox_is_required_and_invalid_inputs_never_query_sqlite(self):
+        for query in (
+            "", "?ts=1", "?bbox=nan,0,1,1", "?bbox=1,2,3",
+            "?bbox=0,2,1,1", "?bbox=1,1,2,2&limit=1",
+            "?bbox=1,1,2,2&bbox=1,1,2,2",
+            "?bbox=1,1,2,2&cursor=x",
+        ):
+            with self.subTest(query=query):
+                with patch.object(public_data, "list_map_photo_clusters", side_effect=AssertionError("queried")):
+                    result = self._cluster_request("/api/field-photos/clusters" + query)
+                self.assertEqual(result.status, 400)
+
+    def test_dense_grid_is_bounded_and_counts_photos_not_vehicle_groups(self):
+        con = connection_for(self.storage)
+        try:
+            with con:
+                for n in range(330):
+                    con.execute(
+                        """
+                        INSERT INTO field_photos (
+                            id, created_at, issue_type, lat, lon, coordinate_source,
+                            public_review_status, original_filename, content_type,
+                            format, size_bytes, links_json
+                        ) VALUES (?, '2026-10-29', 'vehicle', 51.1, 17.1, 'map',
+                                  'pending', 'source.jpg', 'image/jpeg', 'JPEG', 1, '{}')
+                        """,
+                        (f"photo_20261029T010101Z_{n:08x}",),
+                    )
+        finally:
+            con.close()
+        response = self._cluster_request(
+            "/api/field-photos/clusters?bbox=16,50,18,52", is_admin=True
+        )
+        clusters = response.payload()["clusters"]
+        self.assertLessEqual(len(clusters), 256)
+        self.assertEqual(sum(c["total"] for c in clusters), 332)
+        self.assertEqual(sum(c["pending"] for c in clusters), 331)
+
+    def test_empty_viewport_never_leaks_an_unbounded_list(self):
+        response = self._cluster_request(
+            "/api/field-photos/clusters?bbox=0,0,1,1", is_admin=True
+        )
+        self.assertEqual(response.status, 200)
+        self.assertEqual(response.payload(), {"status": "ok", "clusters": []})
 
     def test_unbounded_contract_and_guest_layer_filters(self):
         h = self._request("/api/field-photos?ts=123")
