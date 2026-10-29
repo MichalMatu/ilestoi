@@ -28,11 +28,15 @@ class ObservationPagesTests(unittest.TestCase):
     def setUp(self):
         self.approved = {
             "id": "photo_20260604T184016Z_fc121f84",
-            "public_review_status": "approved", "issue_type": "vehicle",
+            "public_review_status": "approved",
+            "issue_type": "vehicle",
             "public_image": "/api/field-photos/photo_20260604T184016Z_fc121f84/public-image",
             "public_thumb": "/api/field-photos/photo_20260604T184016Z_fc121f84/public-thumb",
-            "lat": 51.086872, "lon": 17.041330, "captured_at": "2026-06-04",
-            "created_at": "2026-06-04", "vehicle_insurance_status": "uninsured",
+            "lat": 51.086872,
+            "lon": 17.041330,
+            "captured_at": "2026-06-04",
+            "created_at": "2026-06-04",
+            "vehicle_insurance_status": "uninsured",
             "vehicle_insurance_checked_at": "2026-07-05",
             "vehicle_resolution_status": "active",
         }
@@ -42,12 +46,16 @@ class ObservationPagesTests(unittest.TestCase):
 
     def _patch(self, layers=None):
         return (
-            patch.object(observation_pages, "list_field_photos", return_value=[
-                self.approved, self.pending, self.removed, self.hidden
-            ]),
-            patch.object(observation_pages.access, "public_layer_settings", return_value=layers or {
-                "vehicles": True, "field_photo_smoke": False
-            })
+            patch.object(
+                observation_pages,
+                "list_field_photos",
+                return_value=[self.approved, self.pending, self.removed, self.hidden],
+            ),
+            patch.object(
+                observation_pages.access,
+                "public_layer_settings",
+                return_value=layers or {"vehicles": True, "field_photo_smoke": False},
+            ),
         )
 
     def test_public_list_excludes_pending_removed_and_disabled_layers(self):
@@ -59,9 +67,7 @@ class ObservationPagesTests(unittest.TestCase):
     def test_server_rendered_observation_has_public_image_metadata_and_manual_oc(self):
         a, b = self._patch()
         h = Handler("/observations/" + self.approved["id"])
-        with a, b, patch.object(
-            observation_pages, "load_field_photo_record", return_value=self.approved
-        ):
+        with a, b, patch.object(observation_pages, "load_field_photo_record", return_value=self.approved):
             self.assertTrue(observation_pages.handle_public_route(h, h.path))
         txt = h.wfile.getvalue().decode()
         self.assertEqual(h.status, 200)
@@ -90,8 +96,15 @@ class ObservationPagesTests(unittest.TestCase):
             ({**self.approved, "public_review_status": "pending"}, {"vehicles": True}),
             ({**self.approved, "public_review_status": "rejected"}, {"vehicles": True}),
             ({**self.approved, "vehicle_resolution_status": "removed"}, {"vehicles": True}),
-            ({**self.approved, "issue_type": "smoke", "vehicle_insurance_status": "unknown",
-              "vehicle_insurance_checked_at": None}, {"field_photo_smoke": False}),
+            (
+                {
+                    **self.approved,
+                    "issue_type": "smoke",
+                    "vehicle_insurance_status": "unknown",
+                    "vehicle_insurance_checked_at": None,
+                },
+                {"field_photo_smoke": False},
+            ),
         ]
         for record, layers in cases:
             with self.subTest(record=record["public_review_status"], layers=layers):
@@ -137,14 +150,13 @@ class ObservationPagesTests(unittest.TestCase):
         self.assertNotIn(">pending<", xml)
         a, b = self._patch()
         h2 = Handler("/observations/pending")
-        with a, b, patch.object(
-            observation_pages, "load_field_photo_record", return_value=self.pending
-        ):
+        with a, b, patch.object(observation_pages, "load_field_photo_record", return_value=self.pending):
             observation_pages.handle_public_route(h2, h2.path)
         self.assertEqual(h2.status, 404)
 
     def test_robot_rules_are_scoped_to_read_only_public_assets(self):
         from pathlib import Path
+
         robots = (Path(__file__).resolve().parents[1] / "web/robots.txt").read_text()
         for rule in (
             "Allow: /api/field-photos$",
