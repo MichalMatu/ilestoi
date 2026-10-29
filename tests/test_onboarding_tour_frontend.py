@@ -1,6 +1,7 @@
 """Contract checks for accessible map-native first-visit walkthrough."""
-from pathlib import Path
+
 import unittest
+from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 WEB = ROOT / "web"
@@ -34,22 +35,46 @@ class GuidedTourContracts(unittest.TestCase):
 
     def test_tour_never_submits_or_changes_filters(self):
         tour = (WEB / "app" / "onboarding_tour.js").read_text(encoding="utf-8")
-        for mutation in ("submitReportPdf(", "apiPostJson(", "apiJson(", "toggleVehicleLayer(",
-                         "toggleCadastralLayer(", "openFieldPhotoUploadModal(", "map.setZoom("):
+        for mutation in (
+            "submitReportPdf(",
+            "apiPostJson(",
+            "apiJson(",
+            "toggleVehicleLayer(",
+            "toggleCadastralLayer(",
+            "openFieldPhotoUploadModal(",
+            "map.setZoom(",
+        ):
             self.assertNotIn(mutation, tour)
         self.assertIn("state.marker.openPopup()", tour)
 
     def test_translations_are_complete(self):
-        tour = (WEB / "app" / "onboarding_tour.js").read_text(encoding="utf-8")
         for language in ("pl", "en"):
             dict_source = (WEB / "i18n" / f"{language}.js").read_text(encoding="utf-8")
             for key in (
-                "tour.reopen", "tour.progress", "tour.next", "tour.back", "tour.skip",
-                "tour.finish", "tour.welcomeTitle", "tour.welcomeBody", "tour.mapTitle",
-                "tour.mapBody", "tour.mapEmptyBody", "tour.vehicleTitle", "tour.vehicleBody",
-                "tour.reportTitle", "tour.reportBody", "tour.addTitle", "tour.addBody",
-                "tour.addUnavailableBody", "tour.layersTitle", "tour.layersBody",
-                "tour.sourcesTitle", "tour.sourcesBody", "tour.doneTitle", "tour.doneBody",
+                "tour.reopen",
+                "tour.progress",
+                "tour.next",
+                "tour.back",
+                "tour.skip",
+                "tour.finish",
+                "tour.welcomeTitle",
+                "tour.welcomeBody",
+                "tour.mapTitle",
+                "tour.mapBody",
+                "tour.mapEmptyBody",
+                "tour.vehicleTitle",
+                "tour.vehicleBody",
+                "tour.reportTitle",
+                "tour.reportBody",
+                "tour.addTitle",
+                "tour.addBody",
+                "tour.addUnavailableBody",
+                "tour.layersTitle",
+                "tour.layersBody",
+                "tour.sourcesTitle",
+                "tour.sourcesBody",
+                "tour.doneTitle",
+                "tour.doneBody",
             ):
                 self.assertIn(f"'{key}':", dict_source)
 

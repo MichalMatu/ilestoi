@@ -38,9 +38,11 @@ class PublicMapOverlayContracts(unittest.TestCase):
         self.assertIn("https://*.openstreetmap.org", headers["Content-Security-Policy"])
         config_js = (ROOT / "web/config.js").read_text(encoding="utf-8")
         self.assertIn("https://tile.openstreetmap.org/{z}/{x}/{y}.png", config_js)
-        self.assertIn('https://www.openstreetmap.org/copyright', config_js)
+        self.assertIn("https://www.openstreetmap.org/copyright", config_js)
         self.assertIn("labelsOverlay: false", config_js)
-        self.assertNotIn('Referrer-Policy": "same-origin"', (ROOT / "app/http/responses.py").read_text(encoding="utf-8"))
+        self.assertNotIn(
+            'Referrer-Policy": "same-origin"', (ROOT / "app/http/responses.py").read_text(encoding="utf-8")
+        )
 
     def test_map_swap_retains_last_good_map_on_failed_tile_load(self):
         js = (ROOT / "web/app/map_sources.js").read_text(encoding="utf-8")

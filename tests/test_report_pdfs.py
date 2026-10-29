@@ -362,7 +362,6 @@ class ReportPdfTests(unittest.TestCase):
 
         self.assertTrue(pdf_bytes.startswith(b"%PDF-"))
 
-
     def test_termux_font_directory_is_discovered(self):
         with TemporaryDirectory() as tmp:
             fonts = Path(tmp) / "share/fonts/TTF"
@@ -401,7 +400,6 @@ class ReportPdfTests(unittest.TestCase):
         self.assertIn(b"/ToUnicode", pdf_bytes)
         self.assertEqual(report_pdf._font_name(), report_pdf.FONT_REGULAR)
         self.assertEqual(report_pdf._font_name(bold=True), report_pdf.FONT_BOLD)
-
 
 
 if __name__ == "__main__":
