@@ -111,6 +111,7 @@ const TRANSLATIONS_PL = {
         'layers.vehicleResolutionCycleAll': 'Usunięte: pokaż',
         'layers.vehicleResolutionCycleRemoved': 'Usunięte: tylko',
         'layers.vehicleFilterCountLabel': '{label}: {n}',
+        'layers.viewportCountSuffix': '(w obszarze mapy)',
         'layers.countVehiclesTooltip': 'Widoczne auta udokumentowane zdjęciami w terenie: {n}',
         'layers.countFieldPhotoInfrastructureTooltip': 'Zgrupowane punkty niebezpiecznej infrastruktury: {n}',
         'layers.countFieldPhotoSmokeTooltip': 'Zgrupowane punkty zanieczyszczonego powietrza: {n}',
