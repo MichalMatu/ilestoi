@@ -24,12 +24,16 @@ SERVER_PROBE_TIMEOUT_SECONDS ?= 5
 SERVER_LOG ?= .dev/server.log
 AUTOSTART_DISABLED_FILE ?= .dev/server.autostart.disabled
 SYSTEMD_WORKING_DIRECTORY := $(shell $(SYSTEMCTL) show "$(SYSTEMD_UNIT)" --property=WorkingDirectory --value 2>/dev/null)
-SYSTEMD_MANAGED ?= $(if $(filter $(CURDIR),$(SYSTEMD_WORKING_DIRECTORY)),1,0)
+SYSTEMD_MOUNT_PATHS := $(shell $(SYSTEMCTL) show "$(SYSTEMD_UNIT)" --property=BindPaths --property=BindReadOnlyPaths --value 2>/dev/null)
+SYSTEMD_CHECKOUT_MOUNTS := $(filter $(CURDIR):% $(CURDIR)/server.py:%,$(SYSTEMD_MOUNT_PATHS))
+SYSTEMD_MANAGED ?= $(if $(or $(filter $(CURDIR),$(SYSTEMD_WORKING_DIRECTORY)),$(SYSTEMD_CHECKOUT_MOUNTS)),1,0)
+RUNIT_SERVICE ?= $(PREFIX)/var/service/wreckscanner
+RUNIT_MANAGED ?= $(if $(and $(PREFIX),$(filter $(HOME)/WreckScanner/WreckScanner,$(CURDIR)),$(wildcard $(RUNIT_SERVICE)/run)),1,0)
 
 menu:
 	@printf '%s\n' \
 		'WreckScanner - menu:' \
-		'  Supervisor: $(if $(filter 1,$(SYSTEMD_MANAGED)),systemd ($(SYSTEMD_UNIT)),lokalny watcher)' \
+		'  Supervisor: $(if $(filter 1,$(RUNIT_MANAGED)),runit (wreckscanner),$(if $(filter 1,$(SYSTEMD_MANAGED)),systemd ($(SYSTEMD_UNIT)),lokalny watcher))' \
 		'' \
 		'  1. Status serwera' \
 		'  2. Restart serwera (watcher)' \
@@ -63,7 +67,7 @@ menu:
 help:
 	@printf '%s\n' \
 		'WreckScanner - komendy:' \
-		'Supervisor: $(if $(filter 1,$(SYSTEMD_MANAGED)),systemd ($(SYSTEMD_UNIT)),lokalny watcher)' \
+		'Supervisor: $(if $(filter 1,$(RUNIT_MANAGED)),runit (wreckscanner),$(if $(filter 1,$(SYSTEMD_MANAGED)),systemd ($(SYSTEMD_UNIT)),lokalny watcher))' \
 		'' \
 		'Serwer:'
 	@printf '  %-24s %s\n' \
@@ -73,8 +77,11 @@ help:
 		'make serwerstop' 'wylacz watcher + zatrzymaj proces' \
 		'make serwerstart' 'wlacz watcher i czekaj na readiness' \
 		'make autostart-status' 'supervisor + autostart + PID + health'
+	@if [ "$(RUNIT_MANAGED)" = '1' ]; then \
+		printf '%s\n' '  Na Termuxie: sv restart $(RUNIT_SERVICE)'; \
+	fi
 	@if [ "$(SYSTEMD_MANAGED)" = '1' ]; then \
-		printf '%s\n' \
+		printf '%s\n' 
 			'' \
 			'  Ten katalog obsluguje systemd. Zmiany stanu wykonuj przez:' \
 			'  sudo systemctl stop|start|restart $(SYSTEMD_UNIT)' \
@@ -105,6 +112,10 @@ start:
 	@$(SUBMAKE) status
 
 require-local-watcher:
+	@if [ "$(RUNIT_MANAGED)" = '1' ]; then \
+		echo 'Ten katalog jest nadzorowany przez runit. Uzyj sv stop|start|restart $(RUNIT_SERVICE).'; \
+		exit 2; \
+	fi
 	@if [ "$(SYSTEMD_MANAGED)" = '1' ]; then \
 		echo 'Ta komenda jest przeznaczona tylko dla lokalnego watchera.'; \
 		echo 'Ten katalog obsluguje systemd: $(SYSTEMD_UNIT).'; \
@@ -184,7 +195,10 @@ autostart-start: require-local-watcher
 	exit 1
 
 autostart-status:
-	@if [ "$(SYSTEMD_MANAGED)" = '1' ]; then \
+	@if [ "$(RUNIT_MANAGED)" = '1' ]; then \
+		echo 'Supervisor server.py: runit'; \
+		sv status '$(RUNIT_SERVICE)' || exit 1; \
+	elif [ "$(SYSTEMD_MANAGED)" = '1' ]; then \
 		enabled="$$( $(SYSTEMCTL) is-enabled "$(SYSTEMD_UNIT)" 2>/dev/null || true )"; \
 		active="$$( $(SYSTEMCTL) is-active "$(SYSTEMD_UNIT)" 2>/dev/null || true )"; \
 		echo 'Supervisor server.py: systemd ($(SYSTEMD_UNIT))'; \
@@ -206,17 +220,28 @@ serwerstart: autostart-start
 
 status:
 	@status=0; \
-	if [ "$(SYSTEMD_MANAGED)" = '1' ]; then \
+	if [ "$(RUNIT_MANAGED)" = '1' ]; then \
+		echo 'Supervisor: runit ($(RUNIT_SERVICE))'; \
+		if ! sv status '$(RUNIT_SERVICE)'; then status=1; fi; \
+	elif [ "$(SYSTEMD_MANAGED)" = '1' ]; then \
 		active="$$( $(SYSTEMCTL) is-active "$(SYSTEMD_UNIT)" 2>/dev/null || true )"; \
+		main_pid="$$( $(SYSTEMCTL) show "$(SYSTEMD_UNIT)" --property=MainPID --value 2>/dev/null || true )"; \
 		echo "Supervisor: systemd ($(SYSTEMD_UNIT)), stan: $${active:-nieznany}"; \
 		if [ "$$active" != 'active' ]; then status=1; fi; \
+		printf '%s\n' 'Procesy server.py:'; \
+		if [ -n "$$main_pid" ] && [ "$$main_pid" != '0' ]; then \
+			echo "$$main_pid ($(SYSTEMD_UNIT))"; \
+		else \
+			echo 'brak'; \
+			status=1; \
+		fi; \
 	else \
 		echo 'Supervisor: lokalny watcher'; \
-	fi; \
-	printf '%s\n' 'Procesy server.py:'; \
-	if ! pgrep -af '$(SERVER_PATTERN)'; then \
-		echo 'brak'; \
-		status=1; \
+		printf '%s\n' 'Procesy server.py:'; \
+		if ! pgrep -af '$(SERVER_PATTERN)'; then \
+			echo 'brak'; \
+			status=1; \
+		fi; \
 	fi; \
 	printf '\n%s\n' 'Liveness:'; \
 	if command -v curl >/dev/null 2>&1; then \
@@ -236,7 +261,9 @@ status:
 	exit "$$status"
 
 logs:
-	@if [ "$(SYSTEMD_MANAGED)" = '1' ]; then \
+	@if [ "$(RUNIT_MANAGED)" = '1' ]; then \
+		tail -n 80 '$(HOME)/wreckscanner.log'; \
+	elif [ "$(SYSTEMD_MANAGED)" = '1' ]; then \
 		if ! command -v "$(JOURNALCTL)" >/dev/null 2>&1; then \
 			echo 'journalctl jest wymagany do logow uslugi $(SYSTEMD_UNIT).'; \
 			exit 1; \

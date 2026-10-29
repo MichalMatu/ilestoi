@@ -90,7 +90,7 @@ class FrontendContracts(unittest.TestCase):
         map_sources_js = (ROOT_DIR / "web" / "app" / "map_sources.js").read_text(encoding="utf-8")
 
         self.assertIn(
-            "const RETRYABLE_TILE_CACHE_STATUSES = new Set(['UPSTREAM_ERROR', 'ENCODE_ERROR']);", map_sources_js
+            "const RETRYABLE_TILE_CACHE_STATUSES = new Set(['BUSY', 'IN_FLIGHT', 'UPSTREAM_ERROR', 'ENCODE_ERROR']);", map_sources_js
         )
         self.assertIn("function retryTileDelayMs(attempt)", map_sources_js)
         self.assertIn("response.headers.get('X-WMS-Cache')", map_sources_js)

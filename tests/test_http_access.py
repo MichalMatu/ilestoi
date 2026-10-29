@@ -100,6 +100,29 @@ class HttpAccessContractTests(unittest.TestCase):
         ):
             self.assertFalse(access.public_field_photo_allowed(handler, draft_photo))
 
+    def test_public_field_photo_batch_can_reuse_settings_without_reloading(self):
+        handler = FakeHandler()
+        settings = {"vehicles": True, "field_photo_pending": False, "field_photo_smoke": False}
+        with (
+            patch.object(access.http_admin_session, "is_admin", return_value=False),
+            patch.object(access, "load_app_settings", side_effect=AssertionError("should not reload")),
+        ):
+            self.assertTrue(
+                access.public_field_photo_allowed(
+                    handler, {"issue_type": "vehicle", "public_review_status": "approved"}, layer_settings=settings
+                )
+            )
+            self.assertFalse(
+                access.public_field_photo_allowed(
+                    handler, {"issue_type": "vehicle", "public_review_status": "pending"}, layer_settings=settings
+                )
+            )
+            self.assertFalse(
+                access.public_field_photo_allowed(
+                    handler, {"issue_type": "smoke", "public_review_status": "approved"}, layer_settings=settings
+                )
+            )
+
     def test_public_submission_quota_uses_hashed_owner(self):
         handler = FakeHandler()
 

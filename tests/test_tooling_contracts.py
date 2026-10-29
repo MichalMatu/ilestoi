@@ -1,3 +1,4 @@
+import os
 import subprocess
 import tempfile
 import unittest
@@ -7,14 +8,60 @@ ROOT_DIR = Path(__file__).resolve().parent.parent
 
 
 class ToolingContractTests(unittest.TestCase):
-    def run_make(self, target: str, *variables: str) -> subprocess.CompletedProcess[str]:
+    def run_make(
+        self,
+        target: str,
+        *variables: str,
+        env: dict[str, str] | None = None,
+    ) -> subprocess.CompletedProcess[str]:
+        process_env = os.environ.copy()
+        if env is not None:
+            process_env.update(env)
         return subprocess.run(
             ["make", "--no-print-directory", target, *variables],
             cwd=ROOT_DIR,
             capture_output=True,
             text=True,
             check=False,
+            env=process_env,
         )
+
+    def write_hardened_systemctl_fixture(self, directory: Path) -> Path:
+        systemctl = directory / "systemctl-fixture"
+        systemctl.write_text(
+            f"""#!/bin/sh
+case "$1" in
+    show)
+        case "$*" in
+            *--property=WorkingDirectory*)
+                printf '%s\\n' '/var/lib/wreckscanner'
+                ;;
+            *--property=BindReadOnlyPaths*)
+                printf '%s\\n' '{ROOT_DIR}/server.py:/var/lib/wreckscanner/server.py:rbind'
+                ;;
+            *--property=MainPID*)
+                printf '%s\\n' '4242'
+                ;;
+            *)
+                exit 1
+                ;;
+        esac
+        ;;
+    is-active)
+        printf '%s\\n' 'active'
+        ;;
+    is-enabled)
+        printf '%s\\n' 'enabled'
+        ;;
+    *)
+        exit 1
+        ;;
+esac
+""",
+            encoding="utf-8",
+        )
+        systemctl.chmod(0o700)
+        return systemctl
 
     def test_opencv_uses_the_published_python_distribution_pin(self):
         requirements = (ROOT_DIR / "requirements.txt").read_text(encoding="utf-8")
@@ -96,6 +143,8 @@ class ToolingContractTests(unittest.TestCase):
         makefile = (ROOT_DIR / "Makefile").read_text(encoding="utf-8")
 
         self.assertIn("SYSTEMD_WORKING_DIRECTORY := $(shell $(SYSTEMCTL) show", makefile)
+        self.assertIn("--property=BindPaths --property=BindReadOnlyPaths", makefile)
+        self.assertIn("SYSTEMD_CHECKOUT_MOUNTS :=", makefile)
         self.assertIn("stop: require-local-watcher", makefile)
         self.assertIn("restart: require-local-watcher", makefile)
         self.assertIn("backup-data: require-local-watcher", makefile)
@@ -134,6 +183,51 @@ class ToolingContractTests(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("przeznaczona tylko dla lokalnego watchera", result.stdout)
         self.assertIn("sudo systemctl stop|start|restart", result.stdout)
+
+    def test_make_detects_hardened_systemd_unit_from_read_only_repo_bind(self):
+        with tempfile.TemporaryDirectory() as directory:
+            fake_systemctl = self.write_hardened_systemctl_fixture(Path(directory))
+
+            result = self.run_make("stop", f"SYSTEMCTL={fake_systemctl}")
+
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("Ten katalog obsluguje systemd: wreckscanner.service.", result.stdout)
+        self.assertIn("sudo systemctl stop|start|restart", result.stdout)
+
+    def test_make_status_uses_systemd_main_pid_without_local_process_matching(self):
+        with tempfile.TemporaryDirectory() as directory:
+            fixture_dir = Path(directory)
+            fake_systemctl = self.write_hardened_systemctl_fixture(fixture_dir)
+            pgrep_marker = fixture_dir / "pgrep-called"
+
+            fake_pgrep = fixture_dir / "pgrep"
+            fake_pgrep.write_text(
+                '#!/bin/sh\n: > "$PGREP_MARKER"\nexit 99\n',
+                encoding="utf-8",
+            )
+            fake_pgrep.chmod(0o700)
+
+            fake_curl = fixture_dir / "curl"
+            fake_curl.write_text(
+                "#!/bin/sh\nprintf '%s\\n' '{\"status\": \"ok\"}'\n",
+                encoding="utf-8",
+            )
+            fake_curl.chmod(0o700)
+
+            result = self.run_make(
+                "status",
+                f"SYSTEMCTL={fake_systemctl}",
+                env={
+                    "PATH": f"{fixture_dir}{os.pathsep}{os.environ['PATH']}",
+                    "PGREP_MARKER": str(pgrep_marker),
+                },
+            )
+            pgrep_was_called = pgrep_marker.exists()
+
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn("Supervisor: systemd (wreckscanner.service), stan: active", result.stdout)
+        self.assertIn("4242", result.stdout)
+        self.assertFalse(pgrep_was_called, "systemd status must not use the watcher pgrep pattern")
 
     def test_make_logs_uses_journalctl_in_systemd_mode(self):
         with tempfile.TemporaryDirectory() as directory:

@@ -4,50 +4,9 @@
     top: var(--space-4);
     left: var(--space-4);
     z-index: 920;
-    display: flex;
-    align-items: center;
-    gap: var(--space-3);
-}
-
-.app-menu-identity {
     display: grid;
-    gap: 1px;
-    min-width: 0;
-    padding: 7px 11px;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    background: var(--glass-panel-bg-strong);
-    box-shadow: var(--shadow-glass);
-    color: var(--text-strong);
-    text-decoration: none;
-    backdrop-filter: var(--glass-blur-soft);
-    -webkit-backdrop-filter: var(--glass-blur-soft);
-    transition:
-        opacity var(--duration-fast),
-        transform var(--duration-fast);
-}
-
-.app-menu-identity h1 {
-    font: 800 0.95rem/1.05 var(--font-display);
-}
-
-.app-menu-identity span {
-    color: var(--text-soft);
-    font-size: 0.68rem;
-    line-height: 1.2;
-}
-
-.app-menu-identity:hover,
-.app-menu-identity:focus-visible {
-    border-color: var(--primary);
-    color: var(--primary);
-    outline: none;
-}
-
-.app-menu-open .app-menu-identity {
-    opacity: 0;
-    pointer-events: none;
-    transform: translateX(-4px);
+    gap: var(--space-3);
+    justify-items: center;
 }
 
 .app-menu-button,
@@ -547,10 +506,6 @@ select:focus {
 
     .app-menu-drawer {
         width: min(280px, calc(100vw - 32px));
-    }
-
-    .app-menu-identity span {
-        display: none;
     }
 
     .app-menu-drawer-header {

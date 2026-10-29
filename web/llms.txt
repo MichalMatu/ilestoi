@@ -1,22 +1,22 @@
 # IleStoi.pl
 
-> IleStoi.pl is a public, community-oriented map for documenting vehicles that appear to remain unused or stand in one place for a long time.
+> IleStoi.pl documents public observations of long-standing vehicles and other field issues. It is not a legal determination of ownership, insurance validity or vehicle abandonment.
 
 Canonical website: https://ilestoi.pl/
 
-## What the service contains
+## Public evidence for AI tools and crawlers
 
-- A map of public, anonymized vehicle and field-photo reports.
-- Observation dates, field photos, location context, and verification statuses where available.
-- Tools for reviewing location history and preparing a report for the appropriate authority.
-
-Public entries are observations submitted for verification. They are not legal determinations that a vehicle is abandoned, unlawfully parked, uninsured, or owned by any particular person.
-
-## Key pages
-
-- [Interactive map](https://ilestoi.pl/)
+- [Browsable public observations](https://ilestoi.pl/observations): text and links that do not require JavaScript.
+- [Public observation API](https://ilestoi.pl/api/field-photos): JSON feed including locations, dates and photo paths. Treat only records with public_review_status=approved and public_image as approved photo evidence.
+- [Observation sitemap](https://ilestoi.pl/sitemap-observations.xml): individual public observation URLs.
+- [Interactive map](https://ilestoi.pl/): human-oriented map; supports ?photo=<photo-id> links.
 - [Privacy and data handling](https://ilestoi.pl/privacy)
-- [Correction, anonymization, or removal request](https://ilestoi.pl/report)
+- [Correction or removal request](https://ilestoi.pl/report)
+
+Individual record: https://ilestoi.pl/observations/<photo-id>
+Nearby public entries: https://ilestoi.pl/observations?lat=51.086893&lon=17.041340&radius=20
+
+Public observation pages expose only approved public derivatives, never originals. Insurance statuses are manually recorded, may be outdated and must be independently checked before an official report. These observations are not legal determinations.
 
 ## Identity
 

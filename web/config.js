@@ -56,7 +56,7 @@ const PUBLIC_FEATURE_KEYS = {
 
 // Źródła podkładu mapy w UI; frontend steruje tutaj wyłącznie podglądem w Leaflet.
 const OSM_TILE_URL = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
-const CARTO_LABELS_TILE_URL = 'https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png';
+const STREET_LABELS_WMS_URL = 'https://mapy.geoportal.gov.pl/wss/ext/KrajowaIntegracjaNumeracjiAdresowej';
 const GEOPORTAL_STANDARD_TILE_PROXY_URL =
     '/tile_proxy/geoportal-standard/{z}/{x}/{y}?enhancementSettings={enhancementSettings}';
 const MAP_SOURCES = [
@@ -73,7 +73,7 @@ const MAP_SOURCES = [
         type: 'tile',
         url: OSM_TILE_URL,
         maxNativeZoom: 19,
-        attribution: 'OpenStreetMap contributors',
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap contributors</a>',
         labelsOverlay: false,
         publicLayerKey: PUBLIC_LAYER_KEYS.baseMapOsm,
     },

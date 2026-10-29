@@ -4,6 +4,7 @@ from app.http import admin as http_admin
 from app.http import assets as http_assets
 from app.http import health as http_health
 from app.http import location as http_location
+from app.http import observation_pages as http_observations
 from app.http import public as http_public
 from app.http import public_data as http_public_data
 from app.http import rate_limit as http_rate_limit
@@ -26,6 +27,8 @@ def handle_options(handler) -> None:
 
 def handle_head(handler) -> bool:
     path = unquote(urlsplit(handler.path).path)
+    if http_observations.handle_public_route(handler, path, include_body=False):
+        return True
     if http_static_files.handle_web_page(handler, path, include_body=False):
         return True
     if http_static_files.handle_web_asset(handler, path, include_body=False):
@@ -94,6 +97,8 @@ def handle_passthrough_get(handler, path: str) -> bool:
 def handle_get(handler) -> bool:
     path = unquote(urlsplit(handler.path).path)
     if http_rate_limit.reject_limited(handler, "GET", path):
+        return True
+    if http_observations.handle_public_route(handler, path):
         return True
     if http_static_files.handle_web_page(handler, path):
         return True

@@ -75,12 +75,13 @@ def require_public_feature(handler, key: str, message: str) -> bool:
     return False
 
 
-def public_field_photo_allowed(handler, photo: dict) -> bool:
+def public_field_photo_allowed(handler, photo: dict, *, layer_settings: dict[str, bool] | None = None) -> bool:
     if http_admin_session.is_admin(handler):
         return True
     if str(photo.get("public_review_status") or "").strip() == "draft":
         return False
-    layer_settings = public_layer_settings()
+    if layer_settings is None:
+        layer_settings = public_layer_settings()
     if str(photo.get("public_review_status") or "approved") == "pending":
         return layer_settings.get("field_photo_pending", True)
     issue_type = str(photo.get("issue_type") or "vehicle")

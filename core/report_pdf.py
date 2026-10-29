@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import html
 import io
+import os
 import re
 from dataclasses import dataclass
 from datetime import datetime
@@ -49,7 +50,10 @@ class PdfPhoto:
 
 def _font_path(*, bold: bool = False) -> Path | None:
     names = ("DejaVuSans-Bold.ttf", "Arial Bold.ttf") if bold else ("DejaVuSans.ttf", "Arial.ttf")
+    prefix = os.environ.get("PREFIX")
     roots = (
+        *((Path(prefix) / "share/fonts/TTF",) if prefix else ()),
+        Path("/data/data/com.termux/files/usr/share/fonts/TTF"),
         Path("/usr/share/fonts/truetype/dejavu"),
         Path("/usr/share/fonts/truetype/msttcorefonts"),
         Path("/Library/Fonts"),
@@ -58,28 +62,29 @@ def _font_path(*, bold: bool = False) -> Path | None:
     for root in roots:
         for name in names:
             path = root / name
-            if path.exists():
+            if path.is_file():
                 return path
     return None
 
 
 def _register_fonts() -> None:
-    if FONT_REGULAR in pdfmetrics.getRegisteredFontNames():
-        return
-    regular = _font_path()
-    bold = _font_path(bold=True)
-    if not regular or not bold:
-        return
-    pdfmetrics.registerFont(TTFont(FONT_REGULAR, str(regular)))
-    pdfmetrics.registerFont(TTFont(FONT_BOLD, str(bold)))
+    registered = set(pdfmetrics.getRegisteredFontNames())
+    if FONT_REGULAR not in registered or FONT_BOLD not in registered:
+        regular = _font_path()
+        bold = _font_path(bold=True)
+        if not regular or not bold:
+            raise RuntimeError("Brak czcionek TrueType z polskimi znakami do wygenerowania PDF.")
+        if FONT_REGULAR not in registered:
+            pdfmetrics.registerFont(TTFont(FONT_REGULAR, str(regular)))
+        if FONT_BOLD not in registered:
+            pdfmetrics.registerFont(TTFont(FONT_BOLD, str(bold)))
+    # Inline <b> must use the embedded TrueType bold font too, not Helvetica.
+    pdfmetrics.registerFontFamily(FONT_REGULAR, normal=FONT_REGULAR, bold=FONT_BOLD)
 
 
 def _font_name(*, bold: bool = False) -> str:
     _register_fonts()
-    name = FONT_BOLD if bold else FONT_REGULAR
-    if name in pdfmetrics.getRegisteredFontNames():
-        return name
-    return "Helvetica-Bold" if bold else "Helvetica"
+    return FONT_BOLD if bold else FONT_REGULAR
 
 
 def _styles() -> dict[str, ParagraphStyle]:

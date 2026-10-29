@@ -1,0 +1,4 @@
+#!/data/data/com.termux/files/usr/bin/sh
+set -eu
+umask 077
+exec "$PREFIX/bin/mosquitto" -c "$HOME/.config/mosquitto/hostops-local.conf" 2>&1

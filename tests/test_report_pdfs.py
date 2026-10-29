@@ -1,6 +1,7 @@
 import base64
 import io
 import json
+import os
 import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -360,6 +361,47 @@ class ReportPdfTests(unittest.TestCase):
             )
 
         self.assertTrue(pdf_bytes.startswith(b"%PDF-"))
+
+
+    def test_termux_font_directory_is_discovered(self):
+        with TemporaryDirectory() as tmp:
+            fonts = Path(tmp) / "share/fonts/TTF"
+            fonts.mkdir(parents=True)
+            regular = fonts / "DejaVuSans.ttf"
+            bold = fonts / "DejaVuSans-Bold.ttf"
+            regular.write_bytes(b"test-regular")
+            bold.write_bytes(b"test-bold")
+            with patch.dict(os.environ, {"PREFIX": tmp}):
+                self.assertEqual(report_pdf._font_path(), regular)
+                self.assertEqual(report_pdf._font_path(bold=True), bold)
+
+    def test_missing_unicode_fonts_fail_closed(self):
+        with (
+            patch.object(report_pdf.pdfmetrics, "getRegisteredFontNames", return_value=[]),
+            patch.object(report_pdf, "_font_path", return_value=None),
+            self.assertRaisesRegex(RuntimeError, "Brak czcionek TrueType"),
+        ):
+            report_pdf._font_name()
+
+    def test_report_embeds_unicode_fonts_for_polish_text(self):
+        with TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            pdf_bytes = report_pdf.build_report_pdf(
+                record={"attached_photos": []},
+                evidence={"crops": []},
+                record_dir=root,
+                evidence_base_dir=root,
+                recipient="interwencje@example.test",
+                reporter={"reporter_name": "Żaneta Łącka", "reporter_address": "Wrocław, Łąkowa 3"},
+                subject="Zgłoszenie",
+                mail_body="Zażółć gęślą jaźń. ĄĆĘŁŃÓŚŹŻ ąćęłńóśźż.",
+            )
+        self.assertTrue(pdf_bytes.startswith(b"%PDF-"))
+        self.assertIn(b"/FontFile2", pdf_bytes)
+        self.assertIn(b"/ToUnicode", pdf_bytes)
+        self.assertEqual(report_pdf._font_name(), report_pdf.FONT_REGULAR)
+        self.assertEqual(report_pdf._font_name(bold=True), report_pdf.FONT_BOLD)
+
 
 
 if __name__ == "__main__":

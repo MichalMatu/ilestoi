@@ -1,0 +1,6 @@
+#!/data/data/com.termux/files/usr/bin/sh
+# runit supervision for the production Termux web service.
+set -eu
+umask 077
+cd "$HOME/WreckScanner/WreckScanner"
+exec "$HOME/WreckScanner/WreckScanner/.venv/bin/python" server.py >> "$HOME/wreckscanner.log" 2>&1

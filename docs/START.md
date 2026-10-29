@@ -29,9 +29,11 @@ http://127.0.0.1:8001
 
 `make help`, `make status`, `make start`, `make health`, `make logs` i
 `make autostart-status` wykrywaja, czy ten katalog obsluguje lokalny watcher,
-czy `wreckscanner.service`. `make start` jest informacyjnym aliasem statusu i
-nie uruchamia procesu. `make status` oraz `make health` koncza sie bledem, gdy
-brakuje procesu, liveness albo readiness.
+czy `wreckscanner.service`. Detekcja obejmuje zarowno bezposredni
+`WorkingDirectory`, jak i utwardzona jednostke, ktora montuje `server.py` z tego
+katalogu przez `BindPaths` albo `BindReadOnlyPaths`. `make start` jest
+informacyjnym aliasem statusu i nie uruchamia procesu. `make status` oraz
+`make health` koncza sie bledem, gdy brakuje procesu, liveness albo readiness.
 
 Nie uruchamiaj drugiej kopii recznie, jesli proces juz dziala. Polecenia
 zmieniajace stan przez `make` sa przeznaczone wylacznie dla lokalnego watchera:

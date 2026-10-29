@@ -35,7 +35,7 @@ WMS_ALLOWED_YEARS = frozenset(ORTHO_YEARS)
 WMS_MAX_CONCURRENT_REQUESTS = 8
 
 CADASTRAL_WMS_URL = "https://integracja.gugik.gov.pl/cgi-bin/KrajowaIntegracjaEwidencjiGruntow"
-CADASTRAL_WMS_FALLBACK_URL = "https://integracja01.gugik.gov.pl/cgi-bin/KrajowaIntegracjaEwidencjiGruntow"
+CADASTRAL_WMS_FALLBACK_URL = "https://services.gugik.gov.pl/cgi-bin/KrajowaIntegracjaEwidencjiGruntow"
 CADASTRAL_WMS_TIMEOUT = (10, 30)
 PRG_ADDRESS_WFS_URL = os.environ.get(
     "WRECKSCANNER_PRG_ADDRESS_WFS_URL",

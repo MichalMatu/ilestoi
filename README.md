@@ -2,48 +2,29 @@
 
 IleStoi.pl to lokalna aplikacja mapowa do dokumentowania pojazdow zalegajacych w przestrzeni publicznej. Wynik aplikacji jest materialem pomocniczym do weryfikacji, a nie decyzja o stanie prawnym pojazdu.
 
-Aktualne wydanie: `v4.0`.
+Aktualna linia produkcyjna: `main` (stan wdrożony na Termuxie, oznaczany tagiem produkcyjnym). Historyczna wersja `v4.0` pozostaje zachowana w historii.
 
 Status projektu: wersja utrzymaniowa. Repo zostaje odchudzone do kodu, testow i podstawowej dokumentacji potrzebnej do uruchomienia, backupu i pozniejszego serwisu.
 
-## Plan Dalszego Utrzymania
+## Kierunek i tryb pracy
 
-To poboczny projekt o niskim priorytecie, utrzymywany glownie jako prywatna mapa
-uzupelniana podczas spacerow. Kolejne prace wybieramy wedlug stosunku zysku do
-nakladu, a nie dla samego domkniecia wszystkich mozliwych usprawnien.
+Projekt jest rozwijany z myślą o możliwym ruchu ogólnopolskim. Bieżąca infrastruktura
+Termux pozostaje pojedynczą instalacją; optymalizacje i migracje wymagają pomiarów
+oraz osobnych zmian, a nie domniemania, że dzisiejszy serwer obsłuży dużą skalę.
 
-### Teraz
+`main` odzwierciedla **zaakceptowaną wersję produkcyjną**. Zmiany powstają
+w izolowanych, krótkotrwałych `feature/*` lub `fix/*`, są testowane przez
+Local Agent na Termuxie i wdrażane w kontrolowany sposób. Dopiero zaakceptowany
+commit staje się nowym `main`; nie utrzymujemy osobnej stałej gałęzi
+`work/dirty` ani nie wdrażamy automatycznie po każdym pushu.
 
-- Zachowywac sprawdzony stan na `work/dirty`; przed checkpointem uruchamiac
-  `scripts/check.sh`.
-- Po wiekszej sesji dodawania zdjec wykonywac `make backup-restic`. Tygodniowy
-  timer utrzymuje 8 kopii tygodniowych i 6 miesiecznych.
-- Nie dodawac nowych funkcji bez konkretnej potrzeby wynikajacej z korzystania
-  z mapy.
-
-### Kolejne Male Poprawki
-
-- Raz na kilka miesiecy skopiowac zaszyfrowane repozytorium Restic na osobny
-  nosnik i sprawdzic kopie; haslo przechowywac osobno. Przy tej okazji wykonac
-  pelny `restic check --read-data` i izolowana probe restore.
-- Przy kolejnej zmianie ZIP ujednolicic `BACKUP_DIR` z katalogiem kopii stanu
-  sprzed restore; obecnie niestandardowy `BACKUP_DIR` dotyczy tworzenia i listy.
-- Przy okazji zmian uslugi dodac produkcyjny `EnvironmentFile`, `UMask=0077`,
-  `NoNewPrivileges=true`, `PrivateTmp=true` i trwaly sekret sesji.
-- Utrzymywac DNS starych hostow `wreckscanner.pl`, `dlugostoi.pl` i ich
-  wariantow `www`, aby stale przekierowywaly do kanonicznego `ilestoi.pl`.
-- Przygotowac squash na `main` i tag dopiero przy swiadomym kolejnym wydaniu.
-
-### Tylko Jesli Projekt Zyska Ruch
-
-- Zautomatyzowac kopie off-host, monitoring wieku backupu i okresowy restore.
-- Usunac `'unsafe-inline'` z CSP.
-- Dalej podnosic coverage, dzielic wieksze moduly i optymalizowac UX na podstawie
-  realnych problemow uzytkownikow.
+Przed zmianami kodu zachowujemy spójny snapshot SQLite i szyfrowany backup
+Restic wraz ze zdjęciami. Szczegóły: [przepływ Git/Termux](docs/TERMUX_DEVELOPMENT_FLOW.md)
+i [backup/restore](docs/BACKUP.md).
 
 ## Start
 
-Wspierany runtime to Python `3.11-3.13`. Node.js `20+` jest potrzebny tylko do
+Wspierany runtime to Python `3.11-3.13` (sprawdzany w CI). Termux z Pythonem `3.14` przeszedł pełne testy jednostkowe, ale nie należy do macierzy CI. Node.js `20+` jest potrzebny tylko do
 kontroli frontendu; CI uzywa Node.js 22. Przygotowanie lokalnego srodowiska:
 
 ```bash
@@ -96,12 +77,17 @@ Haslo administratora pochodzi z `WRECKSCANNER_ADMIN_PASSWORD` albo z lokalnego p
 - [docs/PUBLIC_RUNTIME.md](docs/PUBLIC_RUNTIME.md) - porty publicznych uslug i konfiguracja Cloudflare Tunnel.
 - [docs/BACKUP.md](docs/BACKUP.md) - lokalny backup i restore danych.
 - [docs/DEPLOY.md](docs/DEPLOY.md) - produkcyjny deploy, sekrety, systemd i rollback.
+- [docs/TERMUX.md](docs/TERMUX.md) - aktualny host Android, runit, backup i restart.
+- [docs/TERMUX_DEVELOPMENT_FLOW.md](docs/TERMUX_DEVELOPMENT_FLOW.md) - obowiązujący Git flow, Local Agent i wdrożenie.
 
 ## Git Flow
 
-- `main` jest linia release-only: jeden commit `Release vX.Y baseline` na wydanie i pasujacy tag, np. `v3.1`.
-- `work/dirty` jest galezia robocza do codziennego rozwoju, poprawek i eksperymentow.
-- Po weryfikacji stan z `work/dirty` trafia na `main` jako squash release baseline.
+- `main` = dokładnie zaakceptowany stan produkcyjny, nie bieżący plac budowy.
+- `feature/*` / `fix/*` = krótkotrwałe gałęzie dla pojedynczego celu.
+- Przegląd/testy → kontrolowane wdrożenie kandydata → weryfikacja produkcji
+  → fast-forward `main` do tego samego SHA → tag → usunięcie gałęzi roboczej.
+- Nie używamy trwałej gałęzi `work/dirty`; archiwum starych HEAD może pozostać
+  w tagach, bez mnożenia gałęzi aktywnych.
 
 ## Lokalne Dane
 

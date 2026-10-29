@@ -22,15 +22,17 @@ def _close_response(response) -> None:
         close()
 
 
-def _upstream_text(response, *, max_bytes: int, allowed_content_types: set[str]) -> str:
+def _upstream_text(
+    response, *, max_bytes: int, allowed_content_types: set[str], encoding: str | None = None
+) -> str:
     response.raise_for_status()
     content_type = response_content_type(response)
     if content_type not in allowed_content_types:
         raise ValueError(f"Nieoczekiwany typ odpowiedzi upstreamu: {content_type or 'brak'}.")
     payload = read_limited_response_bytes(response, max_bytes=max_bytes)
-    encoding = str(getattr(response, "encoding", None) or "utf-8")
+    selected_encoding = str(encoding or getattr(response, "encoding", None) or "utf-8")
     try:
-        return payload.decode(encoding)
+        return payload.decode(selected_encoding)
     except (LookupError, UnicodeDecodeError) as exc:
         raise ValueError("Nie udało się odczytać kodowania odpowiedzi upstreamu.") from exc
 
@@ -39,7 +41,11 @@ def handle_field_photos(handler) -> None:
     try:
         photos = list_field_photos(core_config.FIELD_PHOTOS_DIR)
         if not http_admin_session.is_admin(handler):
-            photos = [photo for photo in photos if access.public_field_photo_allowed(handler, photo)]
+            layer_settings = access.public_layer_settings()
+            photos = [
+                photo for photo in photos
+                if access.public_field_photo_allowed(handler, photo, layer_settings=layer_settings)
+            ]
         http_responses.send_json(handler, 200, {"status": "ok", "photos": photos})
     except Exception as exc:
         http_responses.send_internal_error(
@@ -71,6 +77,8 @@ def lookup_cadastral_parcel(lat: float, lon: float) -> dict[str, Any]:
                 response,
                 max_bytes=config.CADASTRAL_MAX_RESPONSE_BYTES,
                 allowed_content_types={"text/html"},
+                # KIEG returns UTF-8 HTML without charset; requests otherwise assumes Latin-1.
+                encoding="utf-8",
             )
             break
         except Exception as exc:

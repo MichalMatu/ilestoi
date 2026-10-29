@@ -111,8 +111,8 @@ def field_photo_record(photo_id: str = "photo_20260604T200730Z_37885295") -> dic
 def fake_restic(path: Path) -> Path:
     script = path / "fake_restic.py"
     script.write_text(
-        """#!/usr/bin/env python3
-import json
+        f"#!{sys.executable}\n"
+        """import json
 import os
 import sqlite3
 import sys
