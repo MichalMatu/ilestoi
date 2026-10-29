@@ -80,11 +80,11 @@ test('client commits once after all pages, with no unbounded listing', async () 
     assert.equal(first.searchParams.has('cursor'), false);
     assert.equal(second.searchParams.get('cursor'), 'opaque-token');
     assert.equal(second.searchParams.get('bbox'), first.searchParams.get('bbox'));
-    assert.deepEqual(h.updates, [
+    assert.deepEqual(JSON.parse(JSON.stringify(h.updates)), [
         { layer: 'photos', ids: ['a', 'b'] }, { layer: 'vehicles' }, { layer: 'counts' },
     ]);
     assert.deepEqual(h.states, ['loading', 'ready']);
-    assert.deepEqual(h.run('fieldPhotoLayerData.map(photo => photo.id)'), ['a', 'b']);
+    assert.deepEqual(Array.from(h.run('fieldPhotoLayerData.map(photo => photo.id)')), ['a', 'b']);
 });
 
 test('stale responses cannot replace more recent view and old request is aborted', async () => {
@@ -102,7 +102,7 @@ test('stale responses cannot replace more recent view and old request is aborted
     await two;
     oldResolve({ status: 'ok', photos: [photo('stale')], next_cursor: null });
     await one;
-    assert.deepEqual(h.run('fieldPhotoLayerData.map(photo => photo.id)'), ['new']);
+    assert.deepEqual(Array.from(h.run('fieldPhotoLayerData.map(photo => photo.id)')), ['new']);
     assert.equal(h.updates.filter(v => v.layer === 'photos').length, 1);
 });
 
@@ -112,7 +112,7 @@ test('invalid or repeating cursors reject partial pages and leave rendered data 
         : { status: 'ok', photos: [photo('second')], next_cursor: 'repeat' });
     await h.run('loadFieldPhotos()');
     assert.equal(h.states.at(-1), 'error');
-    assert.deepEqual(h.run('fieldPhotoLayerData'), []);
+    assert.deepEqual(Array.from(h.run('fieldPhotoLayerData')), []);
     assert.equal(h.updates.length, 0);
 });
 
