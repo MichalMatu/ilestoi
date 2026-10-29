@@ -161,6 +161,58 @@ test('panning is debounced and does not reload an unchanged successful viewport'
     assert.equal(h.requests.length, 2);
 });
 
+
+test('popup auto-pan keeps its marker and refetches only after popup closes', async () => {
+    const h = harness(async () => ({ status: 'ok', photos: [photo('a')], next_cursor: null }));
+    await h.run('loadFieldPhotos()');
+    h.run('fieldPhotoPopupOpen = true');
+    h.bounds.west += 0.2;
+    h.bounds.east += 0.2;
+    h.run('scheduleFieldPhotoViewportLoad()');
+    assert.equal(h.timers.size, 0);
+    assert.equal(h.requests.length, 1);
+    assert.equal(h.updates.filter(x => x.layer === 'photos').length, 1);
+
+    h.run('fieldPhotoPopupOpen = false');
+    h.run('scheduleFieldPhotoViewportLoad()');
+    assert.equal(h.timers.size, 1);
+    [...h.timers.values()][0]();
+    await Promise.resolve();
+    await Promise.resolve();
+    assert.equal(h.requests.length, 2);
+    assert.equal(h.updates.filter(x => x.layer === 'photos').length, 2);
+});
+
+test('small auto-pan stays inside the padded loaded area without replacing markers', async () => {
+    const h = harness(async () => ({ status: 'ok', photos: [photo('a')], next_cursor: null }));
+    await h.run('loadFieldPhotos()');
+    h.bounds.west += 0.01;
+    h.bounds.east += 0.01;
+    h.run('scheduleFieldPhotoViewportLoad()');
+    assert.equal(h.timers.size, 0);
+    assert.equal(h.requests.length, 1);
+    assert.equal(h.updates.filter(x => x.layer === 'photos').length, 1);
+});
+
+test('in-flight pan response cannot replace a marker while its popup is open', async () => {
+    let resolvePan;
+    const h = harness(async (_url, _options, n) => n === 2
+        ? new Promise(resolve => { resolvePan = resolve; })
+        : { status: 'ok', photos: [photo('a')], next_cursor: null });
+    await h.run('loadFieldPhotos()');
+    h.bounds.west += 0.2;
+    h.bounds.east += 0.2;
+    const reload = h.run('loadFieldPhotos()');
+    h.run('fieldPhotoPopupOpen = true');
+    resolvePan({ status: 'ok', photos: [photo('b')], next_cursor: null });
+    await reload;
+    assert.deepEqual(Array.from(h.run('fieldPhotoLayerData.map(x => x.id)')), ['a']);
+    assert.equal(h.updates.filter(x => x.layer === 'photos').length, 1);
+    h.run('fieldPhotoPopupOpen = false');
+    h.run('scheduleFieldPhotoViewportLoad()');
+    assert.equal(h.timers.size, 1);
+});
+
 test('excessively large viewport errors rather than silently truncating results', async () => {
     let page = 0;
     const h = harness(async () => ({
@@ -192,5 +244,5 @@ test('startup attaches viewport handler only after admin bootstrap', async () =>
     resolveAdmin();
     await boot;
     await Promise.resolve();
-    assert.deepEqual(registered.map(args => args[0]), ['moveend']);
+    assert.deepEqual(registered.map(args => args[0]), ['moveend', 'popupopen', 'popupclose']);
 });
