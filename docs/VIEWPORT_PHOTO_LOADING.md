@@ -21,10 +21,8 @@ displaying a silently incomplete map. The old unbounded client request is
 removed; the backend keeps an unbounded API for older deployed clients.
 
 **Counts and filters are now local to the map area** (including its padded
-margin), not national totals. Count tooltips in both languages say so. This
-change does not provide countrywide aggregate counts or server-side clusters:
-wide zoom levels can still require many pages, and marker construction may
-still become costly. The bounded cluster endpoint from PR #7 now supports national-scale
+margin), not national totals. Count tooltips in both languages say so. The paginated detail API alone is not suited to countrywide zoom levels:
+wide views can require many pages and costly individual marker construction. The bounded cluster endpoint from PR #7 now supports national-scale
 photo-count overview levels; PR #8 connects it to the map.
 
 QA must cover pagination, invalid/repeating cursors, abort and stale responses,
