@@ -24,8 +24,8 @@ removed; the backend keeps an unbounded API for older deployed clients.
 margin), not national totals. Count tooltips in both languages say so. This
 change does not provide countrywide aggregate counts or server-side clusters:
 wide zoom levels can still require many pages, and marker construction may
-still become costly. A future dedicated cluster/summary endpoint should
-handle truly national-scale overview levels.
+still become costly. The bounded cluster endpoint from PR #7 now supports national-scale
+photo-count overview levels; PR #8 connects it to the map.
 
 QA must cover pagination, invalid/repeating cursors, abort and stale responses,
 dateline/full-world bounds, and a real-browser viewport pan, before release.
