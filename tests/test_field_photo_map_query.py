@@ -86,7 +86,10 @@ class MapQueryTests(unittest.TestCase):
             "field_photo_pending": False,
         } if layers is None else layers
         with (
-            patch.object(public_data.core_config, "FIELD_PHOTOS_DIR", self.storage),
+            patch.object(
+                public_data, "list_map_field_photos",
+                side_effect=lambda _storage, **kwargs: list_map_field_photos(self.storage, **kwargs),
+            ),
             patch.object(public_data.http_admin_session, "is_admin", return_value=is_admin),
             patch.object(public_data.access, "public_layer_settings", return_value=settings),
         ):
