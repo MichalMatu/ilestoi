@@ -17,8 +17,12 @@ class DocumentationContractTests(unittest.TestCase):
         self.assertNotIn("`work/dirty` jest galezia robocza", readme)
         self.assertIn("Status projektu: wersja utrzymaniowa.", readme)
         for path in (
-            "docs/START.md", "docs/CURRENT_MODEL.md", "docs/DATABASE.md",
-            "docs/BACKUP.md", "docs/DEPLOY.md", "docs/TERMUX.md",
+            "docs/START.md",
+            "docs/CURRENT_MODEL.md",
+            "docs/DATABASE.md",
+            "docs/BACKUP.md",
+            "docs/DEPLOY.md",
+            "docs/TERMUX.md",
             "docs/TERMUX_DEVELOPMENT_FLOW.md",
         ):
             self.assertIn(path, readme)
