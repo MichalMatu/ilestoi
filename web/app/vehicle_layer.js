@@ -632,15 +632,9 @@ function placeVehicleMarkers() {
 }
 
 function refreshVehicleLayer() {
-    if (fieldPhotoLoadMode() === 'overview' !== fieldPhotoOverviewActive) {
-        loadFieldPhotos();
-        return;
-    }
-    if (fieldPhotoOverviewActive) {
-        placeFieldPhotos(fieldPhotoLayerData);
-    } else {
-        placeVehicleMarkers();
-    }
+    if ((fieldPhotoLoadMode() === 'overview') !== fieldPhotoOverviewActive) return loadFieldPhotos();
+    if (fieldPhotoOverviewActive) placeFieldPhotos(fieldPhotoLayerData);
+    else placeVehicleMarkers();
     updateLayerCounters();
 }
 
