@@ -119,16 +119,17 @@ katalogów zdjęć ani snapshotów Restic.
 `.restic_password` (uprawnienia 0600), co 24 godziny z ponowieniem
 co godzinę przy niepowodzeniu; retencja 7 dziennych, 8 tygodniowych
 i 6 miesięcznych punktów odtworzenia, chroniona blokadą
-`~/.local/state/ilestoi-restic.lock`. Trzeba nadal utrzymywać
-zaszyfrowaną kopię off-host i próbny restore, gdyż backup na tym
-samym telefonie nie chroni przed jego utratą.
+`~/.local/state/ilestoi-restic.lock`. Lokalny Restic i weryfikowana
+kopia SQLite w osobnym folderze telefonu są wymaganymi zabezpieczeniami
+tego wydania. Właściciel 29.10.2026 zrezygnował z wymogu kopii off-host
+jako bramki wdrożenia. Utrata telefonu może oznaczać utratę obu kopii.
 
 ```sh
 sv status "$PREFIX/var/service/wreckscanner-backup"
 tail -n 30 "$HOME/wreckscanner-backup.log"
 ```
 
-## Kopia SQLite do ręcznego przeniesienia poza telefon
+## Osobna kopia SQLite na Samsungu
 
 Aktualna, zweryfikowana kopia przed wydaniem PR #2–#5:
 
@@ -136,6 +137,7 @@ Aktualna, zweryfikowana kopia przed wydaniem PR #2–#5:
 
 Manifest, suma SHA-256 i instrukcja przeniesienia znajdują się obok
 tego pliku; pełne szczegóły w [docs/BACKUP.md](BACKUP.md).
-Kopia nie zawiera katalogów zdjęć, nie jest zaszyfrowana i nadal
-znajduje się na tym samym telefonie. Do kompletnego backupu off-host
-trzeba dodatkowo bezpiecznie wyeksportować zaszyfrowany Restic.
+Kopia pozostaje na telefonie w oddzielnym folderze; nie przenosić jej
+ani nie usuwać w ramach wdrożenia. Nie zawiera katalogów zdjęć i nie jest
+zaszyfrowana. Zdjęcia obejmuje istniejące lokalne repozytorium Restic.
+Kopia off-host nie jest wymagana do wydania na wyraźne życzenie właściciela.
