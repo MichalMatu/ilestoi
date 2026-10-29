@@ -26,9 +26,7 @@ def _close_response(response) -> None:
         close()
 
 
-def _upstream_text(
-    response, *, max_bytes: int, allowed_content_types: set[str], encoding: str | None = None
-) -> str:
+def _upstream_text(response, *, max_bytes: int, allowed_content_types: set[str], encoding: str | None = None) -> str:
     response.raise_for_status()
     content_type = response_content_type(response)
     if content_type not in allowed_content_types:
@@ -41,9 +39,9 @@ def _upstream_text(
         raise ValueError("Nie udało się odczytać kodowania odpowiedzi upstreamu.") from exc
 
 
-def _field_photo_list_query(path: str) -> tuple[
-    tuple[float, float, float, float] | None, int | None, tuple[str, str] | None
-]:
+def _field_photo_list_query(
+    path: str,
+) -> tuple[tuple[float, float, float, float] | None, int | None, tuple[str, str] | None]:
     params = parse_qs(urlsplit(path).query, keep_blank_values=True)
     bbox = None
     if "bbox" in params:
@@ -56,9 +54,12 @@ def _field_photo_list_query(path: str) -> tuple[
             west, south, east, north = (float(item) for item in values)
         except ValueError as exc:
             raise ValueError("Nieprawidłowe współrzędne bbox.") from exc
-        if not (all(map(math.isfinite, (west, south, east, north)))
-                and -180 <= west <= 180 and -180 <= east <= 180
-                and -90 <= south <= north <= 90):
+        if not (
+            all(map(math.isfinite, (west, south, east, north)))
+            and -180 <= west <= 180
+            and -180 <= east <= 180
+            and -90 <= south <= north <= 90
+        ):
             raise ValueError("Nieprawidłowy zakres bbox.")
         # A west > east box intentionally crosses the 180th meridian.
         bbox = west, south, east, north
@@ -82,15 +83,16 @@ def _field_photo_list_query(path: str) -> tuple[
         if not token or len(token) > 256:
             raise ValueError("Nieprawidłowy cursor.")
         try:
-            decoded = base64.b64decode(
-                token + "=" * (-len(token) % 4), altchars=b"-_", validate=True
-            )
+            decoded = base64.b64decode(token + "=" * (-len(token) % 4), altchars=b"-_", validate=True)
             value = json.loads(decoded)
-            if (not isinstance(value, list) or len(value) != 2
-                    or not isinstance(value[0], str)
-                    or not 1 <= len(value[0]) <= 80
-                    or any(ord(char) < 32 for char in value[0])
-                    or not isinstance(value[1], str)):
+            if (
+                not isinstance(value, list)
+                or len(value) != 2
+                or not isinstance(value[0], str)
+                or not 1 <= len(value[0]) <= 80
+                or any(ord(char) < 32 for char in value[0])
+                or not isinstance(value[1], str)
+            ):
                 raise ValueError
             after = value[0], validate_photo_id(value[1])
         except (ValueError, UnicodeDecodeError, binascii.Error, json.JSONDecodeError) as exc:
@@ -116,7 +118,8 @@ def handle_field_photos(handler) -> None:
         if not is_admin:
             layers = access.public_layer_settings()
             approved_types = tuple(
-                issue for issue in core_config.FIELD_PHOTO_ISSUE_TYPES
+                issue
+                for issue in core_config.FIELD_PHOTO_ISSUE_TYPES
                 if layers.get(access.field_photo_issue_layer_key(issue), True)
             )
             pending_visible = layers.get("field_photo_pending", True)

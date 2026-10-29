@@ -11,7 +11,6 @@ import json
 from pathlib import Path
 from typing import Any
 
-from core import config
 from core.database import connect_database_read_only
 from core.field_photo_serialization import field_photo_summary
 from core.field_photo_store import database_path_for
@@ -20,12 +19,27 @@ from core.photo_privacy import safe_existing_child
 
 # No original paths, owner credentials, EXIF or redaction payloads are read.
 _MAP_COLUMNS = (
-    "id", "created_at", "submitted_at", "captured_at", "format",
-    "public_width", "public_height", "public_review_status", "reviewed_at",
-    "issue_type", "vehicle_insurance_status", "vehicle_insurance_checked_at",
-    "vehicle_resolution_status", "vehicle_resolution_updated_at",
-    "lat", "lon", "coordinate_source", "position_updated_at", "links_json",
-    "public_image_file", "public_thumb_file",
+    "id",
+    "created_at",
+    "submitted_at",
+    "captured_at",
+    "format",
+    "public_width",
+    "public_height",
+    "public_review_status",
+    "reviewed_at",
+    "issue_type",
+    "vehicle_insurance_status",
+    "vehicle_insurance_checked_at",
+    "vehicle_resolution_status",
+    "vehicle_resolution_updated_at",
+    "lat",
+    "lon",
+    "coordinate_source",
+    "position_updated_at",
+    "links_json",
+    "public_image_file",
+    "public_thumb_file",
 )
 
 
@@ -35,8 +49,9 @@ def _map_photo(record: dict[str, Any], storage_dir: Path, private_dir: Path | No
     # one record, not the whole table; new writes prepare these files eagerly.
     if record["public_review_status"] == "approved":
         photo_dir = storage_dir / photo_id
-        if (not safe_existing_child(photo_dir, record.get("public_image_file"))
-                or not safe_existing_child(photo_dir, record.get("public_thumb_file"))):
+        if not safe_existing_child(photo_dir, record.get("public_image_file")) or not safe_existing_child(
+            photo_dir, record.get("public_thumb_file")
+        ):
             repaired = load_field_photo_record(photo_id, storage_dir, private_dir=private_dir)
             return field_photo_summary(repaired)
     elif record.get("public_image_file") or record.get("public_thumb_file"):
@@ -95,7 +110,8 @@ def list_map_field_photos(
 
     sql = (
         f"SELECT {', '.join(_MAP_COLUMNS)} FROM field_photos "
-        + "WHERE " + " AND ".join(conditions)
+        + "WHERE "
+        + " AND ".join(conditions)
         + " ORDER BY created_at DESC, id DESC"
     )
     if limit is not None:
