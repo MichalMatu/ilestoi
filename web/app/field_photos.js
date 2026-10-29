@@ -5,6 +5,8 @@ let fieldPhotoLoadAbortController = null;
 let fieldPhotoViewportDebounceTimer = null;
 let fieldPhotoLoadedViewportKey = '';
 let fieldPhotoRequestedViewportKey = '';
+let fieldPhotoLoadedViewportCoverage = null;
+let fieldPhotoPopupOpen = false;
 
 const FIELD_PHOTO_VIEWPORT_PAGE_SIZE = 500;
 const FIELD_PHOTO_VIEWPORT_MAX_PAGES = 40;
@@ -37,17 +39,45 @@ function fieldPhotoViewportQuery() {
     const paddedWest = width >= 360 ? -180 : fieldPhotoLongitude(west - longitudePadding);
     const paddedEast = width >= 360 ? 180 : fieldPhotoLongitude(east + longitudePadding);
     const bbox = [paddedWest, paddedSouth, paddedEast, paddedNorth].map(value => value.toFixed(8)).join(',');
-    return { bbox, key: bbox };
+    return {
+        bbox,
+        key: bbox,
+        visible: { west, south, east, north },
+        coverage: {
+            west: west - longitudePadding,
+            south: paddedSouth,
+            east: east + longitudePadding,
+            north: paddedNorth,
+        },
+    };
+}
+
+function fieldPhotoViewportInsideLoadedCoverage(viewport, mode) {
+    const coverage = fieldPhotoLoadedViewportCoverage;
+    if (!coverage || coverage.mode !== mode) return false;
+    const { west, south, east, north } = viewport.visible;
+    if (south < coverage.south || north > coverage.north) return false;
+    if (coverage.east - coverage.west >= 360) return true;
+    // Leaflet can report the same viewport shifted by a full world wrap.
+    const longitudeShift = 360 * Math.round(
+        (coverage.west + coverage.east - west - east) / 720
+    );
+    return west + longitudeShift >= coverage.west && east + longitudeShift <= coverage.east;
 }
 
 function scheduleFieldPhotoViewportLoad() {
     window.clearTimeout(fieldPhotoViewportDebounceTimer);
+    fieldPhotoViewportDebounceTimer = null;
+    // A Leaflet popup auto-pans the map. Replacing its marker closes it.
+    if (fieldPhotoPopupOpen) return;
     const viewport = fieldPhotoViewportQuery();
-    const key = `${fieldPhotoLoadMode()}:${viewport.key}`;
-    if (key === fieldPhotoLoadedViewportKey || key === fieldPhotoRequestedViewportKey) return;
+    const mode = fieldPhotoLoadMode();
+    const key = `${mode}:${viewport.key}`;
+    if (fieldPhotoViewportInsideLoadedCoverage(viewport, mode)
+        || key === fieldPhotoLoadedViewportKey || key === fieldPhotoRequestedViewportKey) return;
     fieldPhotoViewportDebounceTimer = window.setTimeout(() => {
         fieldPhotoViewportDebounceTimer = null;
-        loadFieldPhotos();
+        if (!fieldPhotoPopupOpen) loadFieldPhotos();
     }, FIELD_PHOTO_VIEWPORT_DEBOUNCE_MS);
 }
 
@@ -349,11 +379,15 @@ async function loadFieldPhotos() {
             await loadFieldPhotos();
             return;
         }
+        // Never replace the marker underneath a visible popup, including
+        // when a request was already in flight before the popup opened.
+        if (fieldPhotoPopupOpen) return;
         fieldPhotoOverviewActive = mode === 'overview';
         fieldPhotoOverviewCells = fieldPhotoOverviewActive ? data : [];
         fieldPhotoOverviewBbox = fieldPhotoOverviewActive ? viewport.bbox : '';
         fieldPhotoLayerData = fieldPhotoOverviewActive ? [] : data;
         fieldPhotoLoadedViewportKey = viewportKey;
+        fieldPhotoLoadedViewportCoverage = { ...viewport.coverage, mode };
         placeFieldPhotos(fieldPhotoLayerData);
         placeVehicleMarkers();
         updateLayerCounters();
