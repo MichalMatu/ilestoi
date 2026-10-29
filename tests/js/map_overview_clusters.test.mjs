@@ -186,6 +186,19 @@ test('stale overview response never replaces a newer detail request', async () =
     assert.equal(h.requests.length, 2);
 });
 
+test('marker follows an unwrapped Leaflet map center after the 180th meridian', async () => {
+    const h = harness(async () => ({ status: 'ok', clusters: [{ ...sample(1, 0, 0, 0), lon: -175 }] }));
+    h.bounds.west = 183;
+    h.bounds.east = 187;
+    h.context.map.getCenter = () => ({ lng: 185 });
+    await h.run('loadFieldPhotos()');
+    assert.equal(h.markers.length, 1);
+    assert.equal(h.markers[0].point[1], 185);
+    h.markers[0].handlers.click();
+    const [southWest, northEast] = h.fits[0].target;
+    assert.ok(southWest[1] < 185 && northEast[1] > 185);
+});
+
 test('cross-dateline aggregate fits the exact unwrapped geographic cell', async () => {
     const h = harness(async () => ({ status: 'ok', clusters: [{ ...sample(1, 0, 0, 0), lon: -179.5 }] }));
     h.bounds.west = 178;
