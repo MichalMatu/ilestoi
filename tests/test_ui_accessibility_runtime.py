@@ -513,7 +513,6 @@ class UiAccessibilityRuntimeTests(unittest.TestCase):
         )
         self.assertEqual(result["secureRandomError"], "modal.fieldPhoto.secureRandomUnavailable")
 
-
     def test_viewport_map_move_fetches_new_area_in_a_real_browser(self):
         photo_js = (ROOT_DIR / "web" / "app" / "field_photos.js").read_text(encoding="utf-8")
         startup_js = (ROOT_DIR / "web" / "app" / "startup.js").read_text(encoding="utf-8")
