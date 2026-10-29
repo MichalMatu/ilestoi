@@ -177,8 +177,7 @@ test('popup auto-pan keeps its marker and refetches only after popup closes', as
     h.run('scheduleFieldPhotoViewportLoad()');
     assert.equal(h.timers.size, 1);
     [...h.timers.values()][0]();
-    await Promise.resolve();
-    await Promise.resolve();
+    await new Promise(resolve => setImmediate(resolve));
     assert.equal(h.requests.length, 2);
     assert.equal(h.updates.filter(x => x.layer === 'photos').length, 2);
 });
