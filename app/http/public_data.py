@@ -12,6 +12,7 @@ from app.http import admin_session as http_admin_session
 from app.http import responses as http_responses
 from core import config as core_config
 from core.cadastral import cadastral_feature_info_params, parse_cadastral_feature_info
+from core.field_photo_clusters import list_map_photo_clusters
 from core.field_photo_map_query import list_map_field_photos
 from core.field_photo_store import validate_photo_id
 from core.geo import validate_coordinates
@@ -105,6 +106,44 @@ def _field_photo_cursor(key: tuple[str, str]) -> str:
     return base64.urlsafe_b64encode(payload).decode("ascii").rstrip("=")
 
 
+def _map_visibility(handler) -> tuple[tuple[str, ...] | None, bool]:
+    if http_admin_session.is_admin(handler):
+        return None, True
+    layers = access.public_layer_settings()
+    types = tuple(
+        issue
+        for issue in core_config.FIELD_PHOTO_ISSUE_TYPES
+        if layers.get(access.field_photo_issue_layer_key(issue), True)
+    )
+    return types, layers.get("field_photo_pending", True)
+
+
+def handle_field_photo_clusters(handler) -> None:
+    params = parse_qs(urlsplit(handler.path).query, keep_blank_values=True)
+    try:
+        if set(params) != {"bbox"}:
+            raise ValueError("Agregacja wymaga tylko parametru bbox.")
+        bounds, _, _ = _field_photo_list_query(handler.path)
+        if bounds is None:
+            raise ValueError("Brak granic mapy.")
+    except ValueError as exc:
+        http_responses.send_json(handler, 400, {"status": "error", "error": str(exc)})
+        return
+    try:
+        approved_types, pending_visible = _map_visibility(handler)
+        clusters = list_map_photo_clusters(
+            core_config.FIELD_PHOTOS_DIR,
+            bounds=bounds, approved_types=approved_types,
+            pending_visible=pending_visible,
+        )
+        http_responses.send_json(handler, 200, {"status": "ok", "clusters": clusters})
+    except Exception as exc:
+        http_responses.send_internal_error(
+            handler, 500, "Field photo clusters lookup failed", exc,
+            public_error="Nie udało się pobrać skupisk zgłoszeń.",
+        )
+
+
 def handle_field_photos(handler) -> None:
     try:
         bounds, limit, after = _field_photo_list_query(handler.path)
@@ -112,17 +151,7 @@ def handle_field_photos(handler) -> None:
         http_responses.send_json(handler, 400, {"status": "error", "error": str(exc)})
         return
     try:
-        is_admin = http_admin_session.is_admin(handler)
-        approved_types = None
-        pending_visible = True
-        if not is_admin:
-            layers = access.public_layer_settings()
-            approved_types = tuple(
-                issue
-                for issue in core_config.FIELD_PHOTO_ISSUE_TYPES
-                if layers.get(access.field_photo_issue_layer_key(issue), True)
-            )
-            pending_visible = layers.get("field_photo_pending", True)
+        approved_types, pending_visible = _map_visibility(handler)
         photos, next_key = list_map_field_photos(
             core_config.FIELD_PHOTOS_DIR,
             bounds=bounds,

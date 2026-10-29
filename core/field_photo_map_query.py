@@ -63,6 +63,27 @@ def _map_photo(record: dict[str, Any], storage_dir: Path, private_dir: Path | No
     return field_photo_summary(record)
 
 
+def map_visibility_conditions(
+    approved_types: tuple[str, ...] | None, pending_visible: bool
+) -> tuple[list[str], list[Any]]:
+    """Shared review and public layer restrictions for all read-only map SQL."""
+    conditions = ["public_review_status IN ('approved', 'pending')"]
+    params: list[Any] = []
+    if approved_types is None:
+        return conditions, params
+    clauses: list[str] = []
+    if approved_types:
+        slots = ", ".join("?" for _ in approved_types)
+        clauses.append(f"(public_review_status = 'approved' AND issue_type IN ({slots}))")
+        params.extend(approved_types)
+    if pending_visible:
+        clauses.append("public_review_status = 'pending'")
+    if not clauses:
+        return ["0"], []
+    conditions.append("(" + " OR ".join(clauses) + ")")
+    return conditions, params
+
+
 def list_map_field_photos(
     storage_dir: Path,
     *,
@@ -79,20 +100,9 @@ def list_map_field_photos(
     removes hidden approved layers; pending is controlled by one public switch.
     The cursor is created from the last returned database row, never an offset.
     """
-    conditions = ["public_review_status IN ('approved', 'pending')"]
-    params: list[Any] = []
-
-    if approved_types is not None:
-        clauses: list[str] = []
-        if approved_types:
-            slots = ", ".join("?" for _ in approved_types)
-            clauses.append(f"(public_review_status = 'approved' AND issue_type IN ({slots}))")
-            params.extend(approved_types)
-        if pending_visible:
-            clauses.append("public_review_status = 'pending'")
-        if not clauses:
-            return [], None
-        conditions.append("(" + " OR ".join(clauses) + ")")
+    conditions, params = map_visibility_conditions(approved_types, pending_visible)
+    if conditions == ["0"]:
+        return [], None
 
     if bounds is not None:
         west, south, east, north = bounds
