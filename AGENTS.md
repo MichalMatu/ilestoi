@@ -20,6 +20,6 @@
 ## Data safety and current workflow
 
 - Live data are `wreckscanner.sqlite3`, `zdjecia_terenowe/` and `prywatne_zdjecia/`; never commit them, copy them to GitHub or remove them during source cleanup.
-- Before any DB/schema or production release change, obtain a consistent online SQLite snapshot and the existing encrypted Restic snapshot, verify integrity, preserve previous deployed code and rollback, and check free disk space. Keep an off-host encrypted copy for host-loss recovery.
+- Before any DB/schema or production release change, keep a consistent SQLite snapshot in the dedicated `~/IleStoi-Backups/` folder, verify its checksum/integrity, verify the existing encrypted local Restic (including photo directories), preserve previous deployed code and rollback, and check free disk space. By explicit owner decision on 2026-10-29, an off-host backup is **not** a release/deployment gate for this Samsung installation. Both copies remain on the phone; device loss remains an accepted risk. Do not delete or relocate them during deployment.
 - Do not query or run GitHub Actions; do not use Codex or ChatGPT Work for this project's operating workflow.
 - [Canonical Termux and Git flow](docs/TERMUX_DEVELOPMENT_FLOW.md).
