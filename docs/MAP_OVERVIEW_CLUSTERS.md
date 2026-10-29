@@ -30,14 +30,24 @@ Nie jest potrzebna nowa tabela, indeks ani migracja bazy. Query pozostaje
 ograniczone do wskazanego `bbox`; nie pobiera publicznych obrazów ani pełnej
 projekcji rekordów.
 
-## Kolejność wdrożenia
+## Zintegrowany widok mapy (PR #7 i #8)
 
-Ta funkcja jest dodatkiem backendowym do PR #3. **Nie zastępuje jeszcze
-wyświetlania pinezek w frontendzie**. Przed podłączeniem mapy do agregatów
-potrzebny jest osobny krok UX: syntetyczne pinezki, obsługa kliknięcia
-przybliżającego mapę, różnica między liczbą zdjęć a liczbą pojazdów,
-zachowanie filtrów i przejście do szczegółowego API przy większym zoomie.
+Backend agregatów z PR #7 i frontend z PR #8 znajdują się już razem w
+[kandydacie PR #9](https://github.com/MichalMatu/ilestoi/pull/9).
+Przy zoomie ≤10 gość widzi syntetyczne pinezki z liczbą zdjęć;
+kliknięcie przybliża odpowiednie pole siatki. Przy zoomie ≥11
+mapa pobiera stronicowane zdjęcia widocznego obszaru i pokazuje szczegóły.
+Administrator, bezpośredni link do zdjęcia i zaawansowane filtry pojazdów
+korzystają z trybu szczegółowego również przy małym zoomie.
 
-Wydanie z PR #2–#6 powinno być testowane i wdrażane w ustalonej kolejności;
-ten endpoint nie może powodować automatycznego restartu, migracji ani
-zmiany produkcyjnego `main` przed przyjęciem wydania.
+Przełączniki warstw ograniczają liczbę zdjęć prezentowaną w skupiskach.
+Skupiska nie oznaczają liczby pojazdów. Liczniki grup podczas widoku
+ogólnego pokazują pauzę, ponieważ API agregatów nie zwraca liczby grup.
+
+## Zasady wydania
+
+Sam endpoint agregatów nie wymaga dodatkowej migracji. Połączony PR #9
+wymaga jednak indeksu z migracji `006_field_photo_map_seek`
+dla stronicowanego API zdjęć. Backend i frontend należy wdrożyć razem,
+dopiero po weryfikacji backupu, możliwości restore i rollbacku na Samsungu.
+Do tego czasu `main` nadal odpowiada zaakceptowanej produkcji.
