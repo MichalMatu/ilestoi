@@ -1,9 +1,10 @@
 # Public photo map queries (backend, 2026-10-29)
 
-The existing no-argument `GET /api/field-photos` is retained for the current
-Leaflet client, with the same `{"status":"ok","photos":[...]}` JSON contract
-and the same approval / pending visibility rules. The response remains
-unbounded until the frontend is migrated to viewport-based loading.
+The no-argument `GET /api/field-photos` remains available for older
+clients, with the same `{"status":"ok","photos":[...]}` JSON contract
+and the same approval / pending visibility rules. The current frontend
+requests viewport pages at detail zoom (or for admin/direct links/advanced
+filters) and bounded photo-count aggregates at overview zoom.
 
 The server now reads a **projection** of map fields only. It excludes private
 EXIF, redactions, originals, owner credentials and unnecessary columns before
@@ -24,10 +25,10 @@ Optional parameters:
   between pages may change the result. Do not persist cursors indefinitely.
 
 The unbounded API is deliberately **not** a nationwide-scale delivery
-strategy. The next frontend stage must request viewport-filtered pages,
-cancel stale requests and render only visible subsets; global counters,
-aggregation and clustering will need explicit server contracts. This first
-stage prepares safe SQL queries without silently changing current UX.
+strategy. Viewport pagination, stale-request cancellation and bounded
+16×16 server-side aggregation are now integrated in release candidate PR #9.
+Overview counters represent photos rather than vehicle groups.
+The legacy endpoint stays available for previously deployed clients.
 
 Release notes: migration 006 adds a sorting index; it is not applied in
 production until an explicitly approved release. Local Agent tests run in an
