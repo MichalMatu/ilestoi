@@ -1,8 +1,8 @@
 # IleStoi.pl na Termuxie (Samsung Android)
 
-Stan operacyjny: 26.10.2026, po migracji startu na `runit`.
-Katalog produkcyjny: `~/WreckScanner/WreckScanner`; kod utrzymaniowy:
-`work/dirty`. Python Termuxa 3.14, poza macierzą CI 3.11/3.13.
+Stan operacyjny: 29.10.2026, po migracji startu na `runit`.
+Katalog produkcyjny: `~/WreckScanner/WreckScanner`; zatwierdzona produkcja
+odzwierciedlona przez `main` (zamiast wycofanej gałęzi `work/dirty`). Python Termuxa 3.14, poza macierzą CI 3.11/3.13.
 
 ## Autostart i własność procesów
 
@@ -127,3 +127,15 @@ samym telefonie nie chroni przed jego utratą.
 sv status "$PREFIX/var/service/wreckscanner-backup"
 tail -n 30 "$HOME/wreckscanner-backup.log"
 ```
+
+## Kopia SQLite do ręcznego przeniesienia poza telefon
+
+Aktualna, zweryfikowana kopia przed wydaniem PR #2–#5:
+
+`~/IleStoi-Backups/pre-release-20261029-104843/wreckscanner.sqlite3`
+
+Manifest, suma SHA-256 i instrukcja przeniesienia znajdują się obok
+tego pliku; pełne szczegóły w [docs/BACKUP.md](BACKUP.md).
+Kopia nie zawiera katalogów zdjęć, nie jest zaszyfrowana i nadal
+znajduje się na tym samym telefonie. Do kompletnego backupu off-host
+trzeba dodatkowo bezpiecznie wyeksportować zaszyfrowany Restic.

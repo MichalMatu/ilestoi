@@ -2,6 +2,84 @@ let fieldPhotoMarkers = [];
 let fieldPhotoLayerData = [];
 let fieldPhotoLoadRevision = 0;
 let fieldPhotoLoadAbortController = null;
+let fieldPhotoViewportDebounceTimer = null;
+let fieldPhotoLoadedViewportKey = '';
+let fieldPhotoRequestedViewportKey = '';
+
+const FIELD_PHOTO_VIEWPORT_PAGE_SIZE = 500;
+const FIELD_PHOTO_VIEWPORT_MAX_PAGES = 40;
+const FIELD_PHOTO_VIEWPORT_DEBOUNCE_MS = 250;
+const FIELD_PHOTO_VIEWPORT_PADDING_RATIO = 0.125;
+
+/**
+ * Leaflet can return unwrapped longitudes (e.g. 170..190). Convert them into
+ * the backend's west,south,east,north contract, preserving dateline crossings.
+ */
+function fieldPhotoLongitude(lon) {
+    const normalized = ((lon + 180) % 360 + 360) % 360 - 180;
+    return normalized === -180 && lon > 0 ? 180 : normalized;
+}
+
+function fieldPhotoViewportQuery() {
+    const bounds = map.getBounds();
+    const west = Number(bounds.getWest());
+    const south = Number(bounds.getSouth());
+    const east = Number(bounds.getEast());
+    const north = Number(bounds.getNorth());
+    if (![west, south, east, north].every(Number.isFinite) || south > north || east < west) {
+        throw new Error('Nieprawidłowy obszar mapy.');
+    }
+    const latitudePadding = (north - south) * FIELD_PHOTO_VIEWPORT_PADDING_RATIO;
+    const paddedSouth = Math.max(-90, south - latitudePadding);
+    const paddedNorth = Math.min(90, north + latitudePadding);
+    const longitudePadding = (east - west) * FIELD_PHOTO_VIEWPORT_PADDING_RATIO;
+    const width = east - west + 2 * longitudePadding;
+    const paddedWest = width >= 360 ? -180 : fieldPhotoLongitude(west - longitudePadding);
+    const paddedEast = width >= 360 ? 180 : fieldPhotoLongitude(east + longitudePadding);
+    const bbox = [paddedWest, paddedSouth, paddedEast, paddedNorth].map(value => value.toFixed(8)).join(',');
+    return { bbox, key: bbox };
+}
+
+function scheduleFieldPhotoViewportLoad() {
+    window.clearTimeout(fieldPhotoViewportDebounceTimer);
+    const viewport = fieldPhotoViewportQuery();
+    const key = `${fieldPhotoLoadMode()}:${viewport.key}`;
+    if (key === fieldPhotoLoadedViewportKey || key === fieldPhotoRequestedViewportKey) return;
+    fieldPhotoViewportDebounceTimer = window.setTimeout(() => {
+        fieldPhotoViewportDebounceTimer = null;
+        loadFieldPhotos();
+    }, FIELD_PHOTO_VIEWPORT_DEBOUNCE_MS);
+}
+
+async function fetchFieldPhotoViewportPages(viewport, signal) {
+    const photos = [];
+    const seenCursors = new Set();
+    let cursor = null;
+    for (let page = 0; page < FIELD_PHOTO_VIEWPORT_MAX_PAGES; page++) {
+        const query = new URLSearchParams({
+            bbox: viewport.bbox,
+            limit: String(FIELD_PHOTO_VIEWPORT_PAGE_SIZE),
+        });
+        if (cursor !== null) query.set('cursor', cursor);
+        const data = await apiJson(`${FIELD_PHOTOS_URL}?${query}`, {
+            cache: 'no-store',
+            signal,
+        });
+        if (data.status !== 'ok' || !Array.isArray(data.photos)
+            || data.photos.length > FIELD_PHOTO_VIEWPORT_PAGE_SIZE) {
+            throw new Error(fieldPhotoLoadText('fieldPhoto.loadError', 'Nie udało się odświeżyć zgłoszeń.'));
+        }
+        photos.push(...data.photos);
+        if (data.next_cursor === null) return photos;
+        if (typeof data.next_cursor !== 'string' || !data.next_cursor
+            || seenCursors.has(data.next_cursor)) {
+            throw new Error('Nieprawidłowa paginacja zgłoszeń.');
+        }
+        seenCursors.add(data.next_cursor);
+        cursor = data.next_cursor;
+    }
+    throw new Error(fieldPhotoLoadText('fieldPhoto.viewportLimit', 'Przybliż mapę, aby wyświetlić zgłoszenia.'));
+}
 
 function fieldPhotoLoadText(key, fallback) {
     if (typeof t !== 'function') return fallback;
@@ -145,6 +223,7 @@ function filteredFieldPhotos(photos = fieldPhotoLayerData, options = {}) {
 
 function groupFieldPhotos(photos) {
     const groups = [];
+    const index = createFieldPhotoSpatialIndex(groups);
     (photos || []).forEach(photo => {
         const lat = Number(photo.lat);
         const lon = Number(photo.lon);
@@ -152,7 +231,7 @@ function groupFieldPhotos(photos) {
         const issueType = fieldPhotoIssueType(photo);
         const reviewStatus = fieldPhotoReviewStatus(photo);
         const groupKind = fieldPhotoGroupKind(photo);
-        let group = groups.find(candidate =>
+        let group = index.candidates(lat, lon).find(candidate =>
             candidate.issueType === issueType
             && candidate.groupKind === groupKind
             && metersBetween(candidate.lat, candidate.lon, lat, lon) <= FIELD_PHOTO_GROUP_RADIUS_M
@@ -160,11 +239,13 @@ function groupFieldPhotos(photos) {
         if (!group) {
             group = { lat, lon, issueType, reviewStatus, groupKind, photos: [] };
             groups.push(group);
+            index.add(group);
         }
         group.photos.push(photo);
         const count = group.photos.length;
         group.lat = ((group.lat * (count - 1)) + lat) / count;
         group.lon = ((group.lon * (count - 1)) + lon) / count;
+        index.update(group);
     });
     return groups;
 }
@@ -192,9 +273,12 @@ function countPendingFieldPhotoLayerGroups() {
 function updateLayerCountBadge(id, count, tooltipKey) {
     const badge = document.getElementById(id);
     if (!badge) return;
+    const overview = fieldPhotoOverviewActive;
     const safeCount = Number.isFinite(count) ? count : 0;
-    const tooltip = t(tooltipKey, { n: safeCount });
-    badge.textContent = String(safeCount);
+    const tooltip = overview
+        ? t('map.overviewCountsUnavailable')
+        : `${t(tooltipKey, { n: safeCount })} ${t('layers.viewportCountSuffix')}`;
+    badge.textContent = overview ? '–' : String(safeCount);
     badge.title = tooltip;
     badge.setAttribute('aria-label', tooltip);
 }
@@ -221,6 +305,11 @@ function updateLayerCounters() {
 
 function placeFieldPhotos(photos = fieldPhotoLayerData) {
     clearFieldPhotoMarkers();
+    clearFieldPhotoOverviewMarkers();
+    if (fieldPhotoOverviewActive) {
+        placeFieldPhotoOverviewMarkers();
+        return;
+    }
     const approvedVehicleGroups = vehicleLayerAllowed() ? visibleVehicleGroups(photos) : [];
     groupFieldPhotos(filteredFieldPhotos(photos, { approvedVehicleGroups })).forEach(group => {
         const reviewStatus = fieldPhotoGroupReviewStatus(group);
@@ -240,29 +329,41 @@ function placeFieldPhotos(photos = fieldPhotoLayerData) {
 
 async function loadFieldPhotos() {
     const requestRevision = ++fieldPhotoLoadRevision;
+    window.clearTimeout(fieldPhotoViewportDebounceTimer);
+    fieldPhotoViewportDebounceTimer = null;
     fieldPhotoLoadAbortController?.abort();
     const requestController = new AbortController();
     fieldPhotoLoadAbortController = requestController;
     setFieldPhotoLoadState('loading');
+    let viewportKey = '';
     try {
-        const data = await apiJson(`${FIELD_PHOTOS_URL}?ts=${Date.now()}`, {
-            cache: 'no-store',
-            signal: requestController.signal,
-        });
+        const viewport = fieldPhotoViewportQuery();
+        const mode = fieldPhotoLoadMode();
+        viewportKey = `${mode}:${viewport.key}`;
+        fieldPhotoRequestedViewportKey = viewportKey;
+        const data = mode === 'overview'
+            ? await fetchFieldPhotoOverview(viewport, requestController.signal)
+            : await fetchFieldPhotoViewportPages(viewport, requestController.signal);
         if (requestRevision !== fieldPhotoLoadRevision) return;
-        if (data.status !== 'ok' || !Array.isArray(data.photos)) {
-            throw new Error(fieldPhotoLoadText('fieldPhoto.loadError', 'Nie udało się odświeżyć zgłoszeń.'));
+        if (mode !== fieldPhotoLoadMode()) {
+            await loadFieldPhotos();
+            return;
         }
-        fieldPhotoLayerData = data.photos;
+        fieldPhotoOverviewActive = mode === 'overview';
+        fieldPhotoOverviewCells = fieldPhotoOverviewActive ? data : [];
+        fieldPhotoOverviewBbox = fieldPhotoOverviewActive ? viewport.bbox : '';
+        fieldPhotoLayerData = fieldPhotoOverviewActive ? [] : data;
+        fieldPhotoLoadedViewportKey = viewportKey;
         placeFieldPhotos(fieldPhotoLayerData);
         placeVehicleMarkers();
         updateLayerCounters();
-        setFieldPhotoLoadState(fieldPhotoLayerData.length ? 'ready' : 'empty');
+        setFieldPhotoLoadState(data.length ? 'ready' : 'empty');
     } catch (error) {
         if (requestRevision !== fieldPhotoLoadRevision || error?.payload?.code === 'cancelled') return;
         setFieldPhotoLoadState('error');
     } finally {
         if (fieldPhotoLoadAbortController === requestController) fieldPhotoLoadAbortController = null;
+        if (fieldPhotoRequestedViewportKey === viewportKey) fieldPhotoRequestedViewportKey = '';
     }
 }
 

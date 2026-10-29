@@ -2,6 +2,7 @@
 
 All outputs use only approved public derivatives and honor public layer switches.
 """
+
 from __future__ import annotations
 
 import math
@@ -15,7 +16,8 @@ from app.http import access
 from app.http import responses as http_responses
 from app.http import static_files as http_static_files
 from core import config as core_config
-from core.field_photos import list_field_photos
+from core.field_photo_serialization import field_photo_summary
+from core.field_photos import list_field_photos, load_field_photo_record
 
 PHOTO_ID = re.compile(r"[A-Za-z0-9_-]{3,96}\Z")
 DISCLAIMER = (
@@ -24,47 +26,59 @@ DISCLAIMER = (
 )
 
 
+def _is_public_observation(photo: dict, layers: dict[str, bool]) -> bool:
+    if (
+        photo.get("public_review_status") != "approved"
+        or not photo.get("public_image")
+        or not photo.get("public_thumb")
+        or photo.get("vehicle_resolution_status") == "removed"
+    ):
+        return False
+    layer_key = access.field_photo_issue_layer_key(photo.get("issue_type"))
+    return layers.get(layer_key, True)
+
+
 def public_observations() -> list[dict]:
     """Never use admin session privileges for crawler-facing pages."""
     layers = access.public_layer_settings()
-    result = []
-    for photo in list_field_photos(core_config.FIELD_PHOTOS_DIR):
-        if (photo.get("public_review_status") != "approved"
-                or not photo.get("public_image")
-                or not photo.get("public_thumb")
-                or photo.get("vehicle_resolution_status") == "removed"):
-            continue
-        layer_key = access.field_photo_issue_layer_key(photo.get("issue_type"))
-        if layers.get(layer_key, True):
-            result.append(photo)
-    return result
+    return [photo for photo in list_field_photos(core_config.FIELD_PHOTOS_DIR) if _is_public_observation(photo, layers)]
 
 
-def _base(title: str, description: str, path: str, body: str, *,
-          image_url: str = "") -> bytes:
+def public_observation_by_id(photo_id: str) -> dict | None:
+    """Use SQLite's primary-key lookup instead of scanning the entire map."""
+    try:
+        record = load_field_photo_record(photo_id, core_config.FIELD_PHOTOS_DIR)
+    except (OSError, ValueError, FileNotFoundError):
+        # Missing or unpreparable records were also absent from list_field_photos.
+        return None
+    photo = field_photo_summary(record)
+    return photo if _is_public_observation(photo, access.public_layer_settings()) else None
+
+
+def _base(title: str, description: str, path: str, body: str, *, image_url: str = "") -> bytes:
     canonical = config.CANONICAL_PUBLIC_ORIGIN + path
     meta_image = (
-        '<meta property="og:image" content="' + escape(
-            config.CANONICAL_PUBLIC_ORIGIN + image_url, quote=True
-        ) + '">'
-    ) if image_url else ""
+        ('<meta property="og:image" content="' + escape(config.CANONICAL_PUBLIC_ORIGIN + image_url, quote=True) + '">')
+        if image_url
+        else ""
+    )
     html = (
         '<!doctype html><html lang="pl"><head><meta charset="utf-8">'
         '<meta name="viewport" content="width=device-width, initial-scale=1">'
         '<meta name="robots" content="index,follow,max-image-preview:large">'
-        f'<title>{escape(title)}</title>'
+        f"<title>{escape(title)}</title>"
         f'<meta name="description" content="{escape(description, quote=True)}">'
         f'<link rel="canonical" href="{escape(canonical, quote=True)}">'
         '<meta property="og:type" content="article">'
         f'<meta property="og:title" content="{escape(title, quote=True)}">'
         f'<meta property="og:description" content="{escape(description, quote=True)}">'
-        + meta_image +
-        '</head><body><header><a href="/">IleStoi.pl – mapa</a> | '
+        + meta_image
+        + '</head><body><header><a href="/">IleStoi.pl – mapa</a> | '
         '<a href="/observations">Obserwacje publiczne</a></header>'
-        f'<main>{body}</main><footer><p>{escape(DISCLAIMER)}</p>'
+        f"<main>{body}</main><footer><p>{escape(DISCLAIMER)}</p>"
         '<p><a href="/privacy">Prywatność</a> | '
         '<a href="/report">Zgłoś korektę lub usunięcie zdjęcia</a></p>'
-        '</footer></body></html>'
+        "</footer></body></html>"
     )
     return html.encode("utf-8")
 
@@ -87,9 +101,13 @@ def _nearby(photos: list[dict], query: str) -> tuple[list[dict], str]:
         lat = float(params["lat"][0])
         lon = float(params["lon"][0])
         radius = float(params.get("radius", ["50"])[0])
-        if (not all(map(math.isfinite, (lat, lon, radius))) or
-                not -90 <= lat <= 90 or not -180 <= lon <= 180 or
-                radius < 1 or radius > 500):
+        if (
+            not all(map(math.isfinite, (lat, lon, radius)))
+            or not -90 <= lat <= 90
+            or not -180 <= lon <= 180
+            or radius < 1
+            or radius > 500
+        ):
             raise ValueError
         found = []
         for photo in photos:
@@ -100,8 +118,7 @@ def _nearby(photos: list[dict], query: str) -> tuple[list[dict], str]:
             if distance <= radius:
                 found.append((distance, photo))
         return [photo for _, photo in sorted(found, key=lambda item: item[0])], (
-            f"Najbliższe obserwacje w promieniu {radius:g} m od "
-            f"{lat:.6f}, {lon:.6f}."
+            f"Najbliższe obserwacje w promieniu {radius:g} m od {lat:.6f}, {lon:.6f}."
         )
     except (ValueError, IndexError, OverflowError):
         return [], "Nieprawidłowe współrzędne lub promień (1–500 m)."
@@ -115,15 +132,16 @@ def _index(handler, *, include_body: bool) -> None:
         title = "Zdjęcie terenowe " + str(photo.get("captured_at") or photo.get("created_at") or "")
         links.append(
             f'<li><a href="/observations/{quote(pid)}">{escape(title)}</a>'
-            f' ({escape(str(photo.get("issue_type") or "observation"))}, '
-            f'{escape(str(photo.get("lat")))}, {escape(str(photo.get("lon")))})</li>'
+            f" ({escape(str(photo.get('issue_type') or 'observation'))}, "
+            f"{escape(str(photo.get('lat')))}, {escape(str(photo.get('lon')))})</li>"
         )
     body = (
         "<h1>Zatwierdzone obserwacje terenowe</h1>"
         "<p>Wyłącznie publiczne, zatwierdzone zdjęcia; bez prywatnych oryginałów.</p>"
         + (f"<p>{escape(note)}</p>" if note else "")
         + f"<p>Wyniki: {len(photos)}.</p><ol>"
-        + "".join(links) + "</ol>"
+        + "".join(links)
+        + "</ol>"
     )
     http_static_files.send_bytes(
         handler,
@@ -148,7 +166,7 @@ def _detail(handler, photo_id: str, *, include_body: bool) -> None:
     if not PHOTO_ID.fullmatch(photo_id):
         http_responses.send_text_error(handler, 404, "Nie znaleziono obserwacji.", include_body=include_body)
         return
-    photo = next((p for p in public_observations() if p.get("id") == photo_id), None)
+    photo = public_observation_by_id(photo_id)
     if photo is None:
         http_responses.send_text_error(handler, 404, "Nie znaleziono obserwacji.", include_body=include_body)
         return
@@ -158,11 +176,11 @@ def _detail(handler, photo_id: str, *, include_body: bool) -> None:
     thumb, full = str(photo["public_thumb"]), str(photo["public_image"])
     body = (
         "<article><h1>Zatwierdzona obserwacja terenowa</h1>"
-        f'<p>Identyfikator: <code>{escape(photo_id)}</code></p>'
-        f'<p>Typ: {escape(str(photo.get("issue_type") or "observation"))}</p>'
-        f'<p>Data zdjęcia: {escape(captured)}. Dodano: {escape(created)}.</p>'
-        f'<p>Położenie: {lat:.6f}, {lon:.6f}.</p>'
-        f'<p>{_insurance(photo) if photo.get("issue_type") == "vehicle" else ""}</p>'
+        f"<p>Identyfikator: <code>{escape(photo_id)}</code></p>"
+        f"<p>Typ: {escape(str(photo.get('issue_type') or 'observation'))}</p>"
+        f"<p>Data zdjęcia: {escape(captured)}. Dodano: {escape(created)}.</p>"
+        f"<p>Położenie: {lat:.6f}, {lon:.6f}.</p>"
+        f"<p>{_insurance(photo) if photo.get('issue_type') == 'vehicle' else ''}</p>"
         f'<p><img src="{escape(thumb, quote=True)}" '
         f'alt="Publiczne zdjęcie zatwierdzonej obserwacji {escape(photo_id, quote=True)}" '
         'loading="lazy" style="max-width:100%;height:auto"></p>'
@@ -187,19 +205,26 @@ def _detail(handler, photo_id: str, *, include_body: bool) -> None:
 
 def _sitemap(handler, *, include_body: bool) -> None:
     entries = [
-        "<url><loc>" + xml_escape(config.CANONICAL_PUBLIC_ORIGIN + "/observations/"
-                               + quote(str(photo["id"]))) + "</loc></url>"
+        "<url><loc>"
+        + xml_escape(config.CANONICAL_PUBLIC_ORIGIN + "/observations/" + quote(str(photo["id"])))
+        + "</loc></url>"
         for photo in public_observations()[:1500]
     ]
     body = (
         '<?xml version="1.0" encoding="utf-8"?>'
         '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
-        "<url><loc>" + xml_escape(config.CANONICAL_PUBLIC_ORIGIN + "/observations")
-        + "</loc></url>" + "".join(entries) + "</urlset>"
+        "<url><loc>"
+        + xml_escape(config.CANONICAL_PUBLIC_ORIGIN + "/observations")
+        + "</loc></url>"
+        + "".join(entries)
+        + "</urlset>"
     ).encode("utf-8")
     http_static_files.send_bytes(
-        handler, body, "application/xml; charset=utf-8",
-        cache_control="public, max-age=60", include_body=include_body,
+        handler,
+        body,
+        "application/xml; charset=utf-8",
+        cache_control="public, max-age=60",
+        include_body=include_body,
     )
 
 
@@ -215,8 +240,6 @@ def handle_public_route(handler, path: str, *, include_body: bool = True) -> boo
         if len(segments) == 3:
             _detail(handler, segments[-1], include_body=include_body)
         else:
-            http_responses.send_text_error(
-                handler, 404, "Nie znaleziono obserwacji.", include_body=include_body
-            )
+            http_responses.send_text_error(handler, 404, "Nie znaleziono obserwacji.", include_body=include_body)
         return True
     return False

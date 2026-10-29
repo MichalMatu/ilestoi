@@ -43,7 +43,6 @@ class CadastralFeatureInfoTests(unittest.TestCase):
         self.assertEqual(params["J"], "256")
         self.assertIn("1896", params["BBOX"])
 
-
     def test_identify_decodes_gugik_utf8_html_without_charset(self):
         class GUGiKResponse:
             headers = {"Content-Type": "text/html"}
@@ -60,7 +59,7 @@ class CadastralFeatureInfoTests(unittest.TestCase):
                     "<tr><td>Numer działki</td><td>2351</td></tr>"
                     "<tr><td>Nazwa obrębu</td><td>Południe</td></tr>"
                     "</table>"
-                ).encode("utf-8")
+                ).encode()
 
             def close(self):
                 pass
@@ -93,7 +92,7 @@ class CadastralFeatureInfoTests(unittest.TestCase):
                 yield (
                     "<table><tr><td>Identyfikator działki</td><td>026401_1.0022.2351</td></tr>"
                     "<tr><td>Numer działki</td><td>2351</td></tr></table>"
-                ).encode("utf-8")
+                ).encode()
 
             def close(self):
                 return None

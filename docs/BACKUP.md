@@ -277,3 +277,45 @@ restic restore latest --target /tmp/wreckscanner-restore-test
 Po kazdym restore potwierdz `quick_check: ok`, brak naruszen kluczy obcych,
 komplet migracji, `Brakujace sciezki: 0` i readiness `200` przed dopuszczeniem
 ruchu.
+
+## Ręczny eksport SQLite na Samsungu do przeniesienia poza telefon
+
+**Utworzony i zweryfikowany 29.10.2026**, przed wydaniem PR #2–#5.
+Nie jest to katalog projektu, katalog produkcyjny ani magazyn Restic.
+
+- Katalog bazowy: `/data/data/com.termux/files/home/IleStoi-Backups/`
+  (skrót Termuxa: `~/IleStoi-Backups/`).
+- Konkretna kopia: `~/IleStoi-Backups/pre-release-20261029-104843/`.
+- Baza: `wreckscanner.sqlite3` — spójny snapshot przez SQLite Backup API,
+  **nie** surowe kopiowanie działających plików WAL/SHM.
+- `manifest.json` — data, rozmiar, migracje, liczniki i SHA-256.
+- `SHA256SUMS` — suma kontrolna do weryfikacji po skopiowaniu.
+- `README-TRANSFER.txt` — instrukcja dla operatora w tym samym katalogu.
+- `migration-006-dry-run.json` — wynik próby migracji nowego indeksu na
+  **odizolowanym duplikacie** tego snapshotu, nie na produkcji.
+
+Utworzony plik SQLite ma 512000 bajtów. SHA-256:
+`c216879cfeed9cd171d574e5eb6bbe4b1417f01292b43461b6ba6b591b0dbba2`.
+Przy eksporcie: 306 `field_photos`, 4 `settings`, 0 `privacy_requests`;
+`PRAGMA integrity_check=ok` i brak błędów `foreign_key_check`.
+
+Dostęp wyłącznie dla właściciela Termuxa: katalog `0700`, pliki `0600`.
+Aby samodzielnie znaleźć i sprawdzić kopię na telefonie:
+
+```sh
+cd "$HOME/IleStoi-Backups/pre-release-20261029-104843"
+ls -la
+sha256sum -c SHA256SUMS
+```
+
+Po przeniesieniu folderu poza telefon uruchom `sha256sum -c SHA256SUMS`
+także na docelowym komputerze. **Nie usuwaj** lokalnej kopii do czasu
+potwierdzenia bezpiecznego eksportu.
+
+**Ograniczenie:** ta ręczna kopia zawiera *wyłącznie SQLite* — bez
+`zdjecia_terenowe/` i `prywatne_zdjecia/`. Do pełnego odtworzenia serwisu
+potrzebna jest także szyfrowana kopia Restic obu katalogów zdjęć.
+SQLite zawiera dane wrażliwe i **nie jest szyfrowany**. Do kopiowania
+poza telefon użyj zabezpieczonego połączenia/nośnika i zaszyfruj plik
+w miejscu docelowym. Samej kopii na telefonie nie wolno traktować jako
+wykonanego backupu off-host. Hasła Restic trzymaj oddzielnie.

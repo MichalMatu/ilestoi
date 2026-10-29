@@ -85,3 +85,84 @@ function squareBounds(start, end) {
     const lng2 = start.lng + Math.sign(dLonM || 1) * sizeM / lon_m;
     return L.latLngBounds(start, L.latLng(lat2, lng2));
 }
+
+/**
+ * An exact candidate index for the existing metre-based grouping semantics.
+ *
+ * Retain all groups in insertion order: field photos choose the FIRST match,
+ * vehicles choose the nearest match (first group wins distance ties).
+ * Near the poles or outside geographic bounds, fall back to the full scan.
+ * The longitude buckets deliberately use a conservative latitude bound:
+ * metersBetween() scales longitude by cos(candidate-group latitude).
+ */
+function createFieldPhotoSpatialIndex(groups, radiusM = FIELD_PHOTO_GROUP_RADIUS_M) {
+    const maxLatitude = 84;
+    const validScale = Number.isFinite(radiusM) && radiusM > 0
+        && Number.isFinite(METERS_PER_DEGREE_LAT) && METERS_PER_DEGREE_LAT > 0;
+    if (!validScale) {
+        return { add() {}, update() {}, candidates() { return groups; } };
+    }
+
+    const latitudeStep = radiusM / METERS_PER_DEGREE_LAT * 1.001;
+    const longitudeStep = radiusM / (METERS_PER_DEGREE_LAT * Math.cos(maxLatitude * Math.PI / 180)) * 1.001;
+    const buckets = new Map();
+    const positions = new Map();
+    const overflow = new Set();
+    const insertionOrder = new Map();
+
+    function cell(lat, lon) {
+        if (!Number.isFinite(lat) || !Number.isFinite(lon)
+            || Math.abs(lat) >= maxLatitude || Math.abs(lon) > 180) return null;
+        const y = Math.floor(lat / latitudeStep);
+        const x = Math.floor(lon / longitudeStep);
+        return { x, y, key: y + ':' + x };
+    }
+
+    function addToCell(group, location) {
+        if (!location) {
+            overflow.add(group);
+        } else {
+            if (!buckets.has(location.key)) buckets.set(location.key, new Set());
+            buckets.get(location.key).add(group);
+        }
+        positions.set(group, location);
+    }
+
+    function removeFromCell(group, location) {
+        if (!location) {
+            overflow.delete(group);
+        } else {
+            const bucket = buckets.get(location.key);
+            bucket?.delete(group);
+            if (bucket?.size === 0) buckets.delete(location.key);
+        }
+    }
+
+    return {
+        add(group) {
+            if (insertionOrder.has(group)) return;
+            insertionOrder.set(group, insertionOrder.size);
+            addToCell(group, cell(group.lat, group.lon));
+        },
+        update(group) {
+            if (!insertionOrder.has(group)) return;
+            const previous = positions.get(group);
+            const current = cell(group.lat, group.lon);
+            if (previous?.key === current?.key) return;
+            removeFromCell(group, previous);
+            addToCell(group, current);
+        },
+        candidates(lat, lon) {
+            const position = cell(lat, lon);
+            if (!position) return groups;
+            const found = new Set(overflow);
+            for (let y = position.y - 1; y <= position.y + 1; y++) {
+                for (let x = position.x - 1; x <= position.x + 1; x++) {
+                    const bucket = buckets.get(y + ':' + x);
+                    if (bucket) for (const group of bucket) found.add(group);
+                }
+            }
+            return Array.from(found).sort((a, b) => insertionOrder.get(a) - insertionOrder.get(b));
+        },
+    };
+}

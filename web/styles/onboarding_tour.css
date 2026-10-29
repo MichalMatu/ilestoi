@@ -75,7 +75,7 @@
     background: var(--surface-control);
     color: var(--text-strong);
     font: 650 0.82rem var(--font);
-    cursor: pointer;
+    cursor: var(--cursor-action);
 }
 .onboarding-tour-actions button:focus-visible {
     outline: 3px solid var(--info);

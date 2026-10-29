@@ -5,33 +5,38 @@ ROOT_DIR = Path(__file__).resolve().parent.parent
 
 
 class DocumentationContractTests(unittest.TestCase):
-    def test_readme_links_only_essential_docs(self):
+    def test_readme_documents_current_production_flow_and_essential_docs(self):
         readme = (ROOT_DIR / "README.md").read_text(encoding="utf-8")
 
-        self.assertIn("Aktualne wydanie: `v4.0`", readme)
+        # The current release baseline is the exact deployed commit on main,
+        # not the retired long-lived development branch or the historical v4.0.
+        self.assertIn("Aktualna linia produkcyjna: `main`", readme)
+        self.assertIn("`main` odzwierciedla **zaakceptowaną wersję produkcyjną**", readme)
+        self.assertIn("`feature/*` / `fix/*`", readme)
+        self.assertIn("Nie używamy trwałej gałęzi `work/dirty`", readme)
+        self.assertNotIn("`work/dirty` jest galezia robocza", readme)
         self.assertIn("Status projektu: wersja utrzymaniowa.", readme)
-        self.assertIn("docs/START.md", readme)
-        self.assertIn("docs/CURRENT_MODEL.md", readme)
-        self.assertIn("docs/DATABASE.md", readme)
-        self.assertIn("docs/BACKUP.md", readme)
-        self.assertIn("docs/DEPLOY.md", readme)
-        self.assertIn("OC/UFG", readme)
-        self.assertIn("`main` jest linia release-only", readme)
-        self.assertIn("`work/dirty` jest galezia robocza", readme)
+        for path in (
+            "docs/START.md",
+            "docs/CURRENT_MODEL.md",
+            "docs/DATABASE.md",
+            "docs/BACKUP.md",
+            "docs/DEPLOY.md",
+            "docs/TERMUX.md",
+            "docs/TERMUX_DEVELOPMENT_FLOW.md",
+        ):
+            self.assertIn(path, readme)
         self.assertIn("Python `3.11-3.13`", readme)
+        self.assertIn("OC/UFG", readme)
         self.assertIn("raport PDF z OC/UFG", readme)
+        self.assertIn("szyfrowany backup", readme)
+        self.assertIn("backup/restore", readme)
+        self.assertIn("scripts/check.sh", readme)
         self.assertNotIn("raport ZIP/PDF", readme)
         self.assertNotIn("docs/AUDIT.md", readme)
         self.assertNotIn("docs/README.en.md", readme)
         self.assertNotIn("RUNTIME_SMOKE", readme)
         self.assertNotIn("ROADMAP", readme.upper())
-        self.assertIn("Plan Dalszego Utrzymania", readme)
-        self.assertIn("Kolejne Male Poprawki", readme)
-        self.assertIn("Tylko Jesli Projekt Zyska Ruch", readme)
-        self.assertIn("make backup-restic", readme)
-        self.assertIn("NoNewPrivileges=true", readme)
-        self.assertIn("kopie off-host", readme)
-        self.assertIn("'unsafe-inline'", readme)
 
     def test_start_doc_has_runtime_admin_and_smoke_basics(self):
         doc = (ROOT_DIR / "docs" / "START.md").read_text(encoding="utf-8")
