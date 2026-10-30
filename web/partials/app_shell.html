@@ -47,44 +47,8 @@
                             <span class="layer-label" data-i18n="layers.vehicles">Pojazdy</span>
                             <span class="layer-count-badge" id="layer-count-vehicles">0</span>
                         </label>
-                        <div class="vehicle-filter-tray" data-i18n-attr="aria-label:layers.vehicleFilters"
-                            aria-label="Filtry pojazdów" role="group">
-                            <button type="button" class="vehicle-cycle-filter" id="vehicle-insurance-cycle-filter"
-                                aria-pressed="false" onclick="cycleVehicleInsuranceFilter()">
-                                <span class="vehicle-filter-off-dot" data-vehicle-insurance-filter-dot
-                                    aria-hidden="true"></span>
-                                <span class="vehicle-cycle-filter-label" data-vehicle-insurance-filter-label>OC: wył.</span>
-                                <span class="vehicle-filter-count is-empty" id="vehicle-insurance-filter-count"
-                                    aria-hidden="true"></span>
-                            </button>
-                            <button type="button" class="vehicle-cycle-filter" id="vehicle-standing-cycle-filter"
-                                aria-pressed="false" onclick="cycleVehicleStandingFilterDays()">
-                                <span class="vehicle-filter-off-dot" data-vehicle-standing-filter-dot
-                                    aria-hidden="true"></span>
-                                <span class="vehicle-cycle-filter-label" data-vehicle-standing-filter-label>Stoi: wył.</span>
-                                <span class="vehicle-filter-count is-empty" id="vehicle-standing-filter-count"
-                                    aria-hidden="true"></span>
-                            </button>
-                            <button type="button" class="vehicle-cycle-filter" id="vehicle-photo-cycle-filter"
-                                aria-pressed="false" onclick="cycleVehiclePhotoFilter()">
-                                <span class="vehicle-filter-off-dot" data-vehicle-photo-filter-dot
-                                    aria-hidden="true"></span>
-                                <span class="vehicle-cycle-filter-label" data-vehicle-photo-filter-label>Zdj: wył.</span>
-                                <span class="vehicle-filter-count is-empty" id="vehicle-photo-filter-count"
-                                    aria-hidden="true"></span>
-                            </button>
-                            <button type="button" class="vehicle-cycle-filter" id="vehicle-resolution-cycle-filter"
-                                aria-pressed="true" onclick="cycleVehicleResolutionFilter()">
-                                <span class="vehicle-resolution-dot" data-vehicle-resolution-filter-dot
-                                    aria-hidden="true"></span>
-                                <span class="vehicle-cycle-filter-label" data-vehicle-resolution-filter-label>Usunięte: ukryte</span>
-                                <span class="vehicle-filter-count is-empty" id="vehicle-resolution-filter-count"
-                                    aria-hidden="true"></span>
-                            </button>
-                        </div>
-                        <details class="vehicle-filter-details" id="vehicle-filter-details">
-                            <summary data-i18n="layers.vehicleChooseFilters">Wybierz filtry pojazdów</summary>
-                            <div class="vehicle-filter-choice-grid">
+                        <div class="vehicle-filter-choice-grid" role="group"
+                            aria-label="Filtry pojazdów" data-i18n-attr="aria-label:layers.vehicleFilters">
                                 <label><span data-i18n="layers.vehicleInsuranceFull">Ubezpieczenie OC</span>
                                     <select id="vehicle-insurance-select" onchange="setVehicleInsuranceFilter(this.value)">
                                         <option value="all" data-i18n="layers.vehicleFilterAll">Wszystkie</option>
@@ -115,8 +79,7 @@
                                         <option value="removed" data-i18n="layers.vehicleFilterRemoved">Usunięte</option>
                                     </select>
                                 </label>
-                            </div>
-                        </details>
+                        </div>
                     </div>
                     <label class="layer-toggle">
                         <input type="checkbox" id="toggle-field-photo-infrastructure" checked
