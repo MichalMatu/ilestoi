@@ -1,10 +1,8 @@
-import hashlib
 import json
 import re
-from functools import lru_cache
 from html import escape
 from pathlib import Path
-from urllib.parse import parse_qs, quote, unquote, urlsplit
+from urllib.parse import quote, unquote, urlsplit
 
 from app import config
 from app.http import responses as http_responses
@@ -64,54 +62,6 @@ WEB_ASSET_CONTENT_TYPES = {
     ".woff2": "font/woff2",
     ".xml": "application/xml; charset=utf-8",
 }
-
-
-# HTML remains fresh. Each local CSS/JS link gets a content-derived version,
-# allowing long CDN/browser caching without serving stale assets after deploy.
-_VERSIONED_ASSET_REF = re.compile(
-    r"""(?P<prefix>\b(?:src|href)=["'])(?P<path>/[A-Za-z0-9_./-]+\.(?:css|js))(?P<suffix>["'])"""
-)
-_CSS_IMPORT_REF = re.compile(
-    r"""(?P<prefix>@import\s+url\(["']?)(?P<path>/styles/[A-Za-z0-9_./-]+\.css)(?P<suffix>["']?\))"""
-)
-VERSIONED_WEB_ASSET_CACHE_CONTROL = "public, max-age=31536000, immutable"
-
-
-@lru_cache(maxsize=512)
-def _file_digest(file_path: str, mtime_ns: int, size: int) -> str:
-    # Cache computed digests only while metadata matches; checkout updates mtimes.
-    return hashlib.sha256(Path(file_path).read_bytes()).hexdigest()[:16]
-
-
-def _asset_version(relative: str) -> str:
-    path = config.WEB_DIR / relative
-    stat = path.stat()
-    if relative == "styles.css":
-        return hashlib.sha256(_versioned_stylesheet()).hexdigest()[:16]
-    return _file_digest(str(path), stat.st_mtime_ns, stat.st_size)
-
-
-def _versioned_stylesheet() -> bytes:
-    stylesheet = (config.WEB_DIR / "styles.css").read_text(encoding="utf-8")
-
-    def replace_import(match: re.Match) -> str:
-        relative = match.group("path").lstrip("/")
-        # Only our own CSS imports receive a version; no remote or dynamic URLs.
-        if not (config.WEB_DIR / relative).is_file():
-            return match.group(0)
-        return f'{match.group("prefix")}{match.group("path")}?v={_asset_version(relative)}{match.group("suffix")}'
-
-    return _CSS_IMPORT_REF.sub(replace_import, stylesheet).encode("utf-8")
-
-
-def _version_web_asset_references(page: str) -> str:
-    def replace_reference(match: re.Match) -> str:
-        relative = match.group("path").lstrip("/")
-        if not (config.WEB_DIR / relative).is_file():
-            return match.group(0)
-        return f'{match.group("prefix")}{match.group("path")}?v={_asset_version(relative)}{match.group("suffix")}'
-
-    return _VERSIONED_ASSET_REF.sub(replace_reference, page)
 
 
 def app_settings_bootstrap_json() -> str:
@@ -269,7 +219,7 @@ def render_web_template(
         )
     resolved_page_path = page_path if page_path in PAGE_METADATA else "/"
     metadata = PAGE_METADATA[resolved_page_path]
-    return _version_web_asset_references(
+    return (
         rendered.replace(PAGE_HEAD_METADATA_TOKEN, page_head_metadata(resolved_page_path))
         .replace(PAGE_STRUCTURED_DATA_TOKEN, page_structured_data(resolved_page_path))
         .replace(PAGE_TITLE_KEY_TOKEN, metadata["title_key"])
@@ -320,28 +270,5 @@ def handle_web_asset(handler, path: str, *, include_body: bool = True) -> bool:
     asset_path = config.WEB_DIR / relative
     if not asset_path.is_file():
         return False
-    # Never cache URLs without the *current* content hash. A stale URL
-    # requested after deployment gets fresh bytes, but is never cached under
-    # its obsolete identity. API/private assets are handled elsewhere.
-    if relative.suffix.lower() in {".css", ".js"}:
-        version = parse_qs(urlsplit(getattr(handler, "path", path)).query).get("v", [])
-        current = _asset_version(relative.as_posix())
-        cache_control = (
-            VERSIONED_WEB_ASSET_CACHE_CONTROL if version == [current] else "no-store"
-        )
-        if relative.as_posix() == "styles.css":
-            send_bytes(
-                handler,
-                _versioned_stylesheet(),
-                content_type,
-                cache_control=cache_control,
-                include_body=include_body,
-            )
-            return True
-        send_file(
-            handler, asset_path, content_type,
-            cache_control=cache_control, include_body=include_body,
-        )
-        return True
     send_file(handler, asset_path, content_type, cache_control="no-store", include_body=include_body)
     return True

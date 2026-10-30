@@ -89,7 +89,7 @@ class HttpDispatchContractTests(unittest.TestCase):
         self.assertIn(("Content-Type", "text/html; charset=utf-8"), handler.response_headers)
         body = handler.wfile.getvalue().decode("utf-8")
         self.assertIn('id="modal-problem-report"', body)
-        self.assertRegex(body, r'<script src="/app/problem_report\.js\?v=[0-9a-f]{16}"></script>')
+        self.assertIn('<script src="/app/problem_report.js"></script>', body)
 
     def test_post_settings_uses_json_dispatch_preflight(self):
         handler = FakeHandler("/api/settings")
