@@ -90,6 +90,8 @@ const TRANSLATIONS_EN = {
         'panel.mapControls': 'Map controls',
 
         'layers.label': 'Map layers',
+        'layers.reportsGroup': 'Reports',
+        'layers.appearanceGroup': 'Map appearance',
         'layers.vehicleInsuranceFull': 'Insurance',
         'layers.vehicleStandingFull': 'Standing',
         'layers.vehiclePhotosFull': 'Photos',

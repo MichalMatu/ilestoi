@@ -110,6 +110,13 @@
     padding-bottom: var(--space-2);
 }
 
+.app-menu-group-title {
+    margin: var(--space-2) 0 1px;
+    color: var(--text-soft);
+    font: 800 0.73rem/1.35 var(--font-display);
+    letter-spacing: 0.02em;
+}
+
 .app-menu-drawer-header {
     flex: 0 0 auto;
     min-height: 76px;
