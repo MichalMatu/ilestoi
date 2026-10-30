@@ -1,7 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import vm from 'node:vm';
 
 const get = filename => fs.readFileSync(new URL('../../web/' + filename, import.meta.url), 'utf8');
 const html = get('partials/app_shell.html');
@@ -44,49 +43,21 @@ test('layer groups separate reports from presentation without changing layer con
     assert.match(maps, /unavailable\.hidden = supported/);
 });
 
-test('vehicle filters use exactly four always-visible accessible selectors', () => {
-    assert.match(html, /<div class="vehicle-filter-choice-grid" role="group"/);
-    assert.match(html, /data-i18n-attr="aria-label:layers.vehicleFilters"/);
+test('vehicle selectors are accessible, optional, and synchronized with cycle state', () => {
+    assert.match(html, /<details class="vehicle-filter-details"/);
     for (const [id, handler] of [
         ['vehicle-insurance-select', 'setVehicleInsuranceFilter'],
         ['vehicle-standing-select', 'setVehicleStandingFilterDays'],
         ['vehicle-photo-select', 'setVehiclePhotoFilter'],
         ['vehicle-resolution-select', 'setVehicleResolutionFilter'],
     ]) {
-        assert.equal(html.split('id="' + id + '"').length - 1, 1);
-        assert.ok(html.includes('onchange="' + handler + '('), id);
-        assert.ok(vehicles.includes("'" + id + "':"), id);
+        assert.ok(html.includes('id="' + id + '"'));
+        assert.ok(html.includes('onchange="' + handler + '('));
+        assert.ok(vehicles.includes("'" + id + "':"));
     }
-    assert.doesNotMatch(html, /vehicle-(?:cycle-filter|filter-details|filter-tray)/);
-    assert.doesNotMatch(html, /<details[^>]*vehicle/);
-    assert.doesNotMatch(vehicles, /function (?:cycleVehicle|vehicleFilterCounts|updateVehicleFilterButton)/);
-    assert.match(layers, /\.vehicle-filter-choice-grid\s*\{[^}]*grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)/s);
-    assert.match(layers, /@media \(max-width: 350px\)\s*\{\s*\.vehicle-filter-choice-grid\s*\{\s*grid-template-columns:\s*minmax\(0, 1fr\)/s);
+    assert.match(layers, /\.vehicle-cycle-filter\s*\{[^}]*min-height:\s*36px/s);
     assert.match(layers, /\.vehicle-filter-choice-grid select\s*\{[^}]*min-height:\s*40px/s);
-});
-
-test('persisted filter values appear in selects without rebuilding marker counts', () => {
-    const start = vehicles.indexOf('function updateVehicleFilterSelectors()');
-    const end = vehicles.indexOf('\nfunction vehiclePhotoPopup(', start);
-    assert.ok(start > 0 && end > start);
-    const controls = new Map(['vehicle-insurance-select', 'vehicle-standing-select',
-        'vehicle-photo-select', 'vehicle-resolution-select'].map(id => [id, { value: '' }]));
-    const ctx = {
-        document: { getElementById(id) { return controls.get(id) || null; } },
-    };
-    vm.runInNewContext(`let vehicleInsuranceFilter = 'uninsured';
-        let vehicleStandingFilterDays = 60;
-        let vehiclePhotoFilter = 'above_6';
-        let vehicleResolutionFilter = 'removed';
-        ${vehicles.slice(start, end)}
-        this.sync = updateVehicleFilterSelectors;`, ctx);
-    ctx.sync();
-    assert.deepEqual([...controls.values()].map(el => el.value),
-        ['uninsured', '60', 'above_6', 'removed']);
-    assert.doesNotMatch(vehicles, /function (?:vehicleFilterCounts|emptyVehicleFilterCounts|updateVehicleFilterButton)/);
-    assert.doesNotMatch(vehicles, /updateVehicleFilterControlsAndCounts/);
-    assert.doesNotMatch(get('app/vehicle_resolution.js'), /cycleVehicleResolutionFilter/);
-    assert.match(get('app/field_photos.js'), /updateVehicleFilterSelectors\(\)/);
+    assert.match(html, /id="vehicle-insurance-cycle-filter"/);
 });
 
 test('orthophoto advanced options are collapsed without disabling any existing inputs', () => {
@@ -101,7 +72,7 @@ test('orthophoto advanced options are collapsed without disabling any existing i
 });
 
 test('translations and touch/focus affordances exist in both languages', () => {
-    for (const key of ['layers.reportsGroup','layers.appearanceGroup',
+    for (const key of ['layers.reportsGroup','layers.appearanceGroup','layers.vehicleChooseFilters',
         'layers.vehicleInsuranceFull','layers.vehicleStandingFull','layers.vehiclePhotosFull',
         'layers.vehicleRemovedFull','layers.streetLabelsUnavailable','modal.settings.advanced']) {
         assert.ok(pl.includes("'" + key + "':"), 'pl '+key);

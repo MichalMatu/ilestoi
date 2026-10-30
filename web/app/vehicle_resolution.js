@@ -6,6 +6,11 @@ const VEHICLE_RESOLUTION_FILTERS = new Set([
     VEHICLE_RESOLUTION_FILTER_ALL,
     VEHICLE_RESOLUTION_FILTER_REMOVED,
 ]);
+const VEHICLE_RESOLUTION_FILTER_CYCLE = [
+    VEHICLE_RESOLUTION_FILTER_ACTIVE,
+    VEHICLE_RESOLUTION_FILTER_ALL,
+    VEHICLE_RESOLUTION_FILTER_REMOVED,
+];
 let vehicleResolutionFilter = loadVehicleResolutionFilter();
 
 function vehicleResolutionStatus(value) {
@@ -93,13 +98,46 @@ function vehicleGroupMatchesResolutionFilter(group, filter = vehicleResolutionFi
     }
 }
 
+function vehicleResolutionFilterLabel(filter) {
+    switch (normalizeVehicleResolutionFilter(filter)) {
+        case VEHICLE_RESOLUTION_FILTER_REMOVED:
+            return t('layers.vehicleResolutionCycleRemoved');
+        case VEHICLE_RESOLUTION_FILTER_ALL:
+            return t('layers.vehicleResolutionCycleAll');
+        case VEHICLE_RESOLUTION_FILTER_ACTIVE:
+        default:
+            return t('layers.vehicleResolutionCycleActive');
+    }
+}
+
+function vehicleResolutionFilterCount(counts, filter = vehicleResolutionFilter) {
+    switch (normalizeVehicleResolutionFilter(filter)) {
+        case VEHICLE_RESOLUTION_FILTER_REMOVED:
+        case VEHICLE_RESOLUTION_FILTER_ACTIVE:
+            return counts.removed;
+        case VEHICLE_RESOLUTION_FILTER_ALL:
+        default:
+            return null;
+    }
+}
+
+function vehicleResolutionFilterDotClass(filter = vehicleResolutionFilter) {
+    return normalizeVehicleResolutionFilter(filter) === VEHICLE_RESOLUTION_FILTER_ALL
+        ? 'vehicle-filter-off-dot'
+        : 'vehicle-resolution-dot';
+}
+
 function setVehicleResolutionFilter(filter) {
     const nextFilter = normalizeVehicleResolutionFilter(filter);
     if (nextFilter === vehicleResolutionFilter) {
-        updateVehicleFilterSelectors();
+        updateVehicleFilterControlsAndCounts();
         return;
     }
     vehicleResolutionFilter = nextFilter;
     saveVehicleResolutionFilter(vehicleResolutionFilter);
     refreshVehicleLayer();
+}
+
+function cycleVehicleResolutionFilter() {
+    setVehicleResolutionFilter(nextVehicleCycleValue(VEHICLE_RESOLUTION_FILTER_CYCLE, vehicleResolutionFilter));
 }
