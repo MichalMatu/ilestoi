@@ -6,8 +6,6 @@ const VEHICLE_INSURANCE_FILTER_UNINSURED = 'uninsured';
 const VEHICLE_INSURANCE_FILTER_UNKNOWN = FIELD_PHOTO_VEHICLE_INSURANCE_STATUS_UNKNOWN;
 const VEHICLE_INSURANCE_FILTERS = new Set([VEHICLE_FILTER_ALL, VEHICLE_INSURANCE_FILTER_INSURED, VEHICLE_INSURANCE_FILTER_UNINSURED, VEHICLE_INSURANCE_FILTER_UNKNOWN]);
 const VEHICLE_STANDING_FILTER_OFF = 0;
-const VEHICLE_INSURANCE_FILTER_CYCLE = [VEHICLE_FILTER_ALL, VEHICLE_INSURANCE_FILTER_INSURED, VEHICLE_INSURANCE_FILTER_UNINSURED, VEHICLE_INSURANCE_FILTER_UNKNOWN];
-const VEHICLE_STANDING_FILTER_DAYS_CYCLE = [VEHICLE_STANDING_FILTER_OFF, ...VEHICLE_LONG_STANDING_DAY_OPTIONS];
 const VEHICLE_PHOTO_FILTER_OFF = 'off';
 const VEHICLE_PHOTO_FILTER_UP_TO_6 = 'up_to_6';
 const VEHICLE_PHOTO_FILTER_ABOVE_6 = 'above_6';
@@ -328,127 +326,20 @@ function prioritizedVehicleGroups(photos = fieldPhotoLayerData) {
     return visibleVehicleGroups(photos).sort((a, b) => vehicleGroupStatusPriority(a) - vehicleGroupStatusPriority(b));
 }
 
-function emptyVehicleFilterCounts() {
-    const counts = {
-        unknown: 0,
-        insured: 0,
-        uninsured: 0,
-        active: 0,
-        removed: 0,
-        standingByDays: {},
-        photoByRange: { [VEHICLE_PHOTO_FILTER_UP_TO_6]: 0, [VEHICLE_PHOTO_FILTER_ABOVE_6]: 0 },
-    };
-    VEHICLE_LONG_STANDING_DAY_OPTIONS.forEach(days => {
-        counts.standingByDays[days] = 0;
-    });
-    return counts;
-}
-
-function vehicleFilterCounts(photos = fieldPhotoLayerData) {
-    const counts = emptyVehicleFilterCounts();
-    if (!publicLayerAllowed(PUBLIC_LAYER_KEYS.vehicles)) return counts;
-    const nowMs = Date.now();
-    buildVehicleGroups(photos)
-        .filter(group => vehicleGroupPhotoCount(group) > 0)
-        .forEach(group => {
-            const insuranceStatus = vehicleGroupInsuranceStatus(group);
-            const resolutionStatus = vehicleGroupResolutionStatus(group);
-            if (Object.prototype.hasOwnProperty.call(counts, insuranceStatus)) counts[insuranceStatus] += 1;
-            if (Object.prototype.hasOwnProperty.call(counts, resolutionStatus)) counts[resolutionStatus] += 1;
-            VEHICLE_LONG_STANDING_DAY_OPTIONS.forEach(days => {
-                if (vehicleGroupIsLongStanding(group, nowMs, days)) counts.standingByDays[days] += 1;
-            });
-            const photoRange = vehicleGroupPhotoCount(group) <= 6 ? VEHICLE_PHOTO_FILTER_UP_TO_6 : VEHICLE_PHOTO_FILTER_ABOVE_6;
-            counts.photoByRange[photoRange] += 1;
-        });
-    return counts;
-}
-
-function vehicleInsuranceFilterLabel(filter) {
-    switch (normalizeVehicleInsuranceFilter(filter)) {
-        case VEHICLE_INSURANCE_FILTER_INSURED:
-            return t('layers.vehicleInsuranceCycleStatus', { status: t('vehicle.markerInsuranceShort.insured') });
-        case VEHICLE_INSURANCE_FILTER_UNINSURED:
-            return t('layers.vehicleInsuranceCycleStatus', { status: t('vehicle.markerInsuranceShort.uninsured') });
-        case VEHICLE_INSURANCE_FILTER_UNKNOWN:
-            return t('layers.vehicleInsuranceCycleStatus', { status: t('vehicle.markerInsuranceShort.unknown') });
-        case VEHICLE_FILTER_ALL:
-        default:
-            return t('layers.vehicleInsuranceCycleOff');
-    }
-}
-
-function vehicleStandingFilterLabel(days) {
-    const safeDays = normalizeVehicleStandingFilterDays(days);
-    return safeDays === VEHICLE_STANDING_FILTER_OFF
-        ? t('layers.vehicleStandingCycleOff')
-        : t('layers.vehicleStandingCycleDays', { days: safeDays });
-}
-
-function vehiclePhotoFilterLabel(filter) {
-    const safeFilter = normalizeVehiclePhotoFilter(filter);
-    if (safeFilter === VEHICLE_PHOTO_FILTER_UP_TO_6) return t('layers.vehiclePhotoCycleUpTo', { n: 6 });
-    if (safeFilter === VEHICLE_PHOTO_FILTER_ABOVE_6) return t('layers.vehiclePhotoCycleAbove', { n: 7 });
-    return t('layers.vehiclePhotoCycleOff');
-}
-
-function vehicleInsuranceFilterCount(counts, filter = vehicleInsuranceFilter) {
-    switch (normalizeVehicleInsuranceFilter(filter)) {
-        case VEHICLE_INSURANCE_FILTER_INSURED:
-            return counts.insured;
-        case VEHICLE_INSURANCE_FILTER_UNINSURED:
-            return counts.uninsured;
-        case VEHICLE_INSURANCE_FILTER_UNKNOWN:
-            return counts.unknown;
-        case VEHICLE_FILTER_ALL:
-        default:
-            return null;
-    }
-}
-
-function vehicleInsuranceFilterDotClass(filter = vehicleInsuranceFilter) {
-    switch (normalizeVehicleInsuranceFilter(filter)) {
-        case VEHICLE_INSURANCE_FILTER_INSURED:
-            return 'map-pin-status-ring map-pin-status-ring--insured';
-        case VEHICLE_INSURANCE_FILTER_UNINSURED:
-            return 'map-pin-status-ring map-pin-status-ring--uninsured';
-        case VEHICLE_INSURANCE_FILTER_UNKNOWN:
-            return 'map-pin-status-ring map-pin-status-ring--unknown';
-        case VEHICLE_FILTER_ALL:
-        default:
-            return 'vehicle-filter-off-dot';
-    }
-}
-
-function vehiclePhotoFilterDotClass(filter = vehiclePhotoFilter) {
-    return normalizeVehiclePhotoFilter(filter) === VEHICLE_PHOTO_FILTER_OFF
-        ? 'vehicle-filter-off-dot'
-        : 'vehicle-photo-dot';
-}
-
-function nextVehicleCycleValue(values, current) {
-    const index = values.indexOf(current);
-    return values[(index + 1) % values.length];
-}
-
 function setVehicleInsuranceFilter(filter) {
     const nextFilter = normalizeVehicleInsuranceFilter(filter);
     if (nextFilter === vehicleInsuranceFilter) {
-        updateVehicleFilterControlsAndCounts();
+        updateVehicleFilterSelectors();
         return;
     }
     vehicleInsuranceFilter = nextFilter;
     refreshVehicleLayer();
 }
 
-function cycleVehicleInsuranceFilter() {
-    setVehicleInsuranceFilter(nextVehicleCycleValue(VEHICLE_INSURANCE_FILTER_CYCLE, vehicleInsuranceFilter));
-}
-
 function setVehicleStandingFilterDays(days) {
     const nextDays = normalizeVehicleStandingFilterDays(days);
     if (nextDays === vehicleStandingFilterDays) {
-        updateVehicleFilterControlsAndCounts();
+        updateVehicleFilterSelectors();
         return;
     }
     vehicleStandingFilterDays = nextDays;
@@ -456,52 +347,14 @@ function setVehicleStandingFilterDays(days) {
     refreshVehicleLayer();
 }
 
-function cycleVehicleStandingFilterDays() {
-    setVehicleStandingFilterDays(nextVehicleCycleValue(VEHICLE_STANDING_FILTER_DAYS_CYCLE, vehicleStandingFilterDays));
-}
-
 function setVehiclePhotoFilter(filter) {
     const nextFilter = normalizeVehiclePhotoFilter(filter);
     if (nextFilter === vehiclePhotoFilter) {
-        updateVehicleFilterControlsAndCounts();
+        updateVehicleFilterSelectors();
         return;
     }
     vehiclePhotoFilter = nextFilter;
     refreshVehicleLayer();
-}
-
-function cycleVehiclePhotoFilter() {
-    setVehiclePhotoFilter(nextVehicleCycleValue(VEHICLE_PHOTO_FILTER_CYCLE, vehiclePhotoFilter));
-}
-
-function updateVehicleFilterCount(id, count, label = '') {
-    const badge = document.getElementById(id);
-    if (!badge) return;
-    const hasCount = Number.isFinite(count);
-    const safeCount = hasCount ? count : 0;
-    badge.textContent = hasCount ? String(safeCount) : '';
-    badge.classList.toggle('is-empty', !hasCount);
-    if (hasCount) {
-        badge.removeAttribute('aria-hidden');
-        badge.setAttribute('aria-label', t('layers.vehicleFilterCountLabel', { label, n: safeCount }));
-    } else {
-        badge.setAttribute('aria-hidden', 'true');
-        badge.removeAttribute('aria-label');
-    }
-}
-
-function updateVehicleFilterButton({ buttonId, labelSelector, dotSelector, countId, label, count, dotClass, active }) {
-    const button = document.getElementById(buttonId);
-    const labelEl = document.querySelector(labelSelector);
-    const dotEl = document.querySelector(dotSelector);
-    if (button) {
-        button.classList.toggle('is-active', active);
-        button.setAttribute('aria-pressed', active ? 'true' : 'false');
-        button.setAttribute('aria-label', label);
-    }
-    if (labelEl) labelEl.textContent = label;
-    if (dotEl) dotEl.className = dotClass;
-    updateVehicleFilterCount(countId, fieldPhotoOverviewActive ? null : count, label);
 }
 
 function vehicleMarkerTooltip(group) {
@@ -520,63 +373,15 @@ function vehicleMarkerTooltip(group) {
     return parts.join(', ');
 }
 
-function updateVehicleFilterControlsAndCounts() {
-    const counts = vehicleFilterCounts();
-    updateVehicleFilterButton({
-        buttonId: 'vehicle-insurance-cycle-filter',
-        labelSelector: '[data-vehicle-insurance-filter-label]',
-        dotSelector: '[data-vehicle-insurance-filter-dot]',
-        countId: 'vehicle-insurance-filter-count',
-        label: vehicleInsuranceFilterLabel(vehicleInsuranceFilter),
-        count: vehicleInsuranceFilterCount(counts, vehicleInsuranceFilter),
-        dotClass: vehicleInsuranceFilterDotClass(vehicleInsuranceFilter),
-        active: vehicleInsuranceFilter !== VEHICLE_FILTER_ALL,
-    });
-    updateVehicleFilterButton({
-        buttonId: 'vehicle-standing-cycle-filter',
-        labelSelector: '[data-vehicle-standing-filter-label]',
-        dotSelector: '[data-vehicle-standing-filter-dot]',
-        countId: 'vehicle-standing-filter-count',
-        label: vehicleStandingFilterLabel(vehicleStandingFilterDays),
-        count: vehicleStandingFilterDays === VEHICLE_STANDING_FILTER_OFF
-            ? null
-            : counts.standingByDays[vehicleStandingFilterDays],
-        dotClass: vehicleStandingFilterDays === VEHICLE_STANDING_FILTER_OFF
-            ? 'vehicle-filter-off-dot'
-            : 'map-pin-age-dot',
-        active: vehicleStandingFilterDays !== VEHICLE_STANDING_FILTER_OFF,
-    });
-    updateVehicleFilterButton({
-        buttonId: 'vehicle-photo-cycle-filter',
-        labelSelector: '[data-vehicle-photo-filter-label]',
-        dotSelector: '[data-vehicle-photo-filter-dot]',
-        countId: 'vehicle-photo-filter-count',
-        label: vehiclePhotoFilterLabel(vehiclePhotoFilter),
-        count: vehiclePhotoFilter === VEHICLE_PHOTO_FILTER_OFF
-            ? null
-            : counts.photoByRange[vehiclePhotoFilter],
-        dotClass: vehiclePhotoFilterDotClass(vehiclePhotoFilter),
-        active: vehiclePhotoFilter !== VEHICLE_PHOTO_FILTER_OFF,
-    });
-    updateVehicleFilterButton({
-        buttonId: 'vehicle-resolution-cycle-filter',
-        labelSelector: '[data-vehicle-resolution-filter-label]',
-        dotSelector: '[data-vehicle-resolution-filter-dot]',
-        countId: 'vehicle-resolution-filter-count',
-        label: vehicleResolutionFilterLabel(vehicleResolutionFilter),
-        count: vehicleResolutionFilterCount(counts, vehicleResolutionFilter),
-        dotClass: vehicleResolutionFilterDotClass(vehicleResolutionFilter),
-        active: vehicleResolutionFilter !== VEHICLE_FILTER_ALL,
-    });
-    // Keep explicit selectors and compact cycle buttons in sync, regardless
-    // of which control was used last.
-    const selectValues = {
+function updateVehicleFilterSelectors() {
+    // Refresh restored preferences without counting every marker again.
+    const values = {
         'vehicle-insurance-select': vehicleInsuranceFilter,
         'vehicle-standing-select': String(vehicleStandingFilterDays),
         'vehicle-photo-select': vehiclePhotoFilter,
         'vehicle-resolution-select': vehicleResolutionFilter,
     };
-    Object.entries(selectValues).forEach(([id, value]) => {
+    Object.entries(values).forEach(([id, value]) => {
         const select = document.getElementById(id);
         if (select && select.value !== value) select.value = value;
     });
