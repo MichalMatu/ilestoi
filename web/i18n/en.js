@@ -92,6 +92,8 @@ const TRANSLATIONS_EN = {
         'layers.label': 'Map layers',
         'layers.vehicles': 'Vehicles',
         'layers.cadastral': 'Parcel boundaries',
+        'layers.streetLabels': 'Street names',
+        'layers.streetLabelsTooltip': 'Street names on aerial maps (OSM has its own labels)',
         'layers.cadastralTooltip': 'KIEG/GUGiK parcels, no owner data.',
         'layers.baseMapOsm': 'OSM map',
         'layers.fieldPhotoInfrastructure': 'Infrastructure',
