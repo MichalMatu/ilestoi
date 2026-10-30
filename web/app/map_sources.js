@@ -6,6 +6,12 @@ let mapSourceSwapToken = 0;
 let mapSourcePendingLayer = null;
 let mapSourceStableIndex = currentMapSourceIndex;
 let mapLabelLayer = null;
+let mapLabelsVisible = true;
+try {
+    mapLabelsVisible = localStorage.getItem(MAP_STREET_LABELS_VISIBLE_STORAGE_KEY) !== '0';
+} catch (_) {
+    mapLabelsVisible = true;
+}
 let mapSourceSliderVisible = true;
 try {
     mapSourceSliderVisible = localStorage.getItem(MAP_SOURCE_SLIDER_VISIBLE_STORAGE_KEY) !== 'false';
@@ -219,13 +225,21 @@ function buildMapLabelLayer() {
         transparent: true,
         version: '1.3.0',
         maxZoom: MAX_MAP_ZOOM,
+        opacity: 0.6,
         pane: 'overlayPane',
         attribution: 'GUGiK · Państwowy Rejestr Granic – ulice',
     });
 }
 
 function updateMapLabelLayer() {
-    const shouldShow = activeMapSource().labelsOverlay !== false;
+    const supported = activeMapSource().labelsOverlay !== false;
+    const toggle = document.getElementById('toggle-street-labels');
+    if (toggle) {
+        toggle.checked = mapLabelsVisible;
+        toggle.disabled = !supported;
+        toggle.closest('.layer-toggle')?.classList.toggle('is-disabled', !supported);
+    }
+    const shouldShow = mapLabelsVisible && supported;
     if (shouldShow) {
         if (!mapLabelLayer) mapLabelLayer = buildMapLabelLayer();
         if (!map.hasLayer(mapLabelLayer)) mapLabelLayer.addTo(map);
@@ -234,6 +248,14 @@ function updateMapLabelLayer() {
     if (mapLabelLayer && map.hasLayer(mapLabelLayer)) {
         map.removeLayer(mapLabelLayer);
     }
+}
+
+function toggleMapLabelLayer(visible) {
+    mapLabelsVisible = Boolean(visible);
+    try {
+        localStorage.setItem(MAP_STREET_LABELS_VISIBLE_STORAGE_KEY, mapLabelsVisible ? '1' : '0');
+    } catch (_) {}
+    updateMapLabelLayer();
 }
 
 function renderMapSourceTicks(visibleIndices = visibleMapSourceIndices()) {
