@@ -49,7 +49,7 @@
                         </label>
                         <div class="vehicle-filter-choice-grid" role="group"
                             aria-label="Filtry pojazdów" data-i18n-attr="aria-label:layers.vehicleFilters">
-                                <label><span data-i18n="layers.vehicleInsuranceFull">Ubezpieczenie OC</span>
+                                <label><span data-i18n="layers.vehicleInsuranceFull">OC</span>
                                     <select id="vehicle-insurance-select" onchange="setVehicleInsuranceFilter(this.value)">
                                         <option value="all" data-i18n="layers.vehicleFilterAll">Wszystkie</option>
                                         <option value="insured" data-i18n="layers.vehicleFilterInsured">Ubezpieczone</option>
@@ -57,7 +57,7 @@
                                         <option value="unknown" data-i18n="layers.vehicleFilterUnknown">Nieznane</option>
                                     </select>
                                 </label>
-                                <label><span data-i18n="layers.vehicleStandingFull">Czas postoju</span>
+                                <label><span data-i18n="layers.vehicleStandingFull">Postój</span>
                                     <select id="vehicle-standing-select" onchange="setVehicleStandingFilterDays(Number(this.value))">
                                         <option value="0" data-i18n="layers.vehicleFilterAll">Wszystkie</option>
                                         <option value="30" data-i18n="layers.vehicleFilter30">Od 30 dni</option>
@@ -65,14 +65,14 @@
                                         <option value="90" data-i18n="layers.vehicleFilter90">Od 90 dni</option>
                                     </select>
                                 </label>
-                                <label><span data-i18n="layers.vehiclePhotosFull">Liczba zdjęć</span>
+                                <label><span data-i18n="layers.vehiclePhotosFull">Zdjęcia</span>
                                     <select id="vehicle-photo-select" onchange="setVehiclePhotoFilter(this.value)">
                                         <option value="off" data-i18n="layers.vehicleFilterAll">Wszystkie</option>
                                         <option value="up_to_6" data-i18n="layers.vehicleFilterUpTo6">Do 6 zdjęć</option>
                                         <option value="above_6" data-i18n="layers.vehicleFilterAbove6">7 i więcej</option>
                                     </select>
                                 </label>
-                                <label><span data-i18n="layers.vehicleRemovedFull">Status pojazdu</span>
+                                <label><span data-i18n="layers.vehicleRemovedFull">Status</span>
                                     <select id="vehicle-resolution-select" onchange="setVehicleResolutionFilter(this.value)">
                                         <option value="active" data-i18n="layers.vehicleFilterActive">Widoczne</option>
                                         <option value="all" data-i18n="layers.vehicleFilterAll">Wszystkie</option>
