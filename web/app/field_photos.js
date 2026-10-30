@@ -315,7 +315,7 @@ function updateLayerCountBadge(id, count, tooltipKey) {
 
 function updateLayerCounters() {
     updateLayerCountBadge('layer-count-vehicles', countVehicleLayerGroups(), 'layers.countVehiclesTooltip');
-    updateVehicleFilterControlsAndCounts();
+    updateVehicleFilterSelectors();
     updateLayerCountBadge(
         'layer-count-field-photo-infrastructure',
         countFieldPhotoIssueLayerGroups('infrastructure'),
