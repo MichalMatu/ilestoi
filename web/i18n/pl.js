@@ -92,8 +92,6 @@ const TRANSLATIONS_PL = {
         'panel.mapControls': 'Kontrolki mapy',
 
         'layers.label': 'Warstwy mapy',
-        'layers.reportsGroup': 'Zgłoszenia',
-        'layers.appearanceGroup': 'Wygląd mapy',
         'layers.vehicleInsuranceFull': 'OC',
         'layers.vehicleStandingFull': 'Postój',
         'layers.vehiclePhotosFull': 'Zdjęcia',
