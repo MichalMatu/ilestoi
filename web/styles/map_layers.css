@@ -43,6 +43,20 @@
     border-color: color-mix(in srgb, var(--primary) 34%, transparent);
 }
 
+.layer-toggle.is-disabled {
+    opacity: 0.6;
+    cursor: default;
+}
+
+.layer-toggle.is-disabled:hover {
+    background: var(--surface-subtle);
+    border-color: var(--border);
+}
+
+.layer-toggle input:disabled {
+    cursor: default;
+}
+
 .layer-toggle input {
     appearance: none;
     -webkit-appearance: none;
@@ -251,6 +265,19 @@
     background: var(--pin-vehicle-bg);
     border: 2px solid var(--pin-vehicle-ring);
     box-shadow: 0 0 0 2px var(--pin-vehicle-ring-soft);
+}
+
+.layer-pin--street-labels {
+    width: 16px;
+    height: 16px;
+    display: grid;
+    place-items: center;
+    border: 1px solid var(--border-strong);
+    border-radius: 3px;
+    background: var(--surface-inset);
+    color: var(--text-soft);
+    font: 750 0.56rem/1 var(--font);
+    transform: none;
 }
 
 .layer-pin--cadastral {
