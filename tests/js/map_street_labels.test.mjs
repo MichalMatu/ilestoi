@@ -25,14 +25,16 @@ function harness(initialVisible = true) {
         disabled: false,
         closest(selector) { assert.equal(selector, '.layer-toggle'); return row; },
     };
+    const unavailable = { hidden: true };
     const ctx = {
         initialVisible,
         MAX_MAP_ZOOM: 22,
         STREET_LABELS_WMS_URL: 'https://example.test/wms',
         MAP_STREET_LABELS_VISIBLE_STORAGE_KEY: 'street-labels-test',
         document: { getElementById(id) {
-            assert.equal(id, 'toggle-street-labels');
-            return checkbox;
+            if (id === 'toggle-street-labels') return checkbox;
+            if (id === 'street-labels-unavailable') return unavailable;
+            assert.fail('unexpected element id: ' + id);
         } },
         localStorage: { setItem(key, value) { stored.set(key, value); } },
         activeMapSource: () => ({ labelsOverlay: state.supported }),
@@ -53,7 +55,7 @@ function harness(initialVisible = true) {
         '\nthis.api = { updateMapLabelLayer, toggleMapLabelLayer };',
         ctx
     );
-    return { ctx, state, active, stored, checkbox };
+    return { ctx, state, active, stored, checkbox, unavailable };
 }
 
 test('street-label WMS has reduced opacity and unchanged GUGiK source', () => {
@@ -88,12 +90,14 @@ test('OSM disables switch and hides separate overlay while keeping preference', 
     assert.equal(h.active.size, 0);
     assert.equal(h.checkbox.disabled, true);
     assert.equal(h.state.disabledClass, true);
+    assert.equal(h.unavailable.hidden, false);
     assert.equal(h.checkbox.checked, true, 'retain preference for aerial maps');
     h.state.supported = true;
     h.ctx.api.updateMapLabelLayer();
     assert.equal(h.active.size, 1);
     assert.equal(h.checkbox.disabled, false);
     assert.equal(h.state.disabledClass, false);
+    assert.equal(h.unavailable.hidden, true);
 });
 
 test('saved disabled preference is respected when switching map sources', () => {
