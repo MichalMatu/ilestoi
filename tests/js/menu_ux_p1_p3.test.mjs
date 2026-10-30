@@ -27,16 +27,19 @@ test('drawer has a separately scrolling center with fixed header and footer', ()
     assert.match(panel, /\.app-menu-drawer-footer\s*\{[^}]*flex:\s*0 0 auto/s);
 });
 
-test('layer groups separate reports from presentation without changing layer controls', () => {
-    const report = html.indexOf('data-i18n="layers.reportsGroup"');
+test('map menu has no redundant section headings and preserves the existing control order', () => {
     const vehicle = html.indexOf('id="toggle-vehicles"');
     const pending = html.indexOf('id="toggle-field-photo-pending"');
-    const appearance = html.indexOf('data-i18n="layers.appearanceGroup"');
     const source = html.indexOf('id="map-source-slider-toggle"');
     const cadastral = html.indexOf('id="toggle-cadastral-parcels"');
     const streets = html.indexOf('id="toggle-street-labels"');
-    assert.ok(report < vehicle && vehicle < pending && pending < appearance &&
-        appearance < source && source < cadastral && cadastral < streets);
+    assert.ok(vehicle >= 0 && vehicle < pending && pending < source &&
+        source < cadastral && cadastral < streets);
+    assert.doesNotMatch(html, /app-menu-group-title|layers\.reportsGroup|layers\.appearanceGroup/);
+    assert.doesNotMatch(panel, /\.app-menu-group-title/);
+    for (const bundle of [pl, en]) {
+        assert.doesNotMatch(bundle, /'layers\.(?:reportsGroup|appearanceGroup)'/);
+    }
     assert.match(html, /data-i18n="panel.baseMap">Pokaż wybór podkładu/);
     assert.match(html, /onchange="setMapSourceSliderVisible\(this.checked\)"/);
     assert.match(maps, /function setMapSourceSliderVisible\(visible\)/);
@@ -101,8 +104,7 @@ test('orthophoto advanced options are collapsed without disabling any existing i
 });
 
 test('translations and touch/focus affordances exist in both languages', () => {
-    for (const key of ['layers.reportsGroup','layers.appearanceGroup',
-        'layers.vehicleInsuranceFull','layers.vehicleStandingFull','layers.vehiclePhotosFull',
+    for (const key of ['layers.vehicleInsuranceFull','layers.vehicleStandingFull','layers.vehiclePhotosFull',
         'layers.vehicleRemovedFull','layers.streetLabelsUnavailable','modal.settings.advanced']) {
         assert.ok(pl.includes("'" + key + "':"), 'pl '+key);
         assert.ok(en.includes("'" + key + "':"), 'en '+key);
