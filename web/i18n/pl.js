@@ -94,6 +94,8 @@ const TRANSLATIONS_PL = {
         'layers.label': 'Warstwy mapy',
         'layers.vehicles': 'Pojazdy',
         'layers.cadastral': 'Granice działek',
+        'layers.streetLabels': 'Nazwy ulic',
+        'layers.streetLabelsTooltip': 'Nazwy ulic na ortofotomapie (mapa OSM ma własne etykiety)',
         'layers.cadastralTooltip': 'Działki KIEG/GUGiK, bez danych właścicieli.',
         'layers.baseMapOsm': 'Mapa OSM',
         'layers.fieldPhotoInfrastructure': 'Infrastruktura',
