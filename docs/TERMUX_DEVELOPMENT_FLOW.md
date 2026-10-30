@@ -135,8 +135,9 @@ local readiness and public HTTP success. Avoid auto-deploy on every Git push.
    check runit, `/api/health/live`, `/api/health/ready` and public routes.
    An uncertain result is not permission to replay the deployment.
 5. **Promotion:** only after that acceptance, fast-forward `main` to the
-   **same exact deployed commit** (use expected-SHA protection), attach a
-   dated production tag, close the PR and delete the temporary feature branch.
+   **same exact deployed commit** (use expected-SHA protection), publish a
+   dated production tag through the authorized GitHub-side release operator,
+   close the PR and delete the temporary feature branch.
    If the candidate cannot fast-forward because another release landed,
    revalidate against current `main`; do not force or fabricate a squash SHA.
 6. **Safety:** preserve prior release tags and the separate on-phone SQLite
@@ -150,6 +151,44 @@ An explicit one-time branch unification/release operation is allowed to
 reconcile a historical diverged checkout with `main`, but must check
 identical application source bytes, preserve the previous commit and prove
 service health. Future feature work must never switch the production checkout.
+
+## GitHub release-tag publication boundary (2026-10-30)
+
+**Termux is a production deployment host, not the release-tag writer.**
+Successful `git fetch` and Local Agent mailbox publication do **not**
+prove that `git push` is authorized for `MichalMatu/ilestoi`.
+Do not install a GitHub PAT, deploy key with write permission or global Git
+credential helper on the production phone solely to publish release tags.
+
+After guarded deployment and promotion of the **exact deployed SHA** to
+GitHub `main`, publish annotated release tags through the authorized Mac
+Local Agent's existing `gh` login. The GitHub Connector handles commits,
+branches and PRs; its available actions do not include tag creation.
+On the Mac, use a disposable temporary Git repository and the existing
+`gh auth git-credential` helper for an explicit, non-forced push of the
+verified annotated tag object. No credential material is copied to the
+phone, stored in project files or printed in task results.
+
+Required release checks:
+1. Verify GitHub `main`, phone production `HEAD` and intended tag target
+   resolve to the **same exact commit** before publishing.
+2. Verify an existing remote tag is absent or already matches the
+   intended **tag object SHA**; never replace or force-push an existing tag.
+3. If a local annotated tag exists on Termux, read its tag object SHA and
+   content without reading any secrets, and publish that **identical**
+   Git object through the authorized Mac; do not generate a different
+   annotation for the same name.
+4. Confirm `refs/tags/<release>` on GitHub points to the exact tag object,
+   whose target is the deployed commit; keep the phone checkout clean and
+   recheck production readiness.
+5. If the authenticated GitHub writer is unavailable, mark **tag pending**
+   explicitly. Do not add new write credentials to Termux as a workaround.
+
+Verified recovery: `v2026.10.30-street-labels` was published via the Mac
+`gh` session as annotated tag object
+`78aef0042a6fdd48206809c4abee4a21ac7ba667`, targeting production
+`8e8909dce080f3e716b7f2f9a3c27bb4ac97e5cb`. Termux required no
+authentication changes, and its pre-existing annotated tag matched exactly.
 
 ## Verified real-phone receipt — 2026-10-26
 
