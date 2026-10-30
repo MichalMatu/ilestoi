@@ -239,8 +239,6 @@ function updateMapLabelLayer() {
         toggle.disabled = !supported;
         toggle.closest('.layer-toggle')?.classList.toggle('is-disabled', !supported);
     }
-    const unavailable = document.getElementById('street-labels-unavailable');
-    if (unavailable) unavailable.hidden = supported;
     const shouldShow = mapLabelsVisible && supported;
     if (shouldShow) {
         if (!mapLabelLayer) mapLabelLayer = buildMapLabelLayer();

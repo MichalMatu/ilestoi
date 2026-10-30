@@ -568,18 +568,6 @@ function updateVehicleFilterControlsAndCounts() {
         dotClass: vehicleResolutionFilterDotClass(vehicleResolutionFilter),
         active: vehicleResolutionFilter !== VEHICLE_FILTER_ALL,
     });
-    // Keep explicit selectors and compact cycle buttons in sync, regardless
-    // of which control was used last.
-    const selectValues = {
-        'vehicle-insurance-select': vehicleInsuranceFilter,
-        'vehicle-standing-select': String(vehicleStandingFilterDays),
-        'vehicle-photo-select': vehiclePhotoFilter,
-        'vehicle-resolution-select': vehicleResolutionFilter,
-    };
-    Object.entries(selectValues).forEach(([id, value]) => {
-        const select = document.getElementById(id);
-        if (select && select.value !== value) select.value = value;
-    });
 }
 
 function vehiclePhotoPopup(group) {

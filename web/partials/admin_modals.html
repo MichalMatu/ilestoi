@@ -89,9 +89,7 @@
                             <input type="checkbox" id="enhancement-enabled">
                         </div>
                     </div>
-                    <details class="settings-advanced" id="settings-advanced">
-                        <summary data-i18n="modal.settings.advanced">Zaawansowana korekcja obrazu</summary>
-                        <div class="settings-grid">
+                    <div class="settings-grid">
                         <label class="setting-range">
                             <span data-i18n="modal.settings.clahe">Kontrast lokalny</span>
                             <output id="enhancement-clahe-value">0.8</output>
@@ -127,8 +125,7 @@
                             <output id="enhancement-decast-value">0.2</output>
                             <input type="range" id="enhancement-decast" min="0" max="1" step="0.05" value="0.2">
                         </label>
-                        </div>
-                    </details>
+                    </div>
                     <p class="modal-hint" id="settings-save-status" role="status" aria-live="polite"
                         aria-atomic="true" data-i18n="modal.settings.enhancementHint">Parametry są używane w podglądzie mapy.</p>
                 </section>

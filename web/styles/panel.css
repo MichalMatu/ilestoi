@@ -42,8 +42,7 @@
     color: var(--primary);
     transform: translateY(-1px);
     box-shadow: var(--shadow-glass);
-    outline: 3px solid var(--primary);
-    outline-offset: 2px;
+    outline: none;
 }
 
 .app-menu-icon {
@@ -90,7 +89,7 @@
     height: 100dvh;
     display: flex;
     flex-direction: column;
-    overflow: hidden;
+    overflow-y: auto;
     background:
         linear-gradient(180deg, var(--surface-glass-highlight), transparent 280px),
         var(--surface-overlay);
@@ -98,27 +97,10 @@
     box-shadow: var(--shadow-glass);
     backdrop-filter: var(--blur-glass);
     -webkit-backdrop-filter: var(--blur-glass);
-    min-height: 0;
-}
-
-.app-menu-drawer-scroll {
-    flex: 1 1 auto;
-    min-height: 0;
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    scrollbar-gutter: stable;
-    padding-bottom: var(--space-2);
-}
-
-.app-menu-group-title {
-    margin: var(--space-2) 0 1px;
-    color: var(--text-soft);
-    font: 800 0.73rem/1.35 var(--font-display);
-    letter-spacing: 0.02em;
+    padding-bottom: max(var(--space-4), env(safe-area-inset-bottom));
 }
 
 .app-menu-drawer-header {
-    flex: 0 0 auto;
     min-height: 76px;
     padding: 0 var(--space-6) 0 84px;
     display: flex;
@@ -185,14 +167,12 @@
     background: var(--primary-soft);
     border-color: color-mix(in srgb, var(--primary) 34%, transparent);
     color: var(--primary);
-    outline: 3px solid var(--primary);
-    outline-offset: 2px;
+    outline: none;
 }
 
 .app-menu-drawer-footer {
-    flex: 0 0 auto;
     margin-top: auto;
-    padding: var(--space-3) var(--space-5) max(var(--space-3), env(safe-area-inset-bottom));
+    padding: var(--space-3) var(--space-5) var(--space-4);
     display: grid;
     grid-template-columns: 1fr;
     gap: var(--space-2);
@@ -211,7 +191,7 @@
 }
 
 .app-menu-footer-link {
-    padding: 10px 0;
+    padding: 4px 0;
     background: transparent;
     color: var(--muted);
     font-size: 0.73rem;
@@ -229,8 +209,7 @@
 .app-menu-footer-link:focus-visible {
     color: var(--text-soft);
     opacity: 1;
-    outline: 3px solid var(--primary);
-    outline-offset: 2px;
+    outline: none;
 }
 
 .app-menu-footer-actions {
@@ -241,8 +220,8 @@
 }
 
 .app-menu-footer-icon {
-    width: var(--control-hit-target);
-    height: var(--control-hit-target);
+    width: 36px;
+    height: 36px;
     align-items: center;
     justify-content: center;
     display: grid;
@@ -265,8 +244,7 @@
     border-color: color-mix(in srgb, var(--primary) 34%, transparent);
     color: var(--text-strong);
     opacity: 1;
-    outline: 3px solid var(--primary);
-    outline-offset: 2px;
+    outline: none;
 }
 
 .app-menu-footer-icon--lang {

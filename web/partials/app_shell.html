@@ -22,7 +22,6 @@
             </div>
         </div>
 
-        <div class="app-menu-drawer-scroll" id="app-menu-drawer-scroll">
         <section class="app-menu-map-panel" aria-label="Kontrolki mapy"
             data-i18n-attr="aria-label:panel.mapControls">
             <button type="button" class="panel-photo-cta" id="panel-add-field-photo"
@@ -35,10 +34,20 @@
                 <span data-panel-add-photo-label data-i18n="panel.addPhoto">Dodaj zdjęcie</span>
             </button>
 
+            <label class="layer-toggle panel-map-source" id="panel-map-source"
+                data-i18n-attr="title:panel.baseMapSliderToggle"
+                title="Pokaż dolny suwak">
+                <input type="checkbox" id="map-source-slider-toggle"
+                    data-i18n-attr="aria-label:panel.baseMapSliderToggle"
+                    aria-label="Pokaż dolny suwak" onchange="setMapSourceSliderVisible(this.checked)" checked>
+                <span class="layer-pin layer-pin--base-map-osm"></span>
+                <span class="layer-label" data-i18n="panel.baseMap">Podkład mapy</span>
+                <span class="layer-count-badge" id="map-source-current-badge">POL</span>
+            </label>
+
             <section class="panel-section panel-layers">
                 <div id="map-layer-controls" class="map-layer-controls is-loading-public-layers" aria-label="Warstwy mapy"
                     data-i18n-attr="aria-label:layers.label">
-                    <h3 class="app-menu-group-title" data-i18n="layers.reportsGroup">Zgłoszenia</h3>
                     <div class="layer-toggle layer-toggle--vehicle">
                         <label class="layer-toggle-row">
                             <input type="checkbox" id="toggle-vehicles" checked
@@ -82,41 +91,6 @@
                                     aria-hidden="true"></span>
                             </button>
                         </div>
-                        <details class="vehicle-filter-details" id="vehicle-filter-details">
-                            <summary data-i18n="layers.vehicleChooseFilters">Wybierz filtry pojazdów</summary>
-                            <div class="vehicle-filter-choice-grid">
-                                <label><span data-i18n="layers.vehicleInsuranceFull">Ubezpieczenie OC</span>
-                                    <select id="vehicle-insurance-select" onchange="setVehicleInsuranceFilter(this.value)">
-                                        <option value="all" data-i18n="layers.vehicleFilterAll">Wszystkie</option>
-                                        <option value="insured" data-i18n="layers.vehicleFilterInsured">Ubezpieczone</option>
-                                        <option value="uninsured" data-i18n="layers.vehicleFilterUninsured">Bez OC</option>
-                                        <option value="unknown" data-i18n="layers.vehicleFilterUnknown">Nieznane</option>
-                                    </select>
-                                </label>
-                                <label><span data-i18n="layers.vehicleStandingFull">Czas postoju</span>
-                                    <select id="vehicle-standing-select" onchange="setVehicleStandingFilterDays(Number(this.value))">
-                                        <option value="0" data-i18n="layers.vehicleFilterAll">Wszystkie</option>
-                                        <option value="30" data-i18n="layers.vehicleFilter30">Od 30 dni</option>
-                                        <option value="60" data-i18n="layers.vehicleFilter60">Od 60 dni</option>
-                                        <option value="90" data-i18n="layers.vehicleFilter90">Od 90 dni</option>
-                                    </select>
-                                </label>
-                                <label><span data-i18n="layers.vehiclePhotosFull">Liczba zdjęć</span>
-                                    <select id="vehicle-photo-select" onchange="setVehiclePhotoFilter(this.value)">
-                                        <option value="off" data-i18n="layers.vehicleFilterAll">Wszystkie</option>
-                                        <option value="up_to_6" data-i18n="layers.vehicleFilterUpTo6">Do 6 zdjęć</option>
-                                        <option value="above_6" data-i18n="layers.vehicleFilterAbove6">7 i więcej</option>
-                                    </select>
-                                </label>
-                                <label><span data-i18n="layers.vehicleRemovedFull">Status pojazdu</span>
-                                    <select id="vehicle-resolution-select" onchange="setVehicleResolutionFilter(this.value)">
-                                        <option value="active" data-i18n="layers.vehicleFilterActive">Widoczne</option>
-                                        <option value="all" data-i18n="layers.vehicleFilterAll">Wszystkie</option>
-                                        <option value="removed" data-i18n="layers.vehicleFilterRemoved">Usunięte</option>
-                                    </select>
-                                </label>
-                            </div>
-                        </details>
                     </div>
                     <label class="layer-toggle">
                         <input type="checkbox" id="toggle-field-photo-infrastructure" checked
@@ -139,17 +113,6 @@
                         <span class="layer-label" data-i18n="layers.fieldPhotoPending">Do weryfikacji</span>
                         <span class="layer-count-badge" id="layer-count-field-photo-pending">0</span>
                     </label>
-                    <h3 class="app-menu-group-title" data-i18n="layers.appearanceGroup">Wygląd mapy</h3>
-                    <label class="layer-toggle panel-map-source" id="panel-map-source"
-                        data-i18n-attr="title:panel.baseMapSliderToggle"
-                        title="Pokaż wybór podkładu mapy">
-                        <input type="checkbox" id="map-source-slider-toggle"
-                            data-i18n-attr="aria-label:panel.baseMapSliderToggle"
-                            aria-label="Pokaż wybór podkładu mapy" onchange="setMapSourceSliderVisible(this.checked)" checked>
-                        <span class="layer-pin layer-pin--base-map-osm"></span>
-                        <span class="layer-label" data-i18n="panel.baseMap">Pokaż wybór podkładu</span>
-                        <span class="layer-count-badge" id="map-source-current-badge">POL</span>
-                    </label>
                     <label class="layer-toggle" data-i18n-attr="title:layers.cadastralTooltip">
                         <input type="checkbox" id="toggle-cadastral-parcels"
                             onchange="toggleCadastralLayer(this.checked)">
@@ -162,8 +125,6 @@
                             onchange="toggleMapLabelLayer(this.checked)">
                         <span class="layer-pin layer-pin--street-labels" aria-hidden="true">Aa</span>
                         <span class="layer-label" data-i18n="layers.streetLabels">Nazwy ulic</span>
-                        <span class="layer-unavailable-note" id="street-labels-unavailable"
-                            data-i18n="layers.streetLabelsUnavailable" hidden>OSM ma własne nazwy</span>
                     </label>
                 </div>
             </section>
@@ -178,7 +139,6 @@
                 <span data-i18n="modal.parkingCosts.menu">Koszty postoju</span>
             </button>
         </nav>
-        </div>
         <div class="app-menu-drawer-footer">
             <div class="app-menu-footer-actions">
                 <button type="button" class="app-menu-footer-icon app-menu-footer-icon--settings"
