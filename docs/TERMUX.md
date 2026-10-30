@@ -79,6 +79,47 @@ Nigdy nie uruchamiaj drugiej kopii `server.py`, `cloudflared`,
 Po ponownym podłączeniu Wi-Fi sam `cloudflared` powinien nawiązać
 połączenie bez restartu całego telefonu.
 
+## Cloudflare CDN i szybkie wdrożenia
+
+Statyczne pliki CSS/JS są udostępniane pod adresami z wersją zawartości
+(`/app/...js?v=<hash>`, `/styles.css?v=<hash>`). Importy wewnątrz
+`styles.css` również otrzymują osobne hashe. Jedynie URL z **aktualnym,
+prawidłowym** hashem otrzymuje
+`Cache-Control: public, max-age=31536000, immutable`. URL bez hasha lub
+ze starym hashem nadal ma `no-store`. Po każdym `git switch` na wydanie
+HTML (zawsze `no-store`) automatycznie wskazuje nowe URL-e; nie potrzeba
+purge Cloudflare ani restartu serwera tylko z powodu zmiany statycznych plików.
+
+Nie wolno ustawiać w Cloudflare reguły „Ignore Query String” ani „No Query String”
+dla CSS/JS: parametr `v` musi uczestniczyć w kluczu cache (Caching level:
+**Standard**). W razie globalnych reguł bypass albo Development Mode
+`CF-Cache-Status` może nadal pokazywać `BYPASS` mimo nagłówka `public`.
+Reguły stron HTML, `/api/`, obszaru admina i zdjęć prywatnych pozostają
+bez cache.
+
+Kafle publicznej ortofotomapy mają lokalny cache dyskowy i poprawne kafle
+odpowiadają z `public, max-age=86400`. Ponieważ `/tile_proxy/` i
+`/wms_proxy/` nie mają rozszerzenia pliku, wymagają **osobnej,
+precyzyjnej reguły Cloudflare Cache Rules** (nie jest to konfiguracja
+`cloudflared` w Termuxie):
+
+- Match: `http.host eq "ilestoi.pl" and
+  (starts_with(http.request.uri.path, "/tile_proxy/geoportal-standard/")
+  or starts_with(http.request.uri.path, "/wms_proxy/"))`.
+- Cache eligibility: **Eligible for cache**. Origin Cache Control:
+  **Respect origin headers**; nie wymuszaj Edge Cache TTL ani cache 200
+  niezależnie od nagłówka.
+- Cache key: **include all query strings** (`enhancementSettings` zmienia
+  obraz). Nie dodawaj tej reguły dla HTML, API, statusu zdrowia, uploadów
+  czy prywatnych zdjęć.
+- Odpowiedzi zastępcze (BUSY/UPSTREAM_ERROR/IN_FLIGHT) mają `no-store`
+  i **nie mogą** trafić do cache CDN.
+
+Regułę na koncie Cloudflare należy dodać osobno przez dashboard/API z
+uprawnieniami strefy (sam GitHub Connector i tunel nie zarządzają strefą).
+Przed i po zmianie sprawdź `CF-Cache-Status` dla tego samego, bezpiecznego
+adresu dwukrotnie oraz `Cache-Control`; nie testuj przeciążeniowo produkcji.
+
 ## Zweryfikowane i otwarte kontrole
 
 26.10.2026: autoryzowany switch Cloudflare (nowa rejestracja tunelu,
