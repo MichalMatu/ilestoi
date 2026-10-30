@@ -69,10 +69,10 @@ WEB_ASSET_CONTENT_TYPES = {
 # HTML remains fresh. Each local CSS/JS link gets a content-derived version,
 # allowing long CDN/browser caching without serving stale assets after deploy.
 _VERSIONED_ASSET_REF = re.compile(
-    r'(?P<prefix>\\b(?:src|href)=["\\\'])(?P<path>/[A-Za-z0-9_./-]+\\.(?:css|js))(?P<suffix>["\\\'])'
+    r"""(?P<prefix>\b(?:src|href)=["'])(?P<path>/[A-Za-z0-9_./-]+\.(?:css|js))(?P<suffix>["'])"""
 )
 _CSS_IMPORT_REF = re.compile(
-    r'(?P<prefix>@import\\s+url\\(["\\\']?)(?P<path>/styles/[A-Za-z0-9_./-]+\\.css)(?P<suffix>["\\\']?\\))'
+    r"""(?P<prefix>@import\s+url\(["']?)(?P<path>/styles/[A-Za-z0-9_./-]+\.css)(?P<suffix>["']?\))"""
 )
 VERSIONED_WEB_ASSET_CACHE_CONTROL = "public, max-age=31536000, immutable"
 
