@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import vm from 'node:vm';
 
 const get = filename => fs.readFileSync(new URL('../../web/' + filename, import.meta.url), 'utf8');
 const html = get('partials/app_shell.html');
@@ -62,6 +63,30 @@ test('vehicle filters use exactly four always-visible accessible selectors', () 
     assert.match(layers, /\.vehicle-filter-choice-grid\s*\{[^}]*grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)/s);
     assert.match(layers, /@media \(max-width: 350px\)\s*\{\s*\.vehicle-filter-choice-grid\s*\{\s*grid-template-columns:\s*minmax\(0, 1fr\)/s);
     assert.match(layers, /\.vehicle-filter-choice-grid select\s*\{[^}]*min-height:\s*40px/s);
+});
+
+test('persisted filter values appear in selects without rebuilding marker counts', () => {
+    const start = vehicles.indexOf('function updateVehicleFilterSelectors()');
+    const end = vehicles.indexOf('\nfunction vehiclePhotoPopup(', start);
+    assert.ok(start > 0 && end > start);
+    const controls = new Map(['vehicle-insurance-select', 'vehicle-standing-select',
+        'vehicle-photo-select', 'vehicle-resolution-select'].map(id => [id, { value: '' }]));
+    const ctx = {
+        document: { getElementById(id) { return controls.get(id) || null; } },
+    };
+    vm.runInNewContext(`let vehicleInsuranceFilter = 'uninsured';
+        let vehicleStandingFilterDays = 60;
+        let vehiclePhotoFilter = 'above_6';
+        let vehicleResolutionFilter = 'removed';
+        ${vehicles.slice(start, end)}
+        this.sync = updateVehicleFilterSelectors;`, ctx);
+    ctx.sync();
+    assert.deepEqual([...controls.values()].map(el => el.value),
+        ['uninsured', '60', 'above_6', 'removed']);
+    assert.doesNotMatch(vehicles, /function (?:vehicleFilterCounts|emptyVehicleFilterCounts|updateVehicleFilterButton)/);
+    assert.doesNotMatch(vehicles, /updateVehicleFilterControlsAndCounts/);
+    assert.doesNotMatch(get('app/vehicle_resolution.js'), /cycleVehicleResolutionFilter/);
+    assert.match(get('app/field_photos.js'), /updateVehicleFilterSelectors\(\)/);
 });
 
 test('orthophoto advanced options are collapsed without disabling any existing inputs', () => {
