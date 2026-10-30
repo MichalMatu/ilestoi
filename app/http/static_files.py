@@ -324,7 +324,7 @@ def handle_web_asset(handler, path: str, *, include_body: bool = True) -> bool:
     # requested after deployment gets fresh bytes, but is never cached under
     # its obsolete identity. API/private assets are handled elsewhere.
     if relative.suffix.lower() in {".css", ".js"}:
-        version = parse_qs(urlsplit(handler.path).query).get("v", [])
+        version = parse_qs(urlsplit(getattr(handler, "path", path)).query).get("v", [])
         current = _asset_version(relative.as_posix())
         cache_control = (
             VERSIONED_WEB_ASSET_CACHE_CONTROL if version == [current] else "no-store"
