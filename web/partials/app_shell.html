@@ -119,6 +119,13 @@
                         <span class="layer-pin layer-pin--cadastral"></span>
                         <span class="layer-label" data-i18n="layers.cadastral">Granice działek</span>
                     </label>
+                    <label class="layer-toggle" data-i18n-attr="title:layers.streetLabelsTooltip"
+                        title="Nazwy ulic na ortofotomapie (mapa OSM ma własne etykiety)">
+                        <input type="checkbox" id="toggle-street-labels" checked
+                            onchange="toggleMapLabelLayer(this.checked)">
+                        <span class="layer-pin layer-pin--street-labels" aria-hidden="true">Aa</span>
+                        <span class="layer-label" data-i18n="layers.streetLabels">Nazwy ulic</span>
+                    </label>
                 </div>
             </section>
         </section>
