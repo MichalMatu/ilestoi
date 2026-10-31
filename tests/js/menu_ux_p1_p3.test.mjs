@@ -116,10 +116,9 @@ test('translations and touch/focus affordances exist in both languages', () => {
 
 test('mouse hover is subtle while keyboard focus stays visible across menu controls', () => {
     const styleFor = selector => {
-        const literal = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        const match = panel.match(new RegExp('(?:^|\\n)' + literal + '\\s*\\{([^}]*)\\}', 'm'));
-        assert.ok(match, 'missing selector: ' + selector);
-        return match[1];
+        const found = panel.split(selector + ' {')[1];
+        assert.ok(found, 'missing selector: ' + selector);
+        return found.split('}')[0];
     };
     for (const control of [
         '.app-menu-button',
@@ -129,22 +128,22 @@ test('mouse hover is subtle while keyboard focus stays visible across menu contr
     ]) {
         const hover = styleFor(control + ':hover');
         const focus = styleFor(control + ':focus-visible');
-        assert.doesNotMatch(hover, /\\boutline(?:-color|-width|-style)?\\s*:/, control + ':hover must not draw a focus ring');
-        assert.match(focus, /outline:\\s*2px solid var\\(--primary\\)/, control + ':focus-visible must retain a visible keyboard indicator');
-        assert.match(focus, /outline-offset:\\s*2px/, control + ':focus-visible must not clip against the control');
+        assert.doesNotMatch(hover, /\boutline(?:-color|-width|-style)?\s*:/, control + ':hover must not draw a focus ring');
+        assert.match(focus, /outline:\s*2px solid var\(--primary\)/, control + ':focus-visible must retain a visible keyboard indicator');
+        assert.match(focus, /outline-offset:\s*2px/, control + ':focus-visible must not clip against the control');
     }
-    assert.match(styleFor('.app-menu-drawer-item:hover'), /background:\\s*var\\(--surface-control-strong\\)/);
-    assert.match(styleFor('.app-menu-footer-icon:hover'), /border-color:\\s*var\\(--border-strong\\)/);
+    assert.match(styleFor('.app-menu-drawer-item:hover'), /background:\s*var\(--surface-control-strong\)/);
+    assert.match(styleFor('.app-menu-footer-icon:hover'), /border-color:\s*var\(--border-strong\)/);
 });
 
 test('no other mouse hover in the app styles draws a keyboard focus outline', () => {
     const stylesDir = new URL('../../web/styles/', import.meta.url);
     for (const name of fs.readdirSync(stylesDir).filter(name => name.endsWith('.css'))) {
         const sheet = fs.readFileSync(new URL(name, stylesDir), 'utf8');
-        for (const match of sheet.matchAll(/([^{}]+)\\{([^{}]*)\\}/g)) {
+        for (const match of sheet.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
             const [, selector, declarations] = match;
             if (!selector.includes(':hover')) continue;
-            const visibleOutline = /\\boutline(?:-width)?\\s*:\\s*(?!none\\b|0(?:px)?\\b)[^;]+;?/i;
+            const visibleOutline = /\boutline(?:-width)?\s*:\s*(?!none\b|0(?:px)?\b)[^;]+;?/i;
             assert.doesNotMatch(declarations, visibleOutline, name + ' / ' + selector.trim());
         }
     }
