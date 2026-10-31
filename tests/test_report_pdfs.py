@@ -151,6 +151,18 @@ class ReportPdfTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "zbyt długie"):
             validate_report_fields({**valid_fields(), "vehicle_description": "x" * 4001})
 
+        with self.assertRaisesRegex(ValueError, "tekst zastępczy"):
+            validate_report_fields({
+                **valid_fields(),
+                "reporter_address": "[UZUPEŁNIJ PRZED WYSŁANIEM]",
+            })
+
+        with self.assertRaisesRegex(ValueError, "prawidłową datę"):
+            validate_report_fields({**valid_fields(), "observed_at": "2026-13-40T88:99"})
+
+        with self.assertRaisesRegex(ValueError, "z przyszłości"):
+            validate_report_fields({**valid_fields(), "observed_at": "2099-01-01T12:00"})
+
     def test_reject_report_pdf_files_rejects_uploaded_files(self):
         with self.assertRaisesRegex(ValueError, "zatwierdzonych zdjęć terenowych"):
             reject_report_pdf_files([UploadedFile("photos", "car.jpg", "image/jpeg", b"x")])
