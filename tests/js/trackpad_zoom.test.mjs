@@ -102,7 +102,15 @@ function harness(initialZoom = 12) {
         assert.equal(frames.size, 0);
         assert.equal(timers.size, 0);
     }
-    return { map, counters, wheel, flushFrames, settle, uninstall, setWheelEnabled(enabled) { wheelEnabled = enabled; } };
+    function settleWithoutFrames() {
+        for (const [id, cb] of [...timers]) {
+            timers.delete(id);
+            cb();
+        }
+        assert.equal(frames.size, 0, 'an idle timeout must cancel stalled frames');
+        assert.equal(timers.size, 0);
+    }
+    return { map, counters, wheel, flushFrames, settle, settleWithoutFrames, uninstall, setWheelEnabled(enabled) { wheelEnabled = enabled; } };
 }
 
 test('Mac pinch uses continuous fractional zoom and one final zoomend', () => {
@@ -187,4 +195,14 @@ test('only one controller is mounted and viewport redraw happens on moveend', ()
     assert.match(startup, /map\.on\('moveend', scheduleFieldPhotoViewportLoad\)/);
     assert.doesNotMatch(source, /setZoomAround\(/);
     assert.doesNotMatch(source, /setZoom\(/);
+});
+
+test('idle timeout commits target and emits zoomend even if rAF never fires', () => {
+    const h = harness();
+    h.wheel(-36, true);
+    h.settleWithoutFrames();
+    assert.ok(Math.abs(h.map.getZoom() - 12.18) < 0.0001);
+    assert.equal(h.counters.starts, 1);
+    assert.equal(h.counters.ends, 1);
+    assert.equal(h.map.options.zoomSnap, 1);
 });
