@@ -37,12 +37,14 @@
         box-shadow var(--duration-fast);
 }
 
-.app-menu-button:hover,
-.app-menu-button:focus-visible {
+.app-menu-button:hover {
     color: var(--primary);
     transform: translateY(-1px);
     box-shadow: var(--shadow-glass);
-    outline: 3px solid var(--primary);
+}
+
+.app-menu-button:focus-visible {
+    outline: 2px solid var(--primary);
     outline-offset: 2px;
 }
 
@@ -173,12 +175,14 @@
         color var(--duration-fast);
 }
 
-.app-menu-drawer-item:hover,
+.app-menu-drawer-item:hover {
+    background: var(--surface-control-strong);
+    border-color: var(--border-strong);
+    color: var(--text-strong);
+}
+
 .app-menu-drawer-item:focus-visible {
-    background: var(--primary-soft);
-    border-color: color-mix(in srgb, var(--primary) 34%, transparent);
-    color: var(--primary);
-    outline: 3px solid var(--primary);
+    outline: 2px solid var(--primary);
     outline-offset: 2px;
 }
 
@@ -218,11 +222,13 @@
         opacity var(--duration-fast);
 }
 
-.app-menu-footer-link:hover,
-.app-menu-footer-link:focus-visible {
+.app-menu-footer-link:hover {
     color: var(--text-soft);
     opacity: 1;
-    outline: 3px solid var(--primary);
+}
+
+.app-menu-footer-link:focus-visible {
+    outline: 2px solid var(--primary);
     outline-offset: 2px;
 }
 
@@ -252,13 +258,15 @@
         opacity var(--duration-fast);
 }
 
-.app-menu-footer-icon:hover,
-.app-menu-footer-icon:focus-visible {
+.app-menu-footer-icon:hover {
     background: var(--glass-control-bg-hover);
-    border-color: color-mix(in srgb, var(--primary) 34%, transparent);
+    border-color: var(--border-strong);
     color: var(--text-strong);
     opacity: 1;
-    outline: 3px solid var(--primary);
+}
+
+.app-menu-footer-icon:focus-visible {
+    outline: 2px solid var(--primary);
     outline-offset: 2px;
 }
 
