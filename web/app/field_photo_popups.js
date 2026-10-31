@@ -8,9 +8,14 @@ function fieldPhotoPreview(photo, index = 0, ts = Date.now()) {
     const publicThumb = photo?.public_thumb || '';
     if (!publicThumb) return null;
     const publicUrl = photo.public_image || publicThumb;
+    const capturedAt = popupTimestampMs(photo?.captured_at) === null ? '' : String(photo.captured_at);
+    const addedAt = popupTimestampMs(photo?.created_at) !== null
+        ? String(photo.created_at)
+        : (popupTimestampMs(photo?.submitted_at) !== null ? String(photo.submitted_at) : '');
     return {
         source: 'field',
-        label: photo.captured_at || String(index + 1),
+        label: capturedAt || addedAt || String(index + 1),
+        date_kind: capturedAt ? 'captured' : (addedAt ? 'added' : 'unknown'),
         public_image: cacheBustedUrl(publicUrl, ts),
         public_thumb: cacheBustedUrl(publicThumb, ts),
     };
