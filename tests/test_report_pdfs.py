@@ -152,10 +152,12 @@ class ReportPdfTests(unittest.TestCase):
             validate_report_fields({**valid_fields(), "vehicle_description": "x" * 4001})
 
         with self.assertRaisesRegex(ValueError, "tekst zastępczy"):
-            validate_report_fields({
-                **valid_fields(),
-                "reporter_address": "[UZUPEŁNIJ PRZED WYSŁANIEM]",
-            })
+            validate_report_fields(
+                {
+                    **valid_fields(),
+                    "reporter_address": "[UZUPEŁNIJ PRZED WYSŁANIEM]",
+                }
+            )
 
         with self.assertRaisesRegex(ValueError, "prawidłową datę"):
             validate_report_fields({**valid_fields(), "observed_at": "2026-13-40T88:99"})
