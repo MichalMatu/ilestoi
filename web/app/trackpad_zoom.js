@@ -120,7 +120,6 @@ function installSmoothTrackpadZoom(map) {
             map.options.zoomSnap = 0;
         }
         if (resetTimer !== null) window.clearTimeout(resetTimer);
-        gestureEnded = false;
         targetZoom = trackpadTargetZoom(
             targetZoom ?? map.getZoom(), event.deltaY, map.getMinZoom(), map.getMaxZoom()
         );
