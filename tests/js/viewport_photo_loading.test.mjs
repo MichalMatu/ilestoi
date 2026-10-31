@@ -228,17 +228,20 @@ test('startup attaches viewport handler only after admin bootstrap', async () =>
     let resolveAdmin;
     const boot = new Promise(resolve => { resolveAdmin = resolve; });
     const registered = [];
+    const trackpadInstalls = [];
     const context = vm.createContext({
         document: { addEventListener() {} },
         window: { setTimeout() {} },
         refreshAdminStatus: () => boot,
         map: { on: (...args) => registered.push(args) },
+        installSmoothTrackpadZoom: target => trackpadInstalls.push(target),
         scheduleFieldPhotoViewportLoad() {},
         loadFieldPhotos: () => Promise.resolve(),
         maybeStartOnboardingTour() {},
         updateLayerCounters() {},
     });
     vm.runInContext(startup, context);
+    assert.deepEqual(trackpadInstalls, [context.map]);
     assert.equal(registered.length, 0);
     resolveAdmin();
     await boot;
