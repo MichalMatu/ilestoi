@@ -126,6 +126,7 @@ test('Mac pinch uses continuous fractional zoom and one final zoomend', () => {
     assert.equal(h.map.options.zoomSnap, 0);
     h.settle();
     assert.equal(h.counters.starts, 1);
+    assert.equal(h.counters.stops, 0, 'an idle map must not fire an extra moveend via stop()');
     assert.equal(h.counters.ends, 1);
     assert.equal(h.map.options.zoomSnap, 1);
 });
@@ -205,4 +206,14 @@ test('idle timeout commits target and emits zoomend even if rAF never fires', ()
     assert.equal(h.counters.starts, 1);
     assert.equal(h.counters.ends, 1);
     assert.equal(h.map.options.zoomSnap, 1);
+});
+
+test('interrupts an active prior Leaflet zoom animation before a new trackpad gesture', () => {
+    const h = harness();
+    h.map._animatingZoom = true;
+    h.wheel(-12, true);
+    h.flushFrames();
+    h.settle();
+    assert.equal(h.counters.stops, 1);
+    assert.equal(h.counters.ends, 1);
 });
