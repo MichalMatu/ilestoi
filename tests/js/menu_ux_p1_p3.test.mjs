@@ -143,8 +143,10 @@ test('no other mouse hover in the app styles draws a keyboard focus outline', ()
         for (const match of sheet.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
             const [, selector, declarations] = match;
             if (!selector.includes(':hover')) continue;
-            const visibleOutline = /\boutline(?:-width)?\s*:\s*(?!none\b|0(?:px)?\b)[^;]+;?/i;
-            assert.doesNotMatch(declarations, visibleOutline, name + ' / ' + selector.trim());
+            const outline = declarations.match(/\boutline(?:-width)?\s*:\s*([^;]+)/i)?.[1].trim();
+            if (outline && !/^(?:none|0(?:px)?)(?:\s|$)/i.test(outline)) {
+                assert.fail('visible outline on mouse hover: ' + name + ' / ' + selector.trim());
+            }
         }
     }
 });
