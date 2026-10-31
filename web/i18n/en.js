@@ -388,6 +388,8 @@ const TRANSLATIONS_EN = {
         'modal.photoPreview.next': 'Next photo',
         'modal.photoPreview.photoNumber': 'Photo {n}',
         'modal.photoPreview.photoDated': '{date}',
+        'modal.photoPreview.photoAdded': 'Added {date}',
+        'modal.photoPreview.addedBadge': 'added {date}',
         'modal.photoPreview.mapCropYear': 'Orthophoto {year}',
         'fieldPhoto.reviewPhotos': 'Edit photo anonymization',
         'fieldPhoto.editMyPhoto': 'Edit my photo',
