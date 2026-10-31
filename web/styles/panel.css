@@ -32,14 +32,12 @@
     -webkit-backdrop-filter: var(--glass-blur-soft);
     transition:
         color var(--duration-fast),
-        transform var(--duration-fast),
         background var(--duration-fast),
         box-shadow var(--duration-fast);
 }
 
 .app-menu-button:hover {
     color: var(--primary);
-    transform: translateY(-1px);
     box-shadow: var(--shadow-glass);
 }
 
@@ -109,6 +107,8 @@
     overflow-y: auto;
     overscroll-behavior: contain;
     scrollbar-gutter: stable;
+    /* Keep the first photo button and its shadow clear of the scroll clip edge. */
+    padding-top: var(--space-3);
     padding-bottom: var(--space-2);
 }
 
@@ -302,17 +302,13 @@
     justify-content: center;
     gap: 8px;
     font: 800 0.9rem var(--font);
-    transition: transform 0.16s ease, box-shadow 0.16s ease, opacity 0.16s ease;
+    transition: box-shadow 0.16s ease, opacity 0.16s ease;
 }
 
 .panel-photo-cta:hover {
-    transform: translateY(-1px);
     box-shadow: 0 14px 32px color-mix(in srgb, var(--info) 24%, transparent);
 }
 
-.panel-photo-cta:active {
-    transform: translateY(0);
-}
 
 .panel-photo-cta.is-picking-location {
     background: linear-gradient(135deg, var(--warning), var(--primary));
@@ -451,17 +447,13 @@ select:focus {
     justify-content: center;
     gap: 8px;
     box-shadow: var(--shadow-primary);
-    transition: all 0.2s;
+    transition: box-shadow 0.2s, background 0.2s, color 0.2s;
 }
 
 .btn-download:hover {
-    transform: translateY(-1px);
     box-shadow: var(--shadow-primary);
 }
 
-.btn-download:active {
-    transform: translateY(0);
-}
 
 .btn-download:disabled {
     background: var(--surface-control);
