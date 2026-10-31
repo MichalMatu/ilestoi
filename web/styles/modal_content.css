@@ -337,7 +337,7 @@
     padding: 0 16px;
     font: 800 0.84rem var(--font);
     cursor: var(--cursor-action);
-    transition: transform 0.15s, background 0.15s, border-color 0.15s;
+    transition: background 0.15s, border-color 0.15s;
 }
 
 .confirm-cancel-btn {
@@ -361,10 +361,6 @@
     background: color-mix(in srgb, var(--danger) 82%, black);
 }
 
-.confirm-cancel-btn:active,
-.confirm-danger-btn:active {
-    transform: translateY(1px);
-}
 
 /* Pomoc: ponumerowane kroki + legenda kolorów pinów */
 .modal-steps {
