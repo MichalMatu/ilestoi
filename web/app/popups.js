@@ -102,7 +102,14 @@ function humanDatePartsFromPhotoText(value) {
 
 function popupTimestampMs(value, nowMs = Date.now()) {
     const text = String(value || '').trim();
-    if (!text) return null;
+    // Date.parse accepts numbers such as "4" as dates in 2001. Only accept actual
+    // ISO calendar dates from field-photo capture/upload/submission metadata.
+    const match = text.match(/^(\d{4})-(\d{2})-(\d{2})(?:T(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d{1,6})?)?(?:Z|[+-](?:[01]\d|2[0-3]):[0-5]\d)?)?$/);
+    if (!match) return null;
+    const [, year, month, day] = match.map(Number);
+    const calendar = new Date(Date.UTC(year, month - 1, day));
+    if (calendar.getUTCFullYear() !== year || calendar.getUTCMonth() !== month - 1
+        || calendar.getUTCDate() !== day) return null;
     const timestampMs = Date.parse(text);
     if (!Number.isFinite(timestampMs)) return null;
     if (timestampMs < MAP_POPUP_AGE_MIN_TIMESTAMP_MS || timestampMs > nowMs + MAP_POPUP_AGE_FUTURE_GRACE_MS) {
