@@ -131,14 +131,13 @@ select.modal-input option:disabled,
     color: var(--text);
     font: 800 0.78rem var(--font);
     cursor: var(--cursor-action);
-    transition: background 0.15s, border-color 0.15s, color 0.15s, transform 0.15s;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
 }
 
 .file-picker-button:hover {
     background: color-mix(in srgb, var(--primary) 26%, transparent);
     border-color: color-mix(in srgb, var(--primary) 64%, transparent);
     color: var(--text-strong);
-    transform: translateY(-1px);
 }
 
 .file-picker-input:focus-visible + .file-picker-button {
