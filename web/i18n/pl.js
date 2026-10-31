@@ -393,6 +393,8 @@ const TRANSLATIONS_PL = {
         'modal.photoPreview.next': 'Następne zdjęcie',
         'modal.photoPreview.photoNumber': 'Zdjęcie {n}',
         'modal.photoPreview.photoDated': '{date}',
+        'modal.photoPreview.photoAdded': 'Dodano {date}',
+        'modal.photoPreview.addedBadge': 'dod. {date}',
         'modal.photoPreview.mapCropYear': 'Ortofoto {year}',
         'fieldPhoto.reviewPhotos': 'Edytuj anonimizację zdjęć',
         'fieldPhoto.editMyPhoto': 'Edytuj moje zdjęcie',
