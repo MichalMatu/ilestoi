@@ -38,7 +38,6 @@ function installSmoothTrackpadZoom(map) {
     let frameId = null;
     let resetTimer = null;
     let started = false;
-    let gestureEnded = false;
 
     function endGesture() {
         if (frameId !== null) {
@@ -59,7 +58,22 @@ function installSmoothTrackpadZoom(map) {
         }
         targetZoom = null;
         anchor = null;
-        gestureEnded = false;
+    }
+
+    function moveToZoom(next) {
+        const current = map.getZoom();
+        if (next === current || anchor === null) return;
+        if (!started) {
+            map.stop();
+            map._moveStart(true);
+            started = true;
+        }
+        // Leaflet's cursor-centered projection without per-frame zoomend/moveend.
+        const scale = map.getZoomScale(next, current);
+        const half = map.getSize().divideBy(2);
+        const offset = anchor.subtract(half).multiplyBy(1 - 1 / scale);
+        const center = map.containerPointToLatLng(half.add(offset));
+        map._move(center, next, { pinch: true, round: false });
     }
 
     function animateZoom() {
@@ -69,28 +83,24 @@ function installSmoothTrackpadZoom(map) {
             endGesture();
             return;
         }
-        const current = map.getZoom();
-        const next = approachTrackpadZoom(current, targetZoom);
-        if (next !== current) {
-            if (!started) {
-                map.stop();
-                map._moveStart(true);
-                started = true;
-            }
-
-            // Project around the cursor without generating zoomend/moveend per frame.
-            // Leaflet's _move keeps tile/marker positions live until a single _moveEnd.
-            const scale = map.getZoomScale(next, current);
-            const half = map.getSize().divideBy(2);
-            const offset = anchor.subtract(half).multiplyBy(1 - 1 / scale);
-            const center = map.containerPointToLatLng(half.add(offset));
-            map._move(center, next, { pinch: true, round: false });
-        }
+        const next = approachTrackpadZoom(map.getZoom(), targetZoom);
+        moveToZoom(next);
         if (next !== targetZoom) {
             frameId = window.requestAnimationFrame(animateZoom);
-        } else if (gestureEnded) {
-            endGesture();
         }
+    }
+
+    function finishGesture() {
+        // A throttled or backgrounded tab may stop delivering animation frames.
+        // Finalize the last target and emit exactly one zoomend regardless of rAF.
+        if (frameId !== null) {
+            window.cancelAnimationFrame(frameId);
+            frameId = null;
+        }
+        if (targetZoom !== null && map.scrollWheelZoom.enabled()) {
+            moveToZoom(targetZoom);
+        }
+        endGesture();
     }
 
     function handleWheel(event) {
@@ -118,8 +128,7 @@ function installSmoothTrackpadZoom(map) {
         if (frameId === null) frameId = window.requestAnimationFrame(animateZoom);
         resetTimer = window.setTimeout(() => {
             resetTimer = null;
-            gestureEnded = true;
-            if (frameId === null) endGesture();
+            finishGesture();
         }, SMOOTH_TRACKPAD_ZOOM.idleResetMs);
     }
 
