@@ -111,17 +111,19 @@ function popupTimestampMs(value, nowMs = Date.now()) {
     return timestampMs;
 }
 
-function earliestPopupTimestamp(photos, field, nowMs = Date.now()) {
-    const timestamps = (Array.isArray(photos) ? photos : [])
-        .map(photo => popupTimestampMs(photo?.[field], nowMs))
-        .filter(timestampMs => Number.isFinite(timestampMs));
-    return timestamps.length ? Math.min(...timestamps) : null;
+function fieldPhotoObservationTimestamp(photo, nowMs = Date.now()) {
+    // The capture date describes the observation; upload and submission describe processing.
+    // Choose a fallback per photo so one recent submission cannot hide older evidence.
+    return popupTimestampMs(photo?.captured_at, nowMs)
+        ?? popupTimestampMs(photo?.created_at, nowMs)
+        ?? popupTimestampMs(photo?.submitted_at, nowMs);
 }
 
 function fieldPhotoGroupStartTimestamp(photos, nowMs = Date.now()) {
-    return earliestPopupTimestamp(photos, 'submitted_at', nowMs)
-        ?? earliestPopupTimestamp(photos, 'created_at', nowMs)
-        ?? earliestPopupTimestamp(photos, 'captured_at', nowMs);
+    const timestamps = (Array.isArray(photos) ? photos : [])
+        .map(photo => fieldPhotoObservationTimestamp(photo, nowMs))
+        .filter(timestampMs => Number.isFinite(timestampMs));
+    return timestamps.length ? Math.min(...timestamps) : null;
 }
 
 function popupElapsedUnitText(elapsedMs) {
@@ -184,6 +186,15 @@ function humanDateText(value) {
     return dateTime.split(' ')[0] || dateTime;
 }
 
+function fieldPhotoLocalDateParts(value) {
+    const timestampMs = popupTimestampMs(value);
+    if (!Number.isFinite(timestampMs)) return null;
+    const date = new Date(timestampMs);
+    const pad = number => String(number).padStart(2, '0');
+    const text = `${pad(date.getDate())}.${pad(date.getMonth() + 1)}.${date.getFullYear()}`;
+    return { date: text, dateTime: `${text}, ${pad(date.getHours())}:${pad(date.getMinutes())}` };
+}
+
 function photoPreviewDisplay(photo, index = 0) {
     const source = String(photo?.source || '');
     const rawLabel = String(photo?.label || '').trim();
@@ -196,11 +207,14 @@ function photoPreviewDisplay(photo, index = 0) {
             detail,
         };
     }
-    const humanDate = humanDatePartsFromPhotoText(rawLabel);
+    const humanDate = source === 'field'
+        ? fieldPhotoLocalDateParts(rawLabel)
+        : humanDatePartsFromPhotoText(rawLabel);
     if (humanDate) {
+        const addedDate = source === 'field' && photo?.date_kind === 'added';
         return {
-            name: t('modal.photoPreview.photoDated', { date: humanDate.dateTime }),
-            badge: humanDate.date,
+            name: t(addedDate ? 'modal.photoPreview.photoAdded' : 'modal.photoPreview.photoDated', { date: humanDate.dateTime }),
+            badge: addedDate ? t('modal.photoPreview.addedBadge', { date: humanDate.date }) : humanDate.date,
             detail,
         };
     }
