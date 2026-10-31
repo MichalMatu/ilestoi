@@ -7,6 +7,7 @@ const popups = readFileSync('web/app/popups.js', 'utf8');
 const fieldPopups = readFileSync('web/app/field_photo_popups.js', 'utf8');
 const context = vm.createContext({
     Date,
+    document: { addEventListener() {}, getElementById() { return null; } },
     t(key, params = {}) {
         const labels = {
             'modal.photoPreview.photoDated': params.date,
