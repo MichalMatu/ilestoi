@@ -13,6 +13,10 @@ const context = vm.createContext({
             'modal.photoPreview.photoAdded': `Dodano ${params.date}`,
             'modal.photoPreview.addedBadge': `dod. ${params.date}`,
             'modal.photoPreview.photoNumber': `Zdjęcie ${params.n}`,
+            'popup.agePrefix': `od ${params.age}`,
+            'popup.ageMonths': `${params.n} mies.`,
+            'popup.ageDays': `${params.n} dni`,
+            'popup.ageHours': `${params.n} h`,
         };
         return labels[key] || key;
     },
@@ -31,7 +35,7 @@ test('new photo and unknown OC never reset the earliest captured observation', (
     context.nowMs = Date.parse('2026-10-31T20:00:00Z');
     assert.equal(run('fieldPhotoGroupStartTimestamp(photos, nowMs)'), Date.parse('2026-06-05T20:31:17'));
     const badge = run('popupElapsedAgeText(photos, nowMs)');
-    assert.equal(badge, 'popup.agePrefix');
+    assert.equal(badge, 'od 4 mies.');
     assert.ok(run('fieldPhotoGroupStartTimestamp(photos, nowMs)') < Date.parse('2026-10-30T20:17:26Z'));
 });
 
