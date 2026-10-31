@@ -1,3 +1,4 @@
+installSmoothTrackpadZoom(map);
 refreshAdminStatus().finally(() => {
     map.on('moveend', scheduleFieldPhotoViewportLoad);
     map.on('popupopen', () => { fieldPhotoPopupOpen = true; });
