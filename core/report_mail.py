@@ -185,5 +185,8 @@ Proszę o weryfikację przez patrol i podjęcie czynności przewidzianych prawem
 
 Z poważaniem,
 {fields["reporter_name"]}
+Adres zamieszkania: {fields["reporter_address"]}
+E-mail: {fields["reporter_email"]}
+Telefon: {fields["reporter_phone"]}
 """
     return subject, body
