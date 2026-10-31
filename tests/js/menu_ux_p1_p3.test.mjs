@@ -150,3 +150,38 @@ test('no other mouse hover in the app styles draws a keyboard focus outline', ()
         }
     }
 });
+
+
+test('menu photo CTA has breathing room inside its scrolling viewport', () => {
+    const scroll = panel.split('.app-menu-drawer-scroll {')[1]?.split('}')[0];
+    assert.ok(scroll);
+    assert.match(scroll, /overflow-y:\s*auto/);
+    assert.match(scroll, /padding-top:\s*var\(--space-3\)/);
+    const mapPanel = panel.split('.app-menu-map-panel {')[1]?.split('}')[0];
+    assert.match(mapPanel, /padding:\s*0 var\(--space-5\)/);
+    assert.match(html, /class="app-menu-drawer-scroll"[^>]*>[\s\S]*class="app-menu-map-panel"[\s\S]*id="panel-add-field-photo"/);
+});
+
+test('interactive buttons never physically move on hover or activation', () => {
+    const stylesDir = new URL('../../web/styles/', import.meta.url);
+    const checked = [
+        '.app-menu-button:hover',
+        '.panel-photo-cta:hover',
+        '.btn-download:hover',
+        '.file-picker-button:hover',
+        '.map-pick-hint-close:hover',
+    ];
+    const allStyles = fs.readdirSync(stylesDir).filter(name => name.endsWith('.css'))
+        .map(name => ({ name, css: fs.readFileSync(new URL(name, stylesDir), 'utf8') }));
+    for (const selector of checked) {
+        assert.ok(allStyles.some(({css}) => css.includes(selector)), selector);
+    }
+    for (const { name, css } of allStyles) {
+        for (const match of css.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+            const [, selector, declarations] = match;
+            if (!/(?::hover|:active)/.test(selector)) continue;
+            assert.doesNotMatch(declarations, /\btransform\s*:/, name + ': moving hover/active control ' + selector.trim());
+        }
+    }
+    assert.doesNotMatch(panel, /transition:\s*transform/);
+});
