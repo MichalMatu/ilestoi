@@ -181,8 +181,7 @@
     cursor: var(--cursor-action);
     transition:
         background var(--duration-fast),
-        color var(--duration-fast),
-        transform var(--duration-fast);
+        color var(--duration-fast);
 }
 
 .map-pick-hint-close:hover,
@@ -190,7 +189,6 @@
     background: var(--primary-soft);
     color: var(--text-strong);
     outline: none;
-    transform: scale(1.04);
 }
 
 .map-pick-hint-close svg {
