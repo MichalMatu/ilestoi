@@ -64,7 +64,11 @@ function installSmoothTrackpadZoom(map) {
         const current = map.getZoom();
         if (next === current || anchor === null) return;
         if (!started) {
-            map.stop();
+            // Leaflet stop() fires a spurious moveend even on an idle map.
+            // Only interrupt an actual prior animation before a new gesture.
+            if (map._animatingZoom || map._flyToFrame || map._panAnim?._inProgress) {
+                map.stop();
+            }
             map._moveStart(true);
             started = true;
         }
