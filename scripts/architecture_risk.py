@@ -73,7 +73,7 @@ def _collect_python_patterns(
                 _collect_except_finding(path, node, findings, path_label)
             elif isinstance(node, ast.Call):
                 _collect_call_findings(path, node, findings, path_label)
-            elif isinstance(node, (ast.Import, ast.ImportFrom)):
+            elif isinstance(node, ast.Import | ast.ImportFrom):
                 _collect_import_finding(path, node, findings, path_label)
 
 

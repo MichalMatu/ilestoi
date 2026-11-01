@@ -105,7 +105,7 @@ def biggest_files(files: list[Path], limit: int = 20) -> list[dict[str, Any]]:
 def python_long_functions(path: Path, tree: ast.AST) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     for node in ast.walk(tree):
-        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+        if isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef):
             end_lineno = getattr(node, "end_lineno", node.lineno)
             rows.append(
                 {
@@ -246,7 +246,7 @@ def current_function_name(node: ast.AST, parents: dict[ast.AST, ast.AST]) -> str
     cursor = node
     while cursor in parents:
         cursor = parents[cursor]
-        if isinstance(cursor, (ast.FunctionDef, ast.AsyncFunctionDef)):
+        if isinstance(cursor, ast.FunctionDef | ast.AsyncFunctionDef):
             return cursor.name
     return None
 

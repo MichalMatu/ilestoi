@@ -15,10 +15,10 @@ from typing import Any
 from core import config
 from core.database import connect_database_read_only
 from core.field_photo_groups import same_vehicle_photo_group
-from core.geo import lon_meters_per_degree
 from core.field_photo_serialization import field_photo_summary
 from core.field_photo_store import database_path_for
 from core.field_photos import load_field_photo_record
+from core.geo import lon_meters_per_degree
 from core.photo_privacy import safe_existing_child
 
 # No original paths, owner credentials, EXIF or redaction payloads are read.
