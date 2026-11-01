@@ -1,3 +1,4 @@
+import re
 import unittest
 
 from app.http.static_files import render_web_template
@@ -5,7 +6,7 @@ from app.http.static_files import render_web_template
 
 class ScriptOrderContracts(unittest.TestCase):
     def test_inspection_loads_after_field_photo_actions(self):
-        html = render_web_template("index.html")
+        html = re.sub(r"(\.js)\?v=[a-f0-9]{16}(?=\")", r"\1", render_web_template("index.html"))
 
         self.assertLess(
             html.index('<script src="/app/field_photo_actions.js"></script>'),
