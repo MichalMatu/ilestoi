@@ -314,3 +314,27 @@ test('visible mobile gallery reserves zoom space and restores original zoom posi
     ui.context.setVehicleGalleryDockMode('none');
     assert.equal(ui.bodyClasses.has('vehicle-gallery-visible'), false);
 });
+
+test('gallery viewport requests reuse fresh data, dedupe in-flight work and expire safely', () => {
+    const ui = buildDock();
+    const skip = ui.context.vehicleGalleryShouldSkipRequest;
+    assert.equal(skip('17,51,18,52', '', '', 0, 1000), false);
+    assert.equal(skip('17,51,18,52', '17,51,18,52', '', 0, 1000), true);
+    assert.equal(skip('17,51,18,52', '', '17,51,18,52', 1000, 5999), true);
+    assert.equal(skip('17,51,18,52', '', '17,51,18,52', 1000, 6000), false);
+    assert.equal(skip('17,51,18,52', '', '17,51,18,52', 1000, 999), false);
+    assert.equal(skip('17,51,18,53', '', '17,51,18,52', 1000, 1200), false);
+    const source = readFileSync(new URL('web/app/vehicle_gallery.js', root), 'utf8');
+    assert.match(source, /vehicleGalleryRequest === controller/);
+    assert.match(source, /vehicleGalleryLoadedBbox = '';/);
+    assert.match(source, /vehicleGalleryPendingBbox = '';/);
+});
+
+test('tile layers defer grid refresh during continuous zoom without changing the zoom controller', () => {
+    const sources = readFileSync(new URL('web/app/map_sources.js', root), 'utf8');
+    assert.equal((sources.match(/updateWhenZooming: false/g) || []).length, 4);
+    assert.match(sources, /function buildMapSourceLayer\(source\)/);
+    assert.match(sources, /function buildMapLabelLayer\(\)/);
+    const zoom = readFileSync(new URL('web/app/trackpad_zoom.js', root), 'utf8');
+    assert.match(zoom, /map\._move\(center, next, \{ pinch: true, round: false \}\)/);
+});
