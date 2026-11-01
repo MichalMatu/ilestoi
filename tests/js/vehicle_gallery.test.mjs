@@ -73,11 +73,11 @@ function buildDock({ saved = {}, galleryAllowed = true } = {}) {
     return { context, access, storage, galleryRow, gallery, selector, slider, dock, panel, mapHandlers, documentHandlers, bodyClasses, state };
 }
 
-test('default map mode preserves original slider and unchecks gallery', () => {
+test('first visit defaults to the gallery instead of the map slider', () => {
     const ui = buildDock();
     assert.deepEqual(ui.state(), {
-        mode: 'map', gallery: false, slider: true,
-        sliderHidden: false, dockHidden: true, panelHidden: true,
+        mode: 'gallery', gallery: true, slider: false,
+        sliderHidden: true, dockHidden: false, panelHidden: false,
     });
 });
 
@@ -338,4 +338,43 @@ test('tile layers defer grid refresh during continuous zoom without changing the
     assert.match(sources, /function buildMapLabelLayer\(\)/);
     const zoom = readFileSync(new URL('web/app/trackpad_zoom.js', root), 'utf8');
     assert.match(zoom, /map\._move\(center, next, \{ pinch: true, round: false \}\)/);
+});
+
+test('existing saved map and none modes remain authoritative', () => {
+    for (const [value, visible] of [['map', true], ['none', false]]) {
+        const ui = buildDock({ saved: { 'test.dock': value } });
+        assert.equal(ui.state().mode, value);
+        assert.equal(ui.state().sliderHidden, !visible);
+        assert.equal(ui.state().dockHidden, true);
+    }
+});
+
+test('only successful empty first-visit gallery falls back to the map selector without saving the fallback', () => {
+    const ui = buildDock();
+    ui.context.vehicleGalleryFallbackOnEmptyDefault([]);
+    assert.equal(ui.state().mode, 'map');
+    assert.equal(ui.state().sliderHidden, false);
+    assert.equal(ui.storage.has('test.dock'), false);
+    ui.context.setVehicleGalleryEnabled(true);
+    ui.context.vehicleGalleryFallbackOnEmptyDefault([]);
+    assert.equal(ui.state().mode, 'gallery');
+    assert.equal(ui.storage.get('test.dock'), 'gallery');
+});
+
+test('nonempty first visit never falls back; explicit saved gallery stays even on empty results', () => {
+    const initial = buildDock();
+    initial.context.vehicleGalleryFallbackOnEmptyDefault([{ id: 'vehicle' }]);
+    assert.equal(initial.state().mode, 'gallery');
+    const stored = buildDock({ saved: { 'test.dock': 'gallery' } });
+    stored.context.vehicleGalleryFallbackOnEmptyDefault([]);
+    assert.equal(stored.state().mode, 'gallery');
+});
+
+test('gallery disabled on first visit shows the existing slider and restores the default gallery when enabled', () => {
+    const ui = buildDock({ galleryAllowed: false });
+    assert.equal(ui.state().mode, 'map');
+    assert.equal(ui.state().sliderHidden, false);
+    ui.access.galleryAllowed = true;
+    ui.context.updateVehicleGalleryAvailability();
+    assert.equal(ui.state().mode, 'gallery');
 });
