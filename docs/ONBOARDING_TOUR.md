@@ -9,7 +9,7 @@ English using the existing `t(...)` dictionaries.
 
 ## User flow
 
-The tour appears once on the homepage after the initial public photo data load
+The tour normally appears after the initial data load unless the user has seen the separate first-visit visual introduction
 (or its error state). A versioned local-storage flag
 `ilestoi-onboarding-v1-complete` records **Finish** or **Skip**; the first
 loading attempt does not count as completion. Existing visitors are unaffected
@@ -54,5 +54,11 @@ Before release, perform a browser walkthrough at desktop/mobile sizes,
 including empty map, unavailable photo upload, keyboard Tab/Shift-Tab/Escape,
 PL/EN, popup report enabled/disabled, first visit and replay.
 
-Keep work on feature branches based on `work/dirty`; production `main`
+Keep work on short-lived feature branches from `main`; production `main`
 is release-only as specified by AGENTS.md.
+
+## First-visit visual introduction
+
+The separate `web/intro.html` contains the 13.6-second four-scene responsive visual story. `web/app/intro_overlay.js` mounts it on a first ordinary visit to the homepage, not for deep links. A versioned storage flag `ilestoi-intro-v1-seen` records completion or skip; playback never writes application data. The same-origin parent checks origin and iframe sender before closing. After playback the embedded intro closes automatically; it is also replayable from the menu.
+
+The visual story replaces the automatic full guided tour for people who have seen the intro. The interactive map tour remains manually available in the menu. A single document uses portrait layout for phones and portrait tablets, landscape layout for desktops and landscape tablets.
