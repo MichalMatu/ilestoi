@@ -122,7 +122,7 @@ async function loadVehicleGallery() {
             if (unique.length >= 10) break;
         }
         renderVehicleGalleryItems(unique);
-    } catch (error) {
+    } catch (_error) {
         if (revision !== vehicleGalleryRevision || controller.signal.aborted) return;
         if (list) list.textContent = t('gallery.error');
     }
