@@ -31,6 +31,7 @@ const publicLayerControls = {
 const publicFeatureControls = {
     [PUBLIC_FEATURE_KEYS.reportPdfs]: document.getElementById('admin-feature-report-pdfs'),
     [PUBLIC_FEATURE_KEYS.photoUploads]: document.getElementById('admin-feature-photo-uploads'),
+    [PUBLIC_FEATURE_KEYS.vehicleGallery]: document.getElementById('admin-feature-vehicle-gallery'),
 };
 const publicLayerToggleRows = {
     [PUBLIC_LAYER_KEYS.vehicles]: document.getElementById('toggle-vehicles')?.closest('.layer-toggle'),
@@ -178,6 +179,7 @@ function updatePublicFeatureControlVisibility() {
 function updatePublicFeatureAccess() {
     updateAdminPublicFeatureControls();
     updatePublicFeatureControlVisibility();
+    if (typeof updateVehicleGalleryAvailability === 'function') updateVehicleGalleryAvailability();
 }
 
 function applyPublicFeatureSettings(settings) {

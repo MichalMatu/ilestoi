@@ -283,7 +283,7 @@ function isMapSourceSliderVisible() {
 
 function applyMapSourceSliderVisibility() {
     const slider = document.getElementById('year-slider');
-    if (slider) slider.hidden = !mapSourceSliderVisible;
+    if (slider) slider.hidden = !mapSourceSliderVisible || (typeof vehicleGalleryDockMode === 'function' && vehicleGalleryDockMode() !== 'map' && typeof vehicleGalleryIsAvailable === 'function' && vehicleGalleryIsAvailable());
     const toggle = document.getElementById('map-source-slider-toggle');
     if (toggle) toggle.checked = mapSourceSliderVisible;
 }
@@ -318,6 +318,7 @@ function updateMapSourceUi() {
     }
     renderMapSourceTicks(visibleIndices);
     applyMapSourceSliderVisibility();
+    if (typeof renderVehicleGalleryMapDots === 'function') renderVehicleGalleryMapDots();
     document.getElementById('year-prev')?.toggleAttribute('disabled', mapSourceVisiblePosition(currentMapSourceIndex, visibleIndices) <= 0);
     document.getElementById('year-next')?.toggleAttribute(
         'disabled',
