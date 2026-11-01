@@ -15,3 +15,7 @@ Testy regresyjne obejmują przejścia stanów, odświeżenie, brak dostępu, syn
 ## Zachowanie przy interakcji z mapą
 
 Wybrany tryb `gallery` jest trwałą preferencją. Dotknięcie mapy ani miniatury w galerii **nie** przełącza trybu na `none`. Wybranie miniatury ustawia cel na mapie i otwiera istniejący popup pojazdu; na czas widocznego popupu galeria zostaje **tymczasowo ukryta** (bez odznaczania checkboxa i bez zapisu innego trybu). Zdarzenie Leaflet `popupclose` przywraca ten sam panel. Tryb `none` lub `map` można wybrać tylko z istniejącego menu. Zmiana trybu podczas popupu ma pierwszeństwo nad automatycznym przywróceniem. Oryginalny suwak i jego CSS bez zmian.
+
+## Kolejność i podpisy w galerii
+
+Galeria pokazuje **wyłącznie fotografie**, bez stałych podpisów priorytetu pod miniaturami (etykieta pozostaje dostępna dla czytników ekranu). Kolejność od lewej do prawej: poziom administracyjny `3` (pilny), `2` (wysoki), `1` (wyróżniony); w obrębie poziomu starsza **najwcześniejsza udokumentowana obserwacja pojazdu** jest pierwsza. Data bierze się z zatwierdzonych, aktywnych zdjęć w tej samej grupie (1 m): prawidłowy czas wykonania zdjęcia, a jeśli go brak — dodanie lub zgłoszenie. Nie utożsamiać wieku dokumentacji z nieprzerwanym postojem. Brak poprawnej daty daje miejsce za autami z udokumentowaną datą w obrębie tego samego priorytetu. Tę samą kolejność egzekwują publiczny endpoint i klient (również przed deduplikacją); rozstrzygnięcie pełnego remisu po identyfikatorze. Nie zmienia to struktury suwaka ani ustawień mapy.

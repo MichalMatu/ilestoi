@@ -8,10 +8,14 @@ repairs individual stale records only if their public derivatives are missing.
 from __future__ import annotations
 
 import json
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
+from core import config
 from core.database import connect_database_read_only
+from core.field_photo_groups import same_vehicle_photo_group
+from core.geo import lon_meters_per_degree
 from core.field_photo_serialization import field_photo_summary
 from core.field_photo_store import database_path_for
 from core.field_photos import load_field_photo_record
@@ -150,6 +154,66 @@ def list_map_field_photos(
     return result, (str(last["created_at"]), str(last["id"]))
 
 
+
+_GALLERY_MIN_OBSERVATION = datetime(2000, 1, 1, tzinfo=timezone.utc)
+
+
+def _gallery_observation_date(record: dict[str, Any], now: datetime) -> datetime | None:
+    """Use actual capture time when valid; otherwise first upload/submission."""
+    for key in ("captured_at", "created_at", "submitted_at"):
+        raw = record.get(key)
+        if not isinstance(raw, str) or not raw.strip():
+            continue
+        text = raw.strip()
+        if len(text) < 10 or text[4:5] != "-" or text[7:8] != "-":
+            continue
+        try:
+            parsed = datetime.fromisoformat(text.replace("Z", "+00:00"))
+        except ValueError:
+            continue
+        if parsed.tzinfo is None:
+            parsed = parsed.replace(tzinfo=timezone.utc)
+        parsed = parsed.astimezone(timezone.utc)
+        if _GALLERY_MIN_OBSERVATION <= parsed <= now + timedelta(minutes=5):
+            return parsed
+    return None
+
+
+def _gallery_group_first_observed(
+    connection: Any, nominated: dict[str, Any], now: datetime,
+) -> str | None:
+    """Oldest documented observation of this *group*, not its cover photo."""
+    lat, lon = float(nominated["lat"]), float(nominated["lon"])
+    radius = config.FIELD_PHOTO_GROUP_RADIUS_M
+    lat_margin = radius / 111_320.0 * 1.1
+    lon_margin = radius / max(abs(lon_meters_per_degree(lat)), 0.000001) * 1.1
+    candidates = connection.execute(
+        """SELECT issue_type, lat, lon, captured_at, created_at, submitted_at
+           FROM field_photos WHERE issue_type = 'vehicle'
+             AND public_review_status = 'approved'
+             AND vehicle_resolution_status = 'active'
+             AND lat BETWEEN ? AND ? AND lon BETWEEN ? AND ?""",
+        (lat - lat_margin, lat + lat_margin, lon - lon_margin, lon + lon_margin),
+    )
+    dates = [
+        observed for record in candidates
+        if same_vehicle_photo_group(nominated, dict(record))
+        for observed in [_gallery_observation_date(dict(record), now)]
+        if observed is not None
+    ]
+    earliest = min(dates, default=None)
+    return earliest.isoformat().replace("+00:00", "Z") if earliest is not None else None
+
+
+def _gallery_sort_key(photo: dict[str, Any]) -> tuple[int, datetime, str]:
+    raw = photo.get("first_observed_at")
+    try:
+        observed = datetime.fromisoformat(raw.replace("Z", "+00:00")) if raw else datetime.max.replace(tzinfo=timezone.utc)
+    except (ValueError, AttributeError):
+        observed = datetime.max.replace(tzinfo=timezone.utc)
+    return (-int(photo["vehicle_gallery_priority"]), observed, str(photo["id"]))
+
+
 def list_map_vehicle_gallery(
     storage_dir: Path, *, bounds: tuple[float, float, float, float], private_dir: Path | None = None,
 ) -> list[dict[str, Any]]:
@@ -166,17 +230,20 @@ def list_map_vehicle_gallery(
     sql = (
         f"SELECT {', '.join(_MAP_COLUMNS)} FROM field_photos WHERE "
         + " AND ".join(conditions)
-        + " ORDER BY vehicle_gallery_priority DESC, created_at DESC, id DESC LIMIT 100"
+        + " ORDER BY vehicle_gallery_priority DESC, created_at ASC, id ASC LIMIT 100"
     )
     connection = connect_database_read_only(database_path_for(storage_dir))
     try:
         rows = [dict(row) for row in connection.execute(sql, params)]
+        now = datetime.now(timezone.utc)
+        result: list[dict[str, Any]] = []
+        for row in rows:
+            try:
+                public_photo = _map_photo(row, storage_dir, private_dir)
+                public_photo["first_observed_at"] = _gallery_group_first_observed(connection, row, now)
+                result.append(public_photo)
+            except (OSError, ValueError, FileNotFoundError, json.JSONDecodeError):
+                continue
     finally:
         connection.close()
-    result: list[dict[str, Any]] = []
-    for row in rows:
-        try:
-            result.append(_map_photo(row, storage_dir, private_dir))
-        except (OSError, ValueError, FileNotFoundError, json.JSONDecodeError):
-            continue
-    return result
+    return sorted(result, key=_gallery_sort_key)

@@ -81,6 +81,18 @@ function renderVehicleGalleryMapDots() {
     holder.replaceChildren(fragment);
 }
 
+function vehicleGallerySortPhotos(photos) {
+    const observedMs = photo => {
+        const value = Date.parse(photo.first_observed_at || '');
+        return Number.isFinite(value) ? value : Number.POSITIVE_INFINITY;
+    };
+    return [...photos].sort((a, b) =>
+        Number(b.vehicle_gallery_priority) - Number(a.vehicle_gallery_priority)
+        || observedMs(a) - observedMs(b)
+        || String(a.id).localeCompare(String(b.id))
+    );
+}
+
 function scheduleVehicleGalleryLoad(immediate = false) {
     window.clearTimeout(vehicleGalleryDebounce);
     if (vehicleGalleryDockMode() !== 'gallery') return;
@@ -105,7 +117,7 @@ async function loadVehicleGallery() {
             throw new Error(t('gallery.error'));
         }
         const unique = [];
-        for (const photo of data.photos) {
+        for (const photo of vehicleGallerySortPhotos(data.photos)) {
             if (Number(photo.vehicle_gallery_priority) < 1 || !photo.public_thumb) continue;
             const lat = Number(photo.lat), lon = Number(photo.lon);
             if (!Number.isFinite(lat) || !Number.isFinite(lon)) continue;
@@ -139,9 +151,8 @@ function renderVehicleGalleryItems(photos) {
         img.src = photo.public_thumb;
         img.loading = 'lazy';
         img.alt = '';
-        const copy = document.createElement('span');
-        copy.textContent = t(keys[photo.vehicle_gallery_priority] || 'gallery.featured');
-        button.append(img, copy);
+        button.setAttribute('aria-label', t(keys[photo.vehicle_gallery_priority] || 'gallery.featured'));
+        button.append(img);
         button.addEventListener('click', () => focusVehicleGalleryPhoto(photo));
         fragment.append(button);
     });

@@ -25,7 +25,8 @@ class VehicleGalleryTests(unittest.TestCase):
         self.addCleanup(self.connection.close)
 
     def seed(self, suffix: str, *, priority: int = 0, lat: float = 51.1, lon: float = 17.0,
-             status: str = "approved", resolution: str = "active") -> str:
+             status: str = "approved", resolution: str = "active",
+             created_at: str = "2026-11-01T09:00:00Z", captured_at: str | None = None) -> str:
         photo_id = f"photo_20261101T090000Z_{suffix}"
         folder = self.storage / photo_id
         folder.mkdir()
@@ -34,12 +35,12 @@ class VehicleGalleryTests(unittest.TestCase):
         with self.connection:
             self.connection.execute(
                 """INSERT INTO field_photos
-                    (id, created_at, issue_type, lat, lon, coordinate_source,
+                    (id, created_at, captured_at, issue_type, lat, lon, coordinate_source,
                      public_review_status, vehicle_resolution_status, vehicle_gallery_priority,
                      original_filename, content_type, format, size_bytes, public_image_file, public_thumb_file)
-                   VALUES (?, '2026-11-01T09:00:00Z', 'vehicle', ?, ?, 'map', ?, ?, ?,
+                   VALUES (?, ?, ?, 'vehicle', ?, ?, 'map', ?, ?, ?,
                            'test.jpg', 'image/jpeg', 'JPEG', 20, 'public.jpg', 'thumb.jpg')""",
-                (photo_id, lat, lon, status, resolution, priority),
+                (photo_id, created_at, captured_at, lat, lon, status, resolution, priority),
             )
         return photo_id
 
@@ -77,6 +78,34 @@ class VehicleGalleryTests(unittest.TestCase):
         )
         self.assertEqual(load_field_record_by_id(second, self.storage)["vehicle_gallery_priority"], 0)
         self.assertEqual(list_map_vehicle_gallery(self.storage, bounds=(16, 50, 18, 52)), [])
+
+    def test_priority_first_then_longest_documented_standing(self) -> None:
+        older_high = self.seed("agehigha", priority=2, lon=17.001, created_at="2026-09-20T10:00:00Z")
+        newer_high = self.seed("agehighb", priority=2, lon=17.003, created_at="2026-10-20T10:00:00Z")
+        urgent = self.seed("ageurgent", priority=3, lon=17.005, created_at="2026-10-31T10:00:00Z")
+        featured = self.seed("agefeat0", priority=1, lon=17.007, created_at="2025-01-01T10:00:00Z")
+        rows = list_map_vehicle_gallery(self.storage, bounds=(16.9, 51.0, 17.1, 51.2))
+        self.assertEqual([r["id"] for r in rows], [urgent, older_high, newer_high, featured])
+        self.assertEqual(rows[1]["first_observed_at"], "2026-09-20T10:00:00Z")
+
+    def test_cover_photo_does_not_reset_group_age(self) -> None:
+        old_evidence = self.seed("oldgroup", lon=17.002000, created_at="2026-08-01T12:00:00Z",
+                                 captured_at="2026-04-01T12:00:00Z")
+        cover = self.seed("newcover", priority=2, lon=17.002002, created_at="2026-10-20T12:00:00Z")
+        other = self.seed("othercar", priority=2, lon=17.005, created_at="2026-06-01T12:00:00Z")
+        rows = list_map_vehicle_gallery(self.storage, bounds=(16.9, 51.0, 17.1, 51.2))
+        self.assertEqual([r["id"] for r in rows], [cover, other])
+        self.assertEqual(rows[0]["first_observed_at"], "2026-04-01T12:00:00Z")
+        self.assertNotEqual(rows[0]["id"], old_evidence)
+
+    def test_invalid_or_future_capture_falls_back_to_upload_date(self) -> None:
+        first = self.seed("future00", priority=2, lon=17.001,
+                          created_at="2026-05-01T00:00:00Z", captured_at="2099-01-01T00:00:00Z")
+        second = self.seed("invalid0", priority=2, lon=17.003,
+                           created_at="2026-07-01T00:00:00Z", captured_at="not-a-date")
+        rows = list_map_vehicle_gallery(self.storage, bounds=(16.9, 51.0, 17.1, 51.2))
+        self.assertEqual([r["id"] for r in rows], [first, second])
+        self.assertEqual(rows[0]["first_observed_at"], "2026-05-01T00:00:00Z")
 
     def test_pending_cannot_be_nominated(self) -> None:
         photo_id = self.seed("dddddddd", status="pending")

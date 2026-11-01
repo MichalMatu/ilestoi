@@ -266,3 +266,26 @@ test('original slider stylesheet stays unchanged and mobile zoom remains accessi
     const mapCss = readFileSync(new URL('web/styles/map.css', root), 'utf8');
     assert.match(mapCss, /#map \.leaflet-bottom\.leaflet-right\s*\{\s*bottom: calc\(56px/);
 });
+
+test('gallery sorts priority descending, then oldest documented group observation', () => {
+    const ui = buildDock();
+    const sorted = ui.context.vehicleGallerySortPhotos([
+        { id: 'new_high', vehicle_gallery_priority: 2, first_observed_at: '2026-10-01T00:00:00Z' },
+        { id: 'old_featured', vehicle_gallery_priority: 1, first_observed_at: '2022-01-01T00:00:00Z' },
+        { id: 'old_high', vehicle_gallery_priority: 2, first_observed_at: '2026-04-01T00:00:00Z' },
+        { id: 'urgent', vehicle_gallery_priority: 3, first_observed_at: '2026-10-30T00:00:00Z' },
+        { id: 'unknown_high', vehicle_gallery_priority: 2, first_observed_at: null },
+    ]);
+    assert.deepEqual(Array.from(sorted, p => p.id),
+        ['urgent', 'old_high', 'new_high', 'unknown_high', 'old_featured']);
+});
+
+test('gallery cards are photo-only; priority remains accessible but does not consume height', () => {
+    const source = readFileSync(new URL('web/app/vehicle_gallery.js', root), 'utf8');
+    const css = readFileSync(new URL('web/styles/vehicle_gallery.css', root), 'utf8');
+    assert.match(source, /button\.setAttribute\('aria-label', t\(keys\[/);
+    assert.doesNotMatch(source, /const copy = document\.createElement\('span'\)/);
+    assert.match(source, /button\.append\(img\);/);
+    assert.doesNotMatch(css, /\.vehicle-gallery-card span/);
+    assert.doesNotMatch(css, /\.vehicle-gallery-card \{[^}]*gap: /);
+});

@@ -28,7 +28,7 @@
     font-size: 12px; align-items: center;
 }
 .vehicle-gallery-card {
-    display: grid; gap: 3px; align-content: start; flex: 0 0 105px;
+    display: grid; align-content: start; flex: 0 0 105px;
     min-width: 0; border: 0; color: var(--text-strong);
     background: transparent; cursor: pointer; padding: 0;
     text-align: left; font-size: 10px;
@@ -37,7 +37,6 @@
     width: 105px; height: 78px; aspect-ratio: 4/3; object-fit: cover;
     border-radius: 7px; border: 1px solid var(--glass-border);
 }
-.vehicle-gallery-card span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .vehicle-gallery-map-dots {
     min-height: 30px; display: flex; align-items: center; justify-content: center;
     gap: 3px; border-top: 1px solid var(--glass-border); padding-top: 6px;
