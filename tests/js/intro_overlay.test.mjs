@@ -26,6 +26,7 @@ function setup({ stored = null, path = '/', search = '', hash = '' } = {}) {
         },
         window: { addEventListener(k, fn) { listeners[k] = fn; } },
         CURRENT_LANG: 'pl',
+        URLSearchParams,
     };
     vm.createContext(context);
     vm.runInContext(script, context);
