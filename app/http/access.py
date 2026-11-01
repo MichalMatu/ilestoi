@@ -16,8 +16,8 @@ _FIELD_PHOTO_PUBLIC_LAYER_KEYS = {
 
 def submission_owner(handler) -> str:
     ip = client_key(handler)
-    ua = str(handler.headers.get("User-Agent") or "")
-    digest = hashlib.sha256(f"{ip}|{ua}".encode()).hexdigest()[:24]
+    # User-Agent is supplied by the caller and must not rotate a storage quota.
+    digest = hashlib.sha256(ip.encode()).hexdigest()[:24]
     return f"public:{digest}"
 
 
