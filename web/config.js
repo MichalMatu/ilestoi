@@ -22,8 +22,6 @@ function setDefaultMapView(raw) {
 // Klucze localStorage. Zmiana nazwy resetuje zapisane preferencje użytkownika.
 const MAP_VIEW_STORAGE_KEY = 'wreckscanner.mapView.v3';
 const ENHANCEMENT_SETTINGS_STORAGE_KEY = 'wreckscanner.enhancementSettings.v2';
-const MAP_SOURCE_SLIDER_VISIBLE_STORAGE_KEY = 'wreckscanner.mapSourceSliderVisible.v1';
-const MAP_GALLERY_VISIBLE_STORAGE_KEY = 'wreckscanner.vehicleGalleryVisible.v1';
 const MAP_DOCK_MODE_STORAGE_KEY = 'wreckscanner.bottomDockMode.v1';
 const MAP_STREET_LABELS_VISIBLE_STORAGE_KEY = 'wreckscanner.mapStreetLabelsVisible.v1';
 const VEHICLE_STANDING_FILTER_DAYS_STORAGE_KEY = 'wreckscanner.vehicleStandingFilterDays.v1';

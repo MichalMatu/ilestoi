@@ -64,13 +64,3 @@
     .vehicle-gallery-panel { animation: none; }
 }
 
-/* The gallery is opened from the existing layer-menu row, not from the map. */
-.panel-map-gallery .vehicle-gallery-menu-open {
-    display: grid; place-items: center; justify-self: end;
-    width: 30px; height: 30px; padding: 0;
-    color: var(--text-strong); background: var(--surface-inset);
-    border: 1px solid var(--border); border-radius: 8px;
-    font-size: 16px; cursor: pointer;
-}
-.panel-map-gallery .vehicle-gallery-menu-open:hover { background: var(--primary-soft); }
-.panel-map-gallery .vehicle-gallery-menu-open:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }

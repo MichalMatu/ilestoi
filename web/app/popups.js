@@ -336,7 +336,7 @@ function popupPhotoGrid(previews, { className = '', max = MAP_POPUP_PREVIEW_MAX_
                     ${preview}
                     <button type="button" class="map-popup-nomination" data-gallery-photo-id="${photoId}"
                         data-gallery-priority="${level}" aria-label="${escapeHtml(t('gallery.nominate'))}"
-                        title="${escapeHtml(t('gallery.nominate'))}" onclick="openVehicleGalleryNomination(this); event.stopPropagation()">${level ? '★' : '☆'}</button>
+                        title="${escapeHtml(t('gallery.nominate'))}" onclick="openVehicleGalleryNomination(this); event.stopPropagation()"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77 5.82 21.02 7 14.14 2 9.27l6.91-1.01L12 2z"></path></svg></button>
                 </div>`;
 
             }).join('')}

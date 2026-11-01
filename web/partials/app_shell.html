@@ -111,16 +111,12 @@
                         <span class="layer-label" data-i18n="panel.baseMap">Pokaż wybór podkładu</span>
                         <span class="layer-count-badge" id="map-source-current-badge">POL</span>
                     </label>
-                    <div class="layer-toggle panel-map-gallery">
-                        <input type="checkbox" id="map-gallery-toggle" checked
+                    <label class="layer-toggle panel-map-gallery">
+                        <input type="checkbox" id="map-gallery-toggle"
                             onchange="setVehicleGalleryEnabled(this.checked)">
                         <span class="layer-pin layer-pin--vehicle" aria-hidden="true"></span>
-                        <label for="map-gallery-toggle" class="layer-label" data-i18n="gallery.menuToggle">Galeria wyróżnionych pojazdów</label>
-                        <button type="button" class="vehicle-gallery-menu-open"
-                            onclick="openVehicleGalleryFromMenu()"
-                            data-i18n-attr="title:gallery.open;aria-label:gallery.open"
-                            title="Otwórz galerię" aria-label="Otwórz galerię">▣</button>
-                    </div>
+                        <span class="layer-label" data-i18n="gallery.menuToggle">Galeria pojazdów</span>
+                    </label>
                     <label class="layer-toggle" data-i18n-attr="title:layers.cadastralTooltip">
                         <input type="checkbox" id="toggle-cadastral-parcels"
                             onchange="toggleCadastralLayer(this.checked)">

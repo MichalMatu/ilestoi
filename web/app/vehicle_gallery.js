@@ -1,69 +1,64 @@
 /* Gallery dock is deliberately additive: the existing year slider markup and CSS stay intact. */
-let vehicleGalleryEnabled = true;
 let vehicleGalleryMode = 'map';
 let vehicleGalleryRequest = null;
 let vehicleGalleryDebounce = null;
 let vehicleGalleryRevision = 0;
 try {
-    vehicleGalleryEnabled = localStorage.getItem(MAP_GALLERY_VISIBLE_STORAGE_KEY) !== 'false';
     const stored = localStorage.getItem(MAP_DOCK_MODE_STORAGE_KEY);
     if (['map', 'gallery', 'none'].includes(stored)) vehicleGalleryMode = stored;
 } catch (_) {}
 
 function vehicleGalleryIsAvailable() {
-    return vehicleGalleryEnabled && publicFeatureAllowed(PUBLIC_FEATURE_KEYS.vehicleGallery);
+    return publicFeatureAllowed(PUBLIC_FEATURE_KEYS.vehicleGallery);
 }
 
 function vehicleGalleryDockMode() {
-    return vehicleGalleryMode;
+    return vehicleGalleryMode === 'gallery' && !vehicleGalleryIsAvailable()
+        ? 'none' : vehicleGalleryMode;
 }
 
 function updateVehicleGalleryAvailability() {
+    const activeMode = vehicleGalleryDockMode();
     const dock = document.getElementById('vehicle-gallery-dock');
-    if (!dock) return;
-    const allowed = vehicleGalleryIsAvailable();
-    const control = document.getElementById('map-gallery-toggle');
-    if (control) control.checked = vehicleGalleryEnabled;
-    dock.hidden = !allowed || vehicleGalleryMode !== 'gallery';
-    if (!allowed) {
-        vehicleGalleryRequest?.abort();
-        applyMapSourceSliderVisibility();
-        return;
+    const galleryToggle = document.getElementById('map-gallery-toggle');
+    const galleryRow = galleryToggle?.closest('.layer-toggle');
+    if (galleryToggle) {
+        galleryToggle.checked = activeMode === 'gallery';
+        galleryToggle.disabled = !vehicleGalleryIsAvailable();
     }
-    dock.dataset.mode = vehicleGalleryMode;
+    if (galleryRow) galleryRow.hidden = !vehicleGalleryIsAvailable();
+    if (dock) {
+        dock.hidden = activeMode !== 'gallery';
+        dock.dataset.mode = activeMode;
+    }
     const panel = document.getElementById('vehicle-gallery-panel');
-    if (panel) panel.hidden = vehicleGalleryMode !== 'gallery';
-    renderVehicleGalleryMapDots();
+    if (panel) panel.hidden = activeMode !== 'gallery';
     applyMapSourceSliderVisibility();
-    if (vehicleGalleryMode === 'gallery') scheduleVehicleGalleryLoad(true);
-    else vehicleGalleryRequest?.abort();
+    if (activeMode === 'gallery') {
+        renderVehicleGalleryMapDots();
+        scheduleVehicleGalleryLoad(true);
+    } else {
+        window.clearTimeout(vehicleGalleryDebounce);
+        vehicleGalleryRequest?.abort();
+    }
 }
 
 function setVehicleGalleryEnabled(enabled) {
-    vehicleGalleryEnabled = Boolean(enabled);
-    try { localStorage.setItem(MAP_GALLERY_VISIBLE_STORAGE_KEY, String(vehicleGalleryEnabled)); } catch (_) {}
-    updateVehicleGalleryAvailability();
+    setVehicleGalleryDockMode(enabled ? 'gallery' : 'none');
 }
 
 function setVehicleGalleryDockMode(mode) {
     if (!['map', 'gallery', 'none'].includes(mode)) return;
+    if (mode === 'gallery' && !vehicleGalleryIsAvailable()) return;
     vehicleGalleryMode = mode;
     try { localStorage.setItem(MAP_DOCK_MODE_STORAGE_KEY, mode); } catch (_) {}
     updateVehicleGalleryAvailability();
 }
 
-function openVehicleGalleryFromMenu() {
-    if (!publicFeatureAllowed(PUBLIC_FEATURE_KEYS.vehicleGallery)) return;
-    if (!vehicleGalleryEnabled) setVehicleGalleryEnabled(true);
-    setVehicleGalleryDockMode('gallery');
-    closeAppMenu();
-}
-
 function renderVehicleGalleryMapDots() {
     const holder = document.getElementById('vehicle-gallery-map-dots');
     if (!holder) return;
-    holder.hidden = !mapSourceSliderVisible;
-    if (!mapSourceSliderVisible) return;
+    holder.hidden = false;
     const selected = currentMapSourceIndex;
     const fragment = document.createDocumentFragment();
     visibleMapSourceIndices().forEach(index => {
@@ -83,12 +78,12 @@ function renderVehicleGalleryMapDots() {
 
 function scheduleVehicleGalleryLoad(immediate = false) {
     window.clearTimeout(vehicleGalleryDebounce);
-    if (!vehicleGalleryIsAvailable() || vehicleGalleryMode !== 'gallery') return;
+    if (vehicleGalleryDockMode() !== 'gallery') return;
     vehicleGalleryDebounce = window.setTimeout(loadVehicleGallery, immediate ? 0 : 250);
 }
 
 async function loadVehicleGallery() {
-    if (!vehicleGalleryIsAvailable() || vehicleGalleryMode !== 'gallery') return;
+    if (vehicleGalleryDockMode() !== 'gallery') return;
     vehicleGalleryRequest?.abort();
     const controller = new AbortController();
     vehicleGalleryRequest = controller;
@@ -100,8 +95,7 @@ async function loadVehicleGallery() {
         const data = await apiJson(`${FIELD_PHOTOS_URL}/gallery?bbox=${encodeURIComponent(bbox)}`, {
             signal: controller.signal, cache: 'no-store',
         });
-        if (revision !== vehicleGalleryRevision || !vehicleGalleryIsAvailable()
-            || vehicleGalleryMode !== 'gallery') return;
+        if (revision !== vehicleGalleryRevision || vehicleGalleryDockMode() !== 'gallery') return;
         if (data.status !== 'ok' || !Array.isArray(data.photos) || data.photos.length > 100) {
             throw new Error(t('gallery.error'));
         }
@@ -154,7 +148,7 @@ function focusVehicleGalleryPhoto(photo) {
     if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
     pendingVehiclePhotoFocusId = safeFieldPhotoId(photo.id);
     vehiclePhotoFocusDone = false;
-    setVehicleGalleryDockMode(mapSourceSliderVisible ? 'map' : 'none');
+    setVehicleGalleryDockMode('none');
     map.setView([lat, lon], Math.max(17, map.getZoom()), { animate: false });
     loadFieldPhotos();
 }
@@ -203,11 +197,9 @@ function openVehicleGalleryNomination(button) {
                 popup?.querySelectorAll('.map-popup-nomination').forEach(star => {
                     if (star !== button) {
                         star.dataset.galleryPriority = '0';
-                        star.textContent = '☆';
                     }
                 });
                 button.dataset.galleryPriority = String(priority);
-                button.textContent = priority ? '★' : '☆';
                 scheduleVehicleGalleryLoad(true);
                 map.once('popupclose', () => window.setTimeout(loadFieldPhotos, 0));
             } catch (error) {

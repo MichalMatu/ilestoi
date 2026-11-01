@@ -9,7 +9,7 @@ const TRANSLATIONS_PL = {
         'appMenu.close': 'Zamknij menu',
         'appMenu.label': 'Menu aplikacji',
         'gallery.title': 'Wraki pod lupą',
-        'gallery.menuToggle': 'Galeria wyróżnionych pojazdów',
+        'gallery.menuToggle': 'Galeria pojazdów',
         'gallery.adminToggle': 'Publiczna galeria wyróżnionych pojazdów',
         'gallery.open': 'Otwórz galerię pojazdów',
         'gallery.showMap': 'Wybór mapy',

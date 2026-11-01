@@ -8,7 +8,7 @@ const TRANSLATIONS_EN = {
         'appMenu.close': 'Close menu',
         'appMenu.label': 'Application menu',
         'gallery.title': 'Vehicles in focus',
-        'gallery.menuToggle': 'Featured vehicle gallery',
+        'gallery.menuToggle': 'Vehicle gallery',
         'gallery.adminToggle': 'Public featured vehicle gallery',
         'gallery.open': 'Open vehicle gallery',
         'gallery.showMap': 'Map background selector',

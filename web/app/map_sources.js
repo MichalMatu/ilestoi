@@ -12,12 +12,6 @@ try {
 } catch (_) {
     mapLabelsVisible = true;
 }
-let mapSourceSliderVisible = true;
-try {
-    mapSourceSliderVisible = localStorage.getItem(MAP_SOURCE_SLIDER_VISIBLE_STORAGE_KEY) !== 'false';
-} catch (_) {
-    mapSourceSliderVisible = true;
-}
 const TILE_FALLBACK_DATA_URL = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(
     '<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256"><rect width="256" height="256" fill="#d1d8e0"/></svg>'
 )}`;
@@ -278,22 +272,19 @@ function renderMapSourceTicks(visibleIndices = visibleMapSourceIndices()) {
 }
 
 function isMapSourceSliderVisible() {
-    return mapSourceSliderVisible;
+    return vehicleGalleryDockMode() === 'map';
 }
 
 function applyMapSourceSliderVisibility() {
+    const visible = isMapSourceSliderVisible();
     const slider = document.getElementById('year-slider');
-    if (slider) slider.hidden = !mapSourceSliderVisible || (typeof vehicleGalleryDockMode === 'function' && vehicleGalleryDockMode() !== 'map' && typeof vehicleGalleryIsAvailable === 'function' && vehicleGalleryIsAvailable());
+    if (slider) slider.hidden = !visible;
     const toggle = document.getElementById('map-source-slider-toggle');
-    if (toggle) toggle.checked = mapSourceSliderVisible;
+    if (toggle) toggle.checked = visible;
 }
 
 function setMapSourceSliderVisible(visible) {
-    mapSourceSliderVisible = Boolean(visible);
-    try {
-        localStorage.setItem(MAP_SOURCE_SLIDER_VISIBLE_STORAGE_KEY, mapSourceSliderVisible ? 'true' : 'false');
-    } catch (_) {}
-    applyMapSourceSliderVisibility();
+    setVehicleGalleryDockMode(visible ? 'map' : 'none');
 }
 
 function updateMapSourceUi() {

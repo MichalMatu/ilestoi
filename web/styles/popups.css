@@ -445,18 +445,51 @@ a.map-popup-head-value {
 }
 
 /* Additive admin-only nomination overlay; never changes the photo grid tracks. */
-.map-popup-nomination-wrap { position: relative; min-width: 0; }
-.map-popup-nomination-wrap .map-popup-photo { height: 100%; }
-.map-popup-nomination {
-    position: absolute; top: 5px; right: 5px; z-index: 2;
-    display: grid; place-items: center; width: 29px; height: 29px;
-    border: 1px solid rgba(255,255,255,.55); border-radius: 50%;
-    color: #fff4bd; font-size: 20px; line-height: 1; cursor: pointer;
-    background: rgba(16,28,40,.75); box-shadow: 0 1px 4px rgba(0,0,0,.3);
+.map-popup-nomination-wrap {
+    position: relative;
+    width: 100%;
+    min-width: 0;
+    aspect-ratio: 4 / 3;
 }
+.map-popup-nomination-wrap > .map-popup-photo {
+    height: 100%;
+    aspect-ratio: auto;
+}
+.map-popup-nomination {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    z-index: 2;
+    display: grid;
+    place-items: center;
+    box-sizing: border-box;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: 1px solid rgba(255,255,255,.65);
+    border-radius: 50%;
+    background: rgba(16,28,40,.8);
+    color: #ffe5a3;
+    cursor: pointer;
+    box-shadow: 0 1px 4px rgba(0,0,0,.3);
+}
+.map-popup-nomination svg {
+    display: block;
+    width: 20px;
+    height: 20px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+.map-popup-nomination[data-gallery-priority]:not([data-gallery-priority="0"]) svg { fill: currentColor; }
 .map-popup-nomination:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
 .map-popup-nomination[data-gallery-priority="2"] { color: #ffce74; }
 .map-popup-nomination[data-gallery-priority="3"] { color: #ff8b82; }
+@media (max-height: 520px) {
+    .map-popup-nomination-wrap { aspect-ratio: 16 / 7; }
+}
 .vehicle-gallery-nomination-menu {
     position: fixed; z-index: 2600; min-width: 154px; padding: 4px;
     display: grid; gap: 2px; background: var(--popup-surface);

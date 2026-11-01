@@ -1,21 +1,13 @@
-# Vehicle gallery and bottom dock
+# Galeria pojazdów — dolny panel
 
-Candidate feature branch: `feature/wreck-gallery-bottom-dock`.
+Dolny panel jest przełącznikiem trójstanowym: `map`, `gallery`, `none`. To **jedyne źródło prawdy** o widoczności. Dwa checkboxy w istniejącym menu pokazują stan, nie osobne preferencje. Kliknięcie wybranej opcji wyłącza ją, a kliknięcie drugiej automatycznie odznacza poprzednią. Stan zapamiętany jest przez `MAP_DOCK_MODE_STORAGE_KEY` (localStorage).
 
-- The existing map-source slider remains unchanged in its original HTML and CSS.
-- The optional bottom dock has **map / gallery / none** modes, remembered in localStorage. When gallery is open, the original slider hides and compact accessible map-source dots take its place.
-- The menu has a per-browser gallery toggle; an admin public-feature toggle can hide the public gallery entirely.
-- An admin sees a small star overlay in the **top-right corner of each approved vehicle thumbnail** without adding rows or changing its grid. Selecting a priority (0 off; 1 featured; 2 high; 3 urgent) chooses exactly that photo as the group cover. Only approved active vehicles are eligible.
-- The SQLite field `field_photos.vehicle_gallery_priority` is changed by the existing admin photo-review PATCH route. Selecting one photo clears nomination of its group peers within the existing spatial radius. Marking a group removed clears its nomination.
-- `GET /api/field-photos/gallery?bbox=west,south,east,north` returns up to 100 approved active nominated photo summaries from a read-only indexed query. The browser deduplicates close locations and displays at most ten in the currently loaded area.
-- Selecting a thumbnail focuses the existing marker and popup; no separate case entity or unreviewed originals are exposed.
-- Test on an isolated Termux worktree before any guarded production migration/release. Keep production `main` at its deployed SHA.
+- `map`: oryginalny suwak podkładów (bez zmian HTML/CSS suwaka).
+- `gallery`: galeria pojazdów; oryginalny suwak ukryty; dolna linia kropek podkładów jako pomocnicza kontrolka, bez drugiego zaznaczenia w menu.
+- `none`: oba panele ukryte, czysta mapa.
 
-Known limitation: current grouping is spatial (1 m) and depends on observed photo positions. This feature intentionally reuses that model rather than creating persistent vehicle entities.
+W menu użytkownika: **„Galeria pojazdów”**. Bez osobnego przycisku otwierania i bez pływającej gwiazdki. Brak dostępu do funkcji publicznej wyłącza wybór galerii; widok może wrócić do `none`, lecz nie pokazuje zablokowanych danych. Poprzednie niezależne klucze `mapSourceSliderVisible` i `vehicleGalleryVisible` nie są już odczytywane.
 
-## Mobile UI correction 2026-11-01
-- No floating star launcher in the lower-left corner: open the gallery from the **same existing gallery row** in the map layers menu, using a small icon beside the enable checkbox.
-- In both map and clean-map modes, the gallery dock is fully hidden; the original slider remains unchanged.
-- The open gallery dock is bottom-aligned to 24px, matching the existing map slider's bottom anchor (rather than floating 70px above).
-- On small screens Leaflet's bottom-right zoom controls receive a 56px bottom clearance so both +/- buttons remain accessible.
-- Source slider HTML/CSS intentionally remain byte-for-byte unchanged.
+Administrator wyróżnia zdjęcie bezpośrednio w popupie pojazdu. Każda miniatura korzysta z tego samego zakotwiczonego przycisku SVG w prawym górnym rogu (stały rozmiar i margines). Priorytety: 0 = poza galerią, 1 = wyróżniony, 2 = wysoki, 3 = pilny. Zaznaczenie jednej zatwierdzonej fotografii zastępuje poprzednie wyróżnienie w istniejącej 1-metrowej grupie. Publiczna galeria pokazuje maksymalnie 10 pozycji w bieżącym bbox, a endpoint zwraca najwyżej 100 kandydatów. Nie ujawnia niezatwierdzonych ani oryginalnych zdjęć.
+
+Testy regresyjne obejmują przejścia stanów, odświeżenie, brak dostępu, synchronizację checkboxów, oznaczenia zdjęć, SVG i układ mobilny. Na produkcję tylko po izolowanym QA w Termuxie, backupie i akceptacji.
