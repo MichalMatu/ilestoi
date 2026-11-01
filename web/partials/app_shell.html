@@ -170,7 +170,10 @@
                 </button>
             </div>
             <div class="app-menu-footer-links">
-                <button type="button" class="app-menu-footer-link" id="app-menu-open-tour"
+                <button type="button" class="app-menu-footer-link" id="app-menu-open-intro"
+                    onclick="closeAppMenu({ restoreFocus: false }); startIleStoiIntro(true)"
+                    data-i18n="intro.reopen">Historia IleStoi</button>
+            <button type="button" class="app-menu-footer-link" id="app-menu-open-tour"
                     onclick="closeAppMenu({ restoreFocus: false }); startOnboardingTour()"
                     data-i18n="tour.reopen">Samouczek</button>
                 <button type="button" class="app-menu-footer-link"
