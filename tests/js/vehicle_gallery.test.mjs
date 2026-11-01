@@ -333,6 +333,7 @@ test('gallery viewport requests reuse fresh data, dedupe in-flight work and expi
 test('tile layers defer grid refresh during continuous zoom without changing the zoom controller', () => {
     const sources = readFileSync(new URL('web/app/map_sources.js', root), 'utf8');
     assert.equal((sources.match(/updateWhenZooming: false/g) || []).length, 4);
+    assert.equal((sources.match(/updateWhenIdle: true/g) || []).length, 4);
     assert.match(sources, /function buildMapSourceLayer\(source\)/);
     assert.match(sources, /function buildMapLabelLayer\(\)/);
     const zoom = readFileSync(new URL('web/app/trackpad_zoom.js', root), 'utf8');
