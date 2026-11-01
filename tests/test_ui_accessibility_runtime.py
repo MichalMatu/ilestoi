@@ -552,6 +552,7 @@ class UiAccessibilityRuntimeTests(unittest.TestCase):
                 const rendered = [];
                 function t(key) { return key; }
                 function refreshAdminStatus() { return Promise.resolve(); }
+                function installSmoothTrackpadZoom() {}
                 function maybeStartOnboardingTour() {}
                 function apiJson(url) {
                     const parsed = new URL(url, document.location.href);
