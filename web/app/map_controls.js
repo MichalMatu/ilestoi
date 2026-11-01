@@ -10,8 +10,7 @@ L.control.zoom({ position: 'bottomright' }).addTo(map);
     document.addEventListener('keydown', e => {
         if (e.target.matches('input, select, textarea')) return;
         if (document.querySelector('.modal-backdrop:not([hidden])')) return;
-        const menuOpen = typeof isAppMenuOpen === 'function' && isAppMenuOpen();
-        if (typeof isMapSourceSliderVisible === 'function' && !isMapSourceSliderVisible() && !menuOpen) return;
+        if (!isMapSourceSliderVisible()) return;
         if (e.key === 'ArrowLeft') { moveMapSource(-1); e.preventDefault(); }
         else if (e.key === 'ArrowRight') { moveMapSource(1); e.preventDefault(); }
     });
