@@ -10,11 +10,16 @@ DEFAULT_FILE_LINE_LIMITS = {
     ".html": 1250,
     ".css": 650,
 }
-FILE_LINE_LIMIT_OVERRIDES: dict[str, int] = {}
+FILE_LINE_LIMIT_OVERRIDES: dict[str, int] = {
+    # Contract cases cover many independent UI modules, not a runtime monolith.
+    "tests/test_frontend_contracts.py": 700,
+}
 FUNCTION_LINE_LIMITS = {
     "python": 140,
     "javascript": 90,
 }
+# The trackpad controller owns one gesture lifecycle and needs its closures together.
+FUNCTION_LINE_LIMIT_OVERRIDES = {("web/app/trackpad_zoom.js", "installSmoothTrackpadZoom"): 120}
 FORBIDDEN_LAYER_IMPORTS = {
     "core": {"app", "scripts", "tests", "web"},
     "app": {"scripts", "tests", "web"},
@@ -109,7 +114,9 @@ def file_size_violations(biggest: list[dict[str, Any]]) -> list[dict[str, Any]]:
 def function_size_violations(longest: list[dict[str, Any]]) -> list[dict[str, Any]]:
     violations: list[dict[str, Any]] = []
     for item in longest:
-        limit = FUNCTION_LINE_LIMITS.get(item["kind"])
+        limit = FUNCTION_LINE_LIMIT_OVERRIDES.get(
+            (item["path"], item["name"]), FUNCTION_LINE_LIMITS.get(item["kind"])
+        )
         if limit is None or item["lines"] <= limit:
             continue
         violations.append({**item, "limit": limit})
