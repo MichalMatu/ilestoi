@@ -10,7 +10,9 @@ ROOT_DIR = Path(__file__).resolve().parent.parent
 
 
 def read_index_html() -> str:
-    return static_files.render_web_template("index.html")
+    # Contract assertions concern script order/identity, not the immutable cache digest.
+    rendered = static_files.render_web_template("index.html")
+    return re.sub(r"(\.js)\?v=[a-f0-9]{16}(?=\")", r"\1", rendered)
 
 
 def frontend_map_source_block(config_js: str) -> str:
