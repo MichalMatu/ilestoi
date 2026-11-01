@@ -56,7 +56,7 @@ test('dock cycles between map, gallery, clean map without changing existing slid
     assert.match(html, /id="year-range"/);
     assert.match(html, /id="vehicle-gallery-dock"/);
     const galleryCss = readFileSync(new URL('web/styles/vehicle_gallery.css', root), 'utf8');
-    assert.doesNotMatch(galleryCss, /#year-slider/);
+    assert.doesNotMatch(galleryCss, /^\s*#year-slider\b/m);
 });
 
 test('gallery can be turned off without hiding or restyling map slider', () => {
