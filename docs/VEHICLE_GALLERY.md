@@ -19,3 +19,11 @@ Wybrany tryb `gallery` jest trwałą preferencją. Dotknięcie mapy ani miniatur
 ## Kolejność i podpisy w galerii
 
 Galeria pokazuje **wyłącznie fotografie**, bez stałych podpisów priorytetu pod miniaturami (etykieta pozostaje dostępna dla czytników ekranu). Kolejność od lewej do prawej: poziom administracyjny `3` (pilny), `2` (wysoki), `1` (wyróżniony); w obrębie poziomu starsza **najwcześniejsza udokumentowana obserwacja pojazdu** jest pierwsza. Data bierze się z zatwierdzonych, aktywnych zdjęć w tej samej grupie (1 m): prawidłowy czas wykonania zdjęcia, a jeśli go brak — dodanie lub zgłoszenie. Nie utożsamiać wieku dokumentacji z nieprzerwanym postojem. Brak poprawnej daty daje miejsce za autami z udokumentowaną datą w obrębie tego samego priorytetu. Tę samą kolejność egzekwują publiczny endpoint i klient (również przed deduplikacją); rozstrzygnięcie pełnego remisu po identyfikatorze. Nie zmienia to struktury suwaka ani ustawień mapy.
+
+## Wydajność galerii i zoomu — kandydat PR #30
+
+- Frontend ponownie wykorzystuje poprawną odpowiedź dla identycznego bbox przez maksymalnie 5 sekund, pomija równoległe identyczne odpytywanie i nadal anuluje nieaktualne żądania po przejściu do innego obszaru.
+- Zmiana nominacji administratora i języka unieważnia pamięć wyniku. Wyłączenie panelu nie zmienia zapisanej preferencji.
+- Kafelki podkładów (OSM/POL/ortofoto WMS) i opcjonalnej warstwy nazw ulic nie przeliczają siatki kafelków w trakcie animacji przybliżania; jest ona aktualizowana po jej zakończeniu. Sam kontroler płynnego zoomu nie zmienia algorytmu ani czasu gestu.
+- Są to optymalizacje kandydata, a nie potwierdzony wynik pomiarów produkcyjnych. Przed wdrożeniem potrzebna jest izolowana walidacja Chrome, liczby żądań kafelków, działania wszystkich podkładów oraz JS/Python QA.
+- Osobny długoterminowy punkt: zapytanie historii grup w API galerii wykonywane jest dziś dla każdego wyróżnienia, a kolejność po najstarszej obserwacji ustalana jest dopiero po SQL LIMIT 100. Przy większej liczbie nominacji potrzebna jest wydajniejsza agregacja zachowująca poprawną kolejność.
