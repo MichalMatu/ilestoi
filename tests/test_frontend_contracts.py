@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 import unittest
 from pathlib import Path
 
@@ -9,7 +10,9 @@ ROOT_DIR = Path(__file__).resolve().parents[1]
 
 
 def read_index_html() -> str:
-    return static_files.render_web_template("index.html")
+    rendered = static_files.render_web_template("index.html")
+    # Cache-busting hashes change with assets; contract tests assert actual script names.
+    return re.sub(r"(\.js)\?v=[a-f0-9]{16}(?=\")", r"\1", rendered)
 
 
 def read_i18n_bundle() -> str:
