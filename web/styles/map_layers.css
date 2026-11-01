@@ -45,7 +45,7 @@
 
 .layer-toggle.is-disabled {
     opacity: 0.6;
-    cursor: default;
+    cursor: var(--cursor-static);
 }
 
 .layer-toggle.is-disabled:hover {
@@ -54,7 +54,7 @@
 }
 
 .layer-toggle input:disabled {
-    cursor: default;
+    cursor: var(--cursor-static);
 }
 .layer-unavailable-note { grid-column: 3 / -1; font-size: 0.69rem; line-height: 1.35; color: var(--text-soft); font-weight: 600; }
 .layer-toggle.is-disabled .layer-label { color: var(--muted-strong); }
