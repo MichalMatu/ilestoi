@@ -30,7 +30,7 @@
 .vehicle-gallery-card {
     display: grid; align-content: start; flex: 0 0 105px;
     min-width: 0; border: 0; color: var(--text-strong);
-    background: transparent; cursor: pointer; padding: 0;
+    background: transparent; cursor: var(--cursor-action); padding: 0;
     text-align: left; font-size: 10px;
 }
 .vehicle-gallery-card img {
@@ -44,7 +44,7 @@
 .vehicle-gallery-map-dot {
     display: grid; place-items: center; width: 30px; height: 24px;
     padding: 0; border: 0; border-radius: 8px; background: transparent;
-    cursor: pointer;
+    cursor: var(--cursor-action);
 }
 .vehicle-gallery-map-dot::after {
     content: ''; width: 6px; height: 6px; border-radius: 50%;

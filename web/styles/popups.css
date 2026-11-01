@@ -470,7 +470,7 @@ a.map-popup-head-value {
     border-radius: 50%;
     background: rgba(16,28,40,.8);
     color: #ffe5a3;
-    cursor: pointer;
+    cursor: var(--cursor-action);
     box-shadow: 0 1px 4px rgba(0,0,0,.3);
 }
 .map-popup-nomination svg {
@@ -499,7 +499,7 @@ a.map-popup-head-value {
 .vehicle-gallery-nomination-menu button {
     color: var(--popup-text); background: transparent; border: 0;
     padding: 9px 11px; text-align: left; border-radius: 6px;
-    font: 600 12px var(--font); cursor: pointer;
+    font: 600 12px var(--font); cursor: var(--cursor-action);
 }
 .vehicle-gallery-nomination-menu button:hover,
 .vehicle-gallery-nomination-menu button:focus-visible { background: var(--popup-surface-muted); }

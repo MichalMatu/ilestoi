@@ -47,6 +47,7 @@ class PublicFeatureSettingsTests(unittest.TestCase):
             {
                 "report_pdfs": True,
                 "photo_uploads": True,
+                "vehicle_gallery": True,
             },
         )
 
@@ -56,6 +57,7 @@ class PublicFeatureSettingsTests(unittest.TestCase):
             {
                 "report_pdfs": False,
                 "photo_uploads": False,
+                "vehicle_gallery": True,
             },
         )
 

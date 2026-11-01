@@ -59,6 +59,7 @@ class HttpAdminContractTests(unittest.TestCase):
             redactions=None,
             vehicle_insurance_status=None,
             vehicle_resolution_status="removed",
+            vehicle_gallery_priority=None,
             private_dir=core_config.PRIVATE_PHOTOS_DIR,
         )
         self.assertEqual(handler.status, 200)
