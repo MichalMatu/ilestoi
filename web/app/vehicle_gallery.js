@@ -4,6 +4,10 @@ let vehicleGalleryRequest = null;
 let vehicleGalleryDebounce = null;
 let vehicleGalleryRevision = 0;
 let vehicleGalleryPopupOpen = false;
+let vehicleGalleryPendingBbox = '';
+let vehicleGalleryLoadedBbox = '';
+let vehicleGalleryLoadedAt = 0;
+const VEHICLE_GALLERY_REUSE_MS = 5000;
 try {
     const stored = localStorage.getItem(MAP_DOCK_MODE_STORAGE_KEY);
     if (['map', 'gallery', 'none'].includes(stored)) vehicleGalleryMode = stored;
@@ -47,6 +51,9 @@ function updateVehicleGalleryAvailability() {
     } else {
         window.clearTimeout(vehicleGalleryDebounce);
         vehicleGalleryRequest?.abort();
+        vehicleGalleryRequest = null;
+        vehicleGalleryPendingBbox = '';
+        ++vehicleGalleryRevision;
     }
 }
 
@@ -101,16 +108,24 @@ function scheduleVehicleGalleryLoad(immediate = false) {
     vehicleGalleryDebounce = window.setTimeout(loadVehicleGallery, immediate ? 0 : 250);
 }
 
+function vehicleGalleryShouldSkipRequest(bbox, pending, loaded, loadedAt, now = Date.now()) {
+    return bbox === pending || (bbox === loaded && now >= loadedAt && now - loadedAt < VEHICLE_GALLERY_REUSE_MS);
+}
+
 async function loadVehicleGallery() {
     if (vehicleGalleryDockMode() !== 'gallery') return;
+    const bbox = fieldPhotoViewportQuery().bbox;
+    if (vehicleGalleryShouldSkipRequest(
+        bbox, vehicleGalleryPendingBbox, vehicleGalleryLoadedBbox, vehicleGalleryLoadedAt
+    )) return;
     vehicleGalleryRequest?.abort();
     const controller = new AbortController();
     vehicleGalleryRequest = controller;
+    vehicleGalleryPendingBbox = bbox;
     const revision = ++vehicleGalleryRevision;
     const list = document.getElementById('vehicle-gallery-items');
     if (list && !list.children.length) list.textContent = t('gallery.loading');
     try {
-        const bbox = fieldPhotoViewportQuery().bbox;
         const data = await apiJson(`${FIELD_PHOTOS_URL}/gallery?bbox=${encodeURIComponent(bbox)}`, {
             signal: controller.signal, cache: 'no-store',
         });
@@ -128,9 +143,16 @@ async function loadVehicleGallery() {
             if (unique.length >= 10) break;
         }
         renderVehicleGalleryItems(unique);
+        vehicleGalleryLoadedBbox = bbox;
+        vehicleGalleryLoadedAt = Date.now();
     } catch (_error) {
         if (revision !== vehicleGalleryRevision || controller.signal.aborted) return;
         if (list) list.textContent = t('gallery.error');
+    } finally {
+        if (vehicleGalleryRequest === controller) {
+            vehicleGalleryRequest = null;
+            vehicleGalleryPendingBbox = '';
+        }
     }
 }
 
@@ -219,6 +241,7 @@ function openVehicleGalleryNomination(button) {
                     }
                 });
                 button.dataset.galleryPriority = String(priority);
+                vehicleGalleryLoadedBbox = '';
                 scheduleVehicleGalleryLoad(true);
                 map.once('popupclose', () => window.setTimeout(loadFieldPhotos, 0));
             } catch (error) {
@@ -257,6 +280,8 @@ map.on('popupclose', () => {
     updateVehicleGalleryPanelVisibility();
 });
 document.addEventListener('langchange', () => {
+    // Cached image buttons contain translated screen-reader labels.
+    vehicleGalleryLoadedBbox = '';
     updateVehicleGalleryAvailability();
 });
 updateVehicleGalleryAvailability();
