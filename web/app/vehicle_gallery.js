@@ -3,6 +3,7 @@ let vehicleGalleryMode = 'map';
 let vehicleGalleryRequest = null;
 let vehicleGalleryDebounce = null;
 let vehicleGalleryRevision = 0;
+let vehicleGalleryPopupOpen = false;
 try {
     const stored = localStorage.getItem(MAP_DOCK_MODE_STORAGE_KEY);
     if (['map', 'gallery', 'none'].includes(stored)) vehicleGalleryMode = stored;
@@ -17,6 +18,14 @@ function vehicleGalleryDockMode() {
         ? 'none' : vehicleGalleryMode;
 }
 
+function updateVehicleGalleryPanelVisibility() {
+    const visible = vehicleGalleryDockMode() === 'gallery' && !vehicleGalleryPopupOpen;
+    const dock = document.getElementById('vehicle-gallery-dock');
+    const panel = document.getElementById('vehicle-gallery-panel');
+    if (dock) dock.hidden = !visible;
+    if (panel) panel.hidden = !visible;
+}
+
 function updateVehicleGalleryAvailability() {
     const activeMode = vehicleGalleryDockMode();
     const dock = document.getElementById('vehicle-gallery-dock');
@@ -27,12 +36,8 @@ function updateVehicleGalleryAvailability() {
         galleryToggle.disabled = !vehicleGalleryIsAvailable();
     }
     if (galleryRow) galleryRow.hidden = !vehicleGalleryIsAvailable();
-    if (dock) {
-        dock.hidden = activeMode !== 'gallery';
-        dock.dataset.mode = activeMode;
-    }
-    const panel = document.getElementById('vehicle-gallery-panel');
-    if (panel) panel.hidden = activeMode !== 'gallery';
+    if (dock) dock.dataset.mode = activeMode;
+    updateVehicleGalleryPanelVisibility();
     applyMapSourceSliderVisibility();
     if (activeMode === 'gallery') {
         renderVehicleGalleryMapDots();
@@ -148,7 +153,8 @@ function focusVehicleGalleryPhoto(photo) {
     if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
     pendingVehiclePhotoFocusId = safeFieldPhotoId(photo.id);
     vehiclePhotoFocusDone = false;
-    setVehicleGalleryDockMode('none');
+    // Keep the user's gallery selection. Leaflet popup events temporarily
+    // hide the dock and restore it when the vehicle popup closes.
     map.setView([lat, lon], Math.max(17, map.getZoom()), { animate: false });
     loadFieldPhotos();
 }
@@ -229,13 +235,13 @@ function openVehicleGalleryNomination(button) {
 }
 
 map.on('moveend zoomend', () => scheduleVehicleGalleryLoad());
-map.on('click', () => {
-    if (vehicleGalleryDockMode() === 'gallery') setVehicleGalleryDockMode('none');
+map.on('popupopen', () => {
+    vehicleGalleryPopupOpen = true;
+    updateVehicleGalleryPanelVisibility();
 });
-document.addEventListener('keydown', event => {
-    if (event.key === 'Escape' && vehicleGalleryDockMode() === 'gallery') {
-        setVehicleGalleryDockMode('none');
-    }
+map.on('popupclose', () => {
+    vehicleGalleryPopupOpen = false;
+    updateVehicleGalleryPanelVisibility();
 });
 document.addEventListener('langchange', () => {
     updateVehicleGalleryAvailability();

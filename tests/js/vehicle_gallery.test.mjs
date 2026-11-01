@@ -34,7 +34,15 @@ function buildDock({ saved = {}, galleryAllowed = true } = {}) {
         PUBLIC_FEATURE_KEYS: { vehicleGallery: 'vehicle_gallery' },
         publicFeatureAllowed: () => access.galleryAllowed,
         t: key => key,
-        map: { on: (name, handler) => mapHandlers.set(name, handler) },
+        map: {
+            on: (name, handler) => mapHandlers.set(name, handler),
+            getZoom: () => 17,
+            setView: (coordinates, zoom) => {
+                context.lastFocusedLocation = { coordinates: [...coordinates], zoom };
+            },
+        },
+        safeFieldPhotoId: id => String(id).replace(/[^A-Za-z0-9_-]/g, ''),
+        loadFieldPhotos: () => { context.focusLoadCount = (context.focusLoadCount || 0) + 1; },
         document: {
             getElementById: id => elements[id] || null,
             addEventListener: (name, handler) => documentHandlers.set(name, handler),
@@ -144,25 +152,75 @@ test('gallery hide/show buttons and popup focus update the single panel mode', (
     assert.equal(ui.storage.get('test.dock'), 'map');
 });
 
-test('headerless gallery can be closed from map or Escape without changing other modes', () => {
+test('map taps cannot change the selected gallery mode', () => {
     const ui = buildDock();
-    const mapTap = ui.mapHandlers.get('click');
-    const onKeyDown = ui.documentHandlers.get('keydown');
-    assert.equal(typeof mapTap, 'function');
-    assert.equal(typeof onKeyDown, 'function');
     ui.context.setVehicleGalleryDockMode('gallery');
-    mapTap();
-    assert.equal(ui.state().mode, 'none');
-    assert.equal(ui.storage.get('test.dock'), 'none');
-    ui.context.setVehicleGalleryDockMode('gallery');
-    onKeyDown({ key: 'Enter' });
+    assert.equal(ui.mapHandlers.has('click'), false);
+    assert.equal(ui.documentHandlers.has('keydown'), false);
     assert.equal(ui.state().mode, 'gallery');
-    onKeyDown({ key: 'Escape' });
-    assert.equal(ui.state().mode, 'none');
-    ui.context.setVehicleGalleryDockMode('map');
-    mapTap();
-    onKeyDown({ key: 'Escape' });
+    assert.equal(ui.state().dockHidden, false);
+    assert.equal(ui.storage.get('test.dock'), 'gallery');
+});
+
+test('gallery card focuses the vehicle without unchecking or hiding the gallery prematurely', () => {
+    const ui = buildDock();
+    ui.context.setVehicleGalleryDockMode('gallery');
+    ui.context.focusVehicleGalleryPhoto({ id: 'photo_123', lat: 51.11, lon: 17.03 });
+    assert.equal(ui.state().mode, 'gallery');
+    assert.equal(ui.state().gallery, true);
+    assert.equal(ui.state().dockHidden, false);
+    assert.equal(ui.storage.get('test.dock'), 'gallery');
+    assert.equal(ui.context.pendingVehiclePhotoFocusId, 'photo_123');
+    assert.equal(ui.context.vehiclePhotoFocusDone, false);
+    assert.equal(ui.context.lastFocusedLocation.zoom, 17);
+    assert.equal(ui.context.focusLoadCount, 1);
+});
+
+test('vehicle popup temporarily hides gallery, restores it on close, and preserves selection on reload', () => {
+    const ui = buildDock();
+    const popupOpen = ui.mapHandlers.get('popupopen');
+    const popupClose = ui.mapHandlers.get('popupclose');
+    assert.equal(typeof popupOpen, 'function');
+    assert.equal(typeof popupClose, 'function');
+    ui.context.setVehicleGalleryDockMode('gallery');
+    popupOpen();
+    assert.equal(ui.state().mode, 'gallery');
+    assert.equal(ui.state().gallery, true);
+    assert.equal(ui.state().dockHidden, true);
+    assert.equal(ui.state().panelHidden, true);
+    assert.equal(ui.storage.get('test.dock'), 'gallery');
+    popupClose();
+    assert.equal(ui.state().dockHidden, false);
+    assert.equal(ui.state().panelHidden, false);
+    assert.equal(ui.state().gallery, true);
+    assert.equal(ui.storage.get('test.dock'), 'gallery');
+    const reloaded = buildDock({ saved: Object.fromEntries(ui.storage) });
+    assert.equal(reloaded.state().mode, 'gallery');
+    assert.equal(reloaded.state().dockHidden, false);
+});
+
+test('changing the selected panel while a popup is open never resurrects the gallery', () => {
+    const ui = buildDock();
+    ui.context.setVehicleGalleryDockMode('gallery');
+    ui.mapHandlers.get('popupopen')();
+    ui.context.setMapSourceSliderVisible(true);
+    ui.mapHandlers.get('popupclose')();
     assert.equal(ui.state().mode, 'map');
+    assert.equal(ui.state().sliderHidden, false);
+    assert.equal(ui.state().dockHidden, true);
+    ui.context.setMapSourceSliderVisible(false);
+    ui.mapHandlers.get('popupopen')();
+    ui.mapHandlers.get('popupclose')();
+    assert.equal(ui.state().mode, 'none');
+    assert.equal(ui.state().dockHidden, true);
+});
+
+test('invalid gallery photo coordinates do not alter selection or trigger a focus', () => {
+    const ui = buildDock();
+    ui.context.setVehicleGalleryDockMode('gallery');
+    ui.context.focusVehicleGalleryPhoto({ id: 'foo', lat: 'nan', lon: 17 });
+    assert.equal(ui.state().mode, 'gallery');
+    assert.equal(ui.context.focusLoadCount, undefined);
 });
 
 test('mobile gallery is photo-first: no header, broad dock and larger scrolling cards', () => {

@@ -11,3 +11,7 @@ W menu użytkownika: **„Galeria pojazdów”**. Bez osobnego przycisku otwiera
 Administrator wyróżnia zdjęcie bezpośrednio w popupie pojazdu. Każda miniatura korzysta z tego samego zakotwiczonego przycisku SVG w prawym górnym rogu (stały rozmiar i margines). Priorytety: 0 = poza galerią, 1 = wyróżniony, 2 = wysoki, 3 = pilny. Zaznaczenie jednej zatwierdzonej fotografii zastępuje poprzednie wyróżnienie w istniejącej 1-metrowej grupie. Publiczna galeria pokazuje maksymalnie 10 pozycji w bieżącym bbox, a endpoint zwraca najwyżej 100 kandydatów. Nie ujawnia niezatwierdzonych ani oryginalnych zdjęć.
 
 Testy regresyjne obejmują przejścia stanów, odświeżenie, brak dostępu, synchronizację checkboxów, oznaczenia zdjęć, SVG i układ mobilny. Na produkcję tylko po izolowanym QA w Termuxie, backupie i akceptacji.
+
+## Zachowanie przy interakcji z mapą
+
+Wybrany tryb `gallery` jest trwałą preferencją. Dotknięcie mapy ani miniatury w galerii **nie** przełącza trybu na `none`. Wybranie miniatury ustawia cel na mapie i otwiera istniejący popup pojazdu; na czas widocznego popupu galeria zostaje **tymczasowo ukryta** (bez odznaczania checkboxa i bez zapisu innego trybu). Zdarzenie Leaflet `popupclose` przywraca ten sam panel. Tryb `none` lub `map` można wybrać tylko z istniejącego menu. Zmiana trybu podczas popupu ma pierwszeństwo nad automatycznym przywróceniem. Oryginalny suwak i jego CSS bez zmian.
