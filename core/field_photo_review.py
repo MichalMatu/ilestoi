@@ -157,7 +157,8 @@ def review_field_photo_record(
         _clear_finalized_owner_credentials(record)
 
         group_update_requested = (
-            validated_vehicle_insurance_status is not None or validated_vehicle_resolution_status is not None
+            validated_vehicle_insurance_status is not None
+            or validated_vehicle_resolution_status is not None
             or validated_gallery_priority is not None
         )
         records = _records_with_anchor_snapshot(storage_dir, record) if group_update_requested else [record]

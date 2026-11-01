@@ -154,7 +154,6 @@ def list_map_field_photos(
     return result, (str(last["created_at"]), str(last["id"]))
 
 
-
 _GALLERY_MIN_OBSERVATION = datetime(2000, 1, 1, tzinfo=timezone.utc)
 
 
@@ -180,7 +179,9 @@ def _gallery_observation_date(record: dict[str, Any], now: datetime) -> datetime
 
 
 def _gallery_group_first_observed(
-    connection: Any, nominated: dict[str, Any], now: datetime,
+    connection: Any,
+    nominated: dict[str, Any],
+    now: datetime,
 ) -> str | None:
     """Oldest documented observation of this *group*, not its cover photo."""
     lat, lon = float(nominated["lat"]), float(nominated["lon"])
@@ -196,7 +197,8 @@ def _gallery_group_first_observed(
         (lat - lat_margin, lat + lat_margin, lon - lon_margin, lon + lon_margin),
     )
     dates = [
-        observed for record in candidates
+        observed
+        for record in candidates
         if same_vehicle_photo_group(nominated, dict(record))
         for observed in [_gallery_observation_date(dict(record), now)]
         if observed is not None
@@ -208,20 +210,27 @@ def _gallery_group_first_observed(
 def _gallery_sort_key(photo: dict[str, Any]) -> tuple[int, datetime, str]:
     raw = photo.get("first_observed_at")
     try:
-        observed = datetime.fromisoformat(raw.replace("Z", "+00:00")) if raw else datetime.max.replace(tzinfo=timezone.utc)
+        observed = (
+            datetime.fromisoformat(raw.replace("Z", "+00:00")) if raw else datetime.max.replace(tzinfo=timezone.utc)
+        )
     except (ValueError, AttributeError):
         observed = datetime.max.replace(tzinfo=timezone.utc)
     return (-int(photo["vehicle_gallery_priority"]), observed, str(photo["id"]))
 
 
 def list_map_vehicle_gallery(
-    storage_dir: Path, *, bounds: tuple[float, float, float, float], private_dir: Path | None = None,
+    storage_dir: Path,
+    *,
+    bounds: tuple[float, float, float, float],
+    private_dir: Path | None = None,
 ) -> list[dict[str, Any]]:
     """Bounded read-only public gallery, independent of normal map zoom."""
     west, south, east, north = bounds
     conditions = [
-        "issue_type = 'vehicle'", "public_review_status = 'approved'",
-        "vehicle_resolution_status = 'active'", "vehicle_gallery_priority > 0",
+        "issue_type = 'vehicle'",
+        "public_review_status = 'approved'",
+        "vehicle_resolution_status = 'active'",
+        "vehicle_gallery_priority > 0",
         "lat >= ? AND lat <= ?",
     ]
     params: list[Any] = [south, north]

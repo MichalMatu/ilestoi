@@ -114,9 +114,7 @@ def file_size_violations(biggest: list[dict[str, Any]]) -> list[dict[str, Any]]:
 def function_size_violations(longest: list[dict[str, Any]]) -> list[dict[str, Any]]:
     violations: list[dict[str, Any]] = []
     for item in longest:
-        limit = FUNCTION_LINE_LIMIT_OVERRIDES.get(
-            (item["path"], item["name"]), FUNCTION_LINE_LIMITS.get(item["kind"])
-        )
+        limit = FUNCTION_LINE_LIMIT_OVERRIDES.get((item["path"], item["name"]), FUNCTION_LINE_LIMITS.get(item["kind"]))
         if limit is None or item["lines"] <= limit:
             continue
         violations.append({**item, "limit": limit})

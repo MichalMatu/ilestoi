@@ -99,7 +99,7 @@ def _versioned_stylesheet() -> bytes:
         # Only our own CSS imports receive a version; no remote or dynamic URLs.
         if not (config.WEB_DIR / relative).is_file():
             return match.group(0)
-        return f'{match.group("prefix")}{match.group("path")}?v={_asset_version(relative)}{match.group("suffix")}'
+        return f"{match.group('prefix')}{match.group('path')}?v={_asset_version(relative)}{match.group('suffix')}"
 
     return _CSS_IMPORT_REF.sub(replace_import, stylesheet).encode("utf-8")
 
@@ -109,7 +109,7 @@ def _version_web_asset_references(page: str) -> str:
         relative = match.group("path").lstrip("/")
         if not (config.WEB_DIR / relative).is_file():
             return match.group(0)
-        return f'{match.group("prefix")}{match.group("path")}?v={_asset_version(relative)}{match.group("suffix")}'
+        return f"{match.group('prefix')}{match.group('path')}?v={_asset_version(relative)}{match.group('suffix')}"
 
     return _VERSIONED_ASSET_REF.sub(replace_reference, page)
 
@@ -326,9 +326,7 @@ def handle_web_asset(handler, path: str, *, include_body: bool = True) -> bool:
     if relative.suffix.lower() in {".css", ".js"}:
         version = parse_qs(urlsplit(getattr(handler, "path", path)).query).get("v", [])
         current = _asset_version(relative.as_posix())
-        cache_control = (
-            VERSIONED_WEB_ASSET_CACHE_CONTROL if version == [current] else "no-store"
-        )
+        cache_control = VERSIONED_WEB_ASSET_CACHE_CONTROL if version == [current] else "no-store"
         if relative.as_posix() == "styles.css":
             send_bytes(
                 handler,
@@ -339,8 +337,11 @@ def handle_web_asset(handler, path: str, *, include_body: bool = True) -> bool:
             )
             return True
         send_file(
-            handler, asset_path, content_type,
-            cache_control=cache_control, include_body=include_body,
+            handler,
+            asset_path,
+            content_type,
+            cache_control=cache_control,
+            include_body=include_body,
         )
         return True
     send_file(handler, asset_path, content_type, cache_control="no-store", include_body=include_body)

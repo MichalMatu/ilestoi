@@ -159,7 +159,9 @@ def handle_vehicle_gallery(handler) -> None:
     except ValueError as exc:
         http_responses.send_json(handler, 400, {"status": "error", "error": str(exc)})
         return
-    if not access.public_feature_allowed(handler, "vehicle_gallery") or not access.public_layer_allowed(handler, "vehicles"):
+    if not access.public_feature_allowed(handler, "vehicle_gallery") or not access.public_layer_allowed(
+        handler, "vehicles"
+    ):
         http_responses.send_json(handler, 200, {"status": "ok", "photos": []})
         return
     try:
@@ -167,7 +169,10 @@ def handle_vehicle_gallery(handler) -> None:
         http_responses.send_json(handler, 200, {"status": "ok", "photos": photos})
     except Exception as exc:
         http_responses.send_internal_error(
-            handler, 500, "Vehicle gallery lookup failed", exc,
+            handler,
+            500,
+            "Vehicle gallery lookup failed",
+            exc,
             public_error="Nie udało się pobrać galerii.",
         )
 

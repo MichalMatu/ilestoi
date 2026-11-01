@@ -39,7 +39,9 @@ def field_photo_summary(record: dict[str, Any]) -> dict[str, Any]:
             record.get("vehicle_insurance_status"),
             record.get("vehicle_insurance_checked_at"),
         ),
-        "vehicle_gallery_priority": vehicle_gallery_priority(issue_type_text, record.get("vehicle_gallery_priority", 0)),
+        "vehicle_gallery_priority": vehicle_gallery_priority(
+            issue_type_text, record.get("vehicle_gallery_priority", 0)
+        ),
         "vehicle_resolution_status": vehicle_resolution_status(
             issue_type_text,
             record.get("vehicle_resolution_status"),
@@ -93,7 +95,9 @@ def review_item(record: dict[str, Any]) -> dict[str, Any]:
             record.get("vehicle_insurance_status"),
             record.get("vehicle_insurance_checked_at"),
         ),
-        "vehicle_gallery_priority": vehicle_gallery_priority(issue_type_text, record.get("vehicle_gallery_priority", 0)),
+        "vehicle_gallery_priority": vehicle_gallery_priority(
+            issue_type_text, record.get("vehicle_gallery_priority", 0)
+        ),
         "vehicle_resolution_status": vehicle_resolution_status(
             issue_type_text,
             record.get("vehicle_resolution_status"),

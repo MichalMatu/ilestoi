@@ -348,7 +348,10 @@ class FrontendContracts(unittest.TestCase):
         self.assertNotIn("--popup-photo-hover-shadow", popups_css)
         self.assertNotIn(".map-popup-photo:hover", popups_css)
         self.assertIn("badge: year", popups_js)
-        self.assertIn("badge: addedDate ? t('modal.photoPreview.addedBadge', { date: humanDate.date }) : humanDate.date,", popups_js)
+        self.assertIn(
+            "badge: addedDate ? t('modal.photoPreview.addedBadge', { date: humanDate.date }) : humanDate.date,",
+            popups_js,
+        )
         self.assertIn("const badge = escapeHtml(photo.badge || photo.title || '');", popups_js)
         self.assertNotIn("inspect.coords", frontend)
         self.assertNotIn("toFixed(6)", location_js)

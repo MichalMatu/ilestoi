@@ -24,9 +24,18 @@ class VehicleGalleryTests(unittest.TestCase):
         apply_migrations(self.connection)
         self.addCleanup(self.connection.close)
 
-    def seed(self, suffix: str, *, priority: int = 0, lat: float = 51.1, lon: float = 17.0,
-             status: str = "approved", resolution: str = "active",
-             created_at: str = "2026-11-01T09:00:00Z", captured_at: str | None = None) -> str:
+    def seed(
+        self,
+        suffix: str,
+        *,
+        priority: int = 0,
+        lat: float = 51.1,
+        lon: float = 17.0,
+        status: str = "approved",
+        resolution: str = "active",
+        created_at: str = "2026-11-01T09:00:00Z",
+        captured_at: str | None = None,
+    ) -> str:
         photo_id = f"photo_20261101T090000Z_{suffix}"
         folder = self.storage / photo_id
         folder.mkdir()
@@ -67,14 +76,21 @@ class VehicleGalleryTests(unittest.TestCase):
         second = self.seed("bbbbbbbb", lon=17.000002)
         record = load_field_record_by_id(second, self.storage)
         result = review_field_photo_record(
-            record, self.storage / second, self.storage, self.private, vehicle_gallery_priority=3,
+            record,
+            self.storage / second,
+            self.storage,
+            self.private,
+            vehicle_gallery_priority=3,
         )
         self.assertEqual(result["photo"]["vehicle_gallery_priority"], 3)
         self.assertEqual(load_field_record_by_id(first, self.storage)["vehicle_gallery_priority"], 0)
         self.assertEqual(load_field_record_by_id(second, self.storage)["vehicle_gallery_priority"], 3)
         review_field_photo_record(
             load_field_record_by_id(second, self.storage),
-            self.storage / second, self.storage, self.private, vehicle_resolution_status="removed",
+            self.storage / second,
+            self.storage,
+            self.private,
+            vehicle_resolution_status="removed",
         )
         self.assertEqual(load_field_record_by_id(second, self.storage)["vehicle_gallery_priority"], 0)
         self.assertEqual(list_map_vehicle_gallery(self.storage, bounds=(16, 50, 18, 52)), [])
@@ -89,8 +105,9 @@ class VehicleGalleryTests(unittest.TestCase):
         self.assertEqual(rows[1]["first_observed_at"], "2026-09-20T10:00:00Z")
 
     def test_cover_photo_does_not_reset_group_age(self) -> None:
-        old_evidence = self.seed("oldgroup", lon=17.002000, created_at="2026-08-01T12:00:00Z",
-                                 captured_at="2026-04-01T12:00:00Z")
+        old_evidence = self.seed(
+            "oldgroup", lon=17.002000, created_at="2026-08-01T12:00:00Z", captured_at="2026-04-01T12:00:00Z"
+        )
         cover = self.seed("newcover", priority=2, lon=17.002002, created_at="2026-10-20T12:00:00Z")
         other = self.seed("othercar", priority=2, lon=17.005, created_at="2026-06-01T12:00:00Z")
         rows = list_map_vehicle_gallery(self.storage, bounds=(16.9, 51.0, 17.1, 51.2))
@@ -99,10 +116,12 @@ class VehicleGalleryTests(unittest.TestCase):
         self.assertNotEqual(rows[0]["id"], old_evidence)
 
     def test_invalid_or_future_capture_falls_back_to_upload_date(self) -> None:
-        first = self.seed("future00", priority=2, lon=17.001,
-                          created_at="2026-05-01T00:00:00Z", captured_at="2099-01-01T00:00:00Z")
-        second = self.seed("invalid0", priority=2, lon=17.003,
-                           created_at="2026-07-01T00:00:00Z", captured_at="not-a-date")
+        first = self.seed(
+            "future00", priority=2, lon=17.001, created_at="2026-05-01T00:00:00Z", captured_at="2099-01-01T00:00:00Z"
+        )
+        second = self.seed(
+            "invalid0", priority=2, lon=17.003, created_at="2026-07-01T00:00:00Z", captured_at="not-a-date"
+        )
         rows = list_map_vehicle_gallery(self.storage, bounds=(16.9, 51.0, 17.1, 51.2))
         self.assertEqual([r["id"] for r in rows], [first, second])
         self.assertEqual(rows[0]["first_observed_at"], "2026-05-01T00:00:00Z")
@@ -112,7 +131,10 @@ class VehicleGalleryTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             review_field_photo_record(
                 load_field_record_by_id(photo_id, self.storage),
-                self.storage / photo_id, self.storage, self.private, vehicle_gallery_priority=1,
+                self.storage / photo_id,
+                self.storage,
+                self.private,
+                vehicle_gallery_priority=1,
             )
 
 

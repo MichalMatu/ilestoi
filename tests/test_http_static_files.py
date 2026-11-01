@@ -165,11 +165,12 @@ class HttpStaticFilesContractTests(unittest.TestCase):
             (web_dir / "styles").mkdir(parents=True)
             (web_dir / "app").mkdir()
             (web_dir / "index.html").write_text(
-                '<html><link rel="stylesheet" href="/styles.css">'
-                '<script src="/app/page.js"></script></html>', encoding="utf-8",
+                '<html><link rel="stylesheet" href="/styles.css"><script src="/app/page.js"></script></html>',
+                encoding="utf-8",
             )
             (web_dir / "styles.css").write_text(
-                '@import url("/styles/panel.css");', encoding="utf-8",
+                '@import url("/styles/panel.css");',
+                encoding="utf-8",
             )
             (web_dir / "styles" / "panel.css").write_text(".panel{color:red}", encoding="utf-8")
             (web_dir / "app" / "page.js").write_text("console.log('old')", encoding="utf-8")
@@ -191,7 +192,7 @@ class HttpStaticFilesContractTests(unittest.TestCase):
                     self.assertIn(("Content-Type", expected_content_type), handler.headers)
                     self.assertIn(("Cache-Control", static_files.VERSIONED_WEB_ASSET_CACHE_CONTROL), handler.headers)
                     if url.startswith("/styles.css"):
-                        self.assertRegex(handler.wfile.getvalue().decode(), r'/styles/panel\.css\?v=[0-9a-f]{16}')
+                        self.assertRegex(handler.wfile.getvalue().decode(), r"/styles/panel\.css\?v=[0-9a-f]{16}")
 
                 unversioned = FakeHandler()
                 unversioned.path = "/app/page.js"
@@ -230,7 +231,7 @@ class HttpStaticFilesContractTests(unittest.TestCase):
 
             with patch.object(config, "WEB_DIR", web_dir):
                 root_body = static_files._versioned_stylesheet().decode()
-                imported_url = re.search(r'/styles/panel\.css\?v=[0-9a-f]{16}', root_body).group(0)
+                imported_url = re.search(r"/styles/panel\.css\?v=[0-9a-f]{16}", root_body).group(0)
                 handler = FakeHandler()
                 handler.path = imported_url
                 static_files.handle_web_asset(handler, "/styles/panel.css")
