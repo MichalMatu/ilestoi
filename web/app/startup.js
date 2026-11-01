@@ -6,6 +6,6 @@ refreshAdminStatus().finally(() => {
         fieldPhotoPopupOpen = false;
         scheduleFieldPhotoViewportLoad();
     });
-    loadFieldPhotos().finally(() => window.setTimeout(maybeStartOnboardingTour, 450));
+    loadFieldPhotos().finally(() => window.setTimeout(() => { if (!ileStoiIntroSuppressAutomaticTour()) maybeStartOnboardingTour(); }, 450));
 });
 document.addEventListener('langchange', updateLayerCounters);
