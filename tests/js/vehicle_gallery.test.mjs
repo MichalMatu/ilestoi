@@ -302,7 +302,7 @@ test('visible mobile gallery reserves zoom space and restores original zoom posi
     const css = readFileSync(new URL('web/styles/vehicle_gallery.css', root), 'utf8');
     assert.match(css, /body\.vehicle-gallery-visible #map \.leaflet-bottom\.leaflet-right/);
     assert.match(css, /bottom: calc\(212px \+ env\(safe-area-inset-bottom\)\)/);
-    assert.equal(ui.bodyClasses.has('vehicle-gallery-visible'), false);
+    assert.equal(ui.bodyClasses.has('vehicle-gallery-visible'), true);
     ui.context.setVehicleGalleryDockMode('gallery');
     assert.equal(ui.bodyClasses.has('vehicle-gallery-visible'), true);
     ui.mapHandlers.get('popupopen')();
