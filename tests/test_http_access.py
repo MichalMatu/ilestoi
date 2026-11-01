@@ -137,6 +137,13 @@ class HttpAccessContractTests(unittest.TestCase):
         self.assertEqual(kwargs["additional_bytes"], 12)
         self.assertEqual(kwargs["additional_items"], 2)
 
+    def test_submission_owner_is_not_reset_by_user_agent_rotation(self):
+        handler = FakeHandler()
+        handler.headers["User-Agent"] = "crawler-1"
+        initial = access.submission_owner(handler)
+        handler.headers["User-Agent"] = "crawler-2"
+        self.assertEqual(access.submission_owner(handler), initial)
+
     def test_submission_owner_uses_trusted_proxy_client_identity(self):
         handler = FakeHandler()
         handler.headers["CF-Connecting-IP"] = "203.0.113.9"
