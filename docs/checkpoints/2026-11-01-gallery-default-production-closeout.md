@@ -33,6 +33,18 @@ Przedmiot: tylko początkowy tryb dolnego panelu `gallery / map / none` oraz dok
 5. Dopiero po realnym PASS: przesunąć GitHub `main` do **tego samego** SHA (fast-forward, expected-SHA), opublikować nieprzepisywany tag przez autoryzowanego Mac Local Agenta, zweryfikować lokalny produkcyjny HEAD i publiczne endpointy.
 6. Posprzątać tylko zintegrowaną gałąź `feature/gallery-default-20261101` i jej czysty izolowany worktree. Gałęzi z unikalnymi commitami lub archiwów nie usuwać; nie używać `git clean -fdx` w produkcji.
 
-## Status końcowy
+## Weryfikacja fizyczna i akceptacja produkcyjna (2026-11-01)
 
-Ten checkpoint opisuje kontrakt, kontrolę i niezmienne identyfikatory dowodów. **Wynik cutover, dokładny release SHA, tag oraz potwierdzenie porządku repozytorium wymagają osobnego wpisu po weryfikacji** — nie wolno ich domniemywać z przejścia testów lub samych planów.
+- **DEPLOY_LOCAL_PASS**, zadanie Termux Local Agent: `termux-ilestoi-gallery-default-guarded-release-20261101-v2`, status `done`, exit code `0`. Bazowy HEAD `db60a8b73f1e1f7734af3905d5ffbc8ffc8459b3` -> wdrożony i czysty produkcyjny HEAD `d46e67ccd55cd54dc88812dce8f942e9c6d9b28d` przez `git merge --ff-only`, bez nowego procesu serwera i bez restartu.
+- Testy kandydata **na Samsung/Termux**: 24/24 celowane JS, 102/102 całe `npm run test:web`, 37/37 frontend Python, 43/43 field photo Python, `npm ci`, `lint:web`, kompilacja Python, `git diff --check` — **PASS**.
+- Kopie: Restic 8 snapshotów, najnowszy miał 10,84 godziny, obejmował `zdjecia_terenowe` i `prywatne_zdjecia`, `restic check` zakończony **no errors**. Niezależny snapshot SQLite przez Backup API w `~/IleStoi-Backups/predeploy-gallery-default-20261101-v2/wreckscanner.sqlite3`, 622592 B, SHA-256 `d7e25dbcb8320c9485d5ce3593bb51692a6b3fa7715b377d542a5ca73cfb42e3`, integralność i klucze obce **OK**.
+- Kod sprzed wdrożenia zachowany pod `~/.local/state/ilestoi-ops/gallery-default-20261101-v2/`. Dokładny rollback SHA: `db60a8b73f1e1f7734af3905d5ffbc8ffc8459b3`.
+- Odbiór HTTP po cutover: `/`, `/app/vehicle_gallery.js`, `/styles.css`, `/api/health/live`, `/api/health/ready` → **200**. Wszystkie 6 usług `runit` online, te same PID przed i po.
+- Wcześniejszy kandydat `2b80206` zatrzymał się na przestarzałym oczekiwaniu JS w teście mobilnego odsunięcia zoomu, **przed jakąkolwiek zmianą produkcji**. Poprawka testu na `d46e67c` przeszła ponownie 24/24 oraz pełną bramkę. Te negatywne próby pozostają w niezmiennych wynikach Local Agenta, nie są oznaczane PASS.
+- Docelowa nazwa tagu wydania: `v2026.11.01-gallery-first-view`. Dokładny finalny commit dokumentacyjny musi być również wdrożony na Samsungu, a tag nie może być opublikowany przed weryfikacją identycznych HEAD `main` i produkcji. Potwierdzeniem tagowania i porządku gałęzi są osobne wyniki Local Agenta na Macu i Termuxie.
+
+## Granice zamknięcia
+
+Nie wykonano testów modyfikujących dane produkcyjne, próbnego restore całej galerii ani nowego pomiaru FPS. Publiczne wejście `https://ilestoi.pl/` odpowiada; widok mobilny/desktop zachowuje ten sam komponent. Dane, Restic, historyczne kopie, archiwa, Local Agent i cudze projekty pozostają nienaruszone.
+
+Dalsze czyszczenie dotyczy wyłącznie czystych worktree związanych z intro i tym wydaniem oraz krótkotrwałej gałęzi po pełnym potwierdzeniu jej przynależności do `main`. Nie usuwać historycznych wyników QA ani archiwalnych kopii.
