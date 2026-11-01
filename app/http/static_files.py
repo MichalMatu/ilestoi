@@ -300,6 +300,9 @@ def translate_path(path: str) -> str:
 
 
 def handle_web_page(handler, path: str, *, include_body: bool = True) -> bool:
+    if path == "/intro":
+        send_web_file(handler, "intro.html", include_body=include_body)
+        return True
     if path in HTML_PAGE_PATHS:
         send_web_page(handler, "index.html", page_path=path, include_body=include_body)
         return True
