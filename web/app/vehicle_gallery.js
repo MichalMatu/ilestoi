@@ -229,6 +229,14 @@ function openVehicleGalleryNomination(button) {
 }
 
 map.on('moveend zoomend', () => scheduleVehicleGalleryLoad());
+map.on('click', () => {
+    if (vehicleGalleryDockMode() === 'gallery') setVehicleGalleryDockMode('none');
+});
+document.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && vehicleGalleryDockMode() === 'gallery') {
+        setVehicleGalleryDockMode('none');
+    }
+});
 document.addEventListener('langchange', () => {
     updateVehicleGalleryAvailability();
 });
