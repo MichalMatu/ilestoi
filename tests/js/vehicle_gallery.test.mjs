@@ -171,10 +171,10 @@ test('mobile gallery is photo-first: no header, broad dock and larger scrolling 
     assert.match(html, /id="vehicle-gallery-items"[^>]*role="list"/);
     assert.match(html, /id="vehicle-gallery-map-dots"/);
     assert.doesNotMatch(html, /vehicle-gallery-header|vehicle-gallery-actions/);
-    assert.doesNotMatch(css, /\\.vehicle-gallery-header|\\.vehicle-gallery-actions/);
-    assert.match(css, /@media \\(max-width: 600px\\) \\{[\\s\\S]*?width: calc\\(100vw - 16px\\)/);
-    assert.match(css, /\\.vehicle-gallery-card img \\{ width: 128px; height: 96px; \\}/);
-    assert.match(css, /\\.vehicle-gallery-items \\{[\\s\\S]*?overflow-x: auto/);
+    assert.doesNotMatch(css, /\.vehicle-gallery-header|\.vehicle-gallery-actions/);
+    assert.match(css, /@media \(max-width: 600px\) \{[\s\S]*?width: calc\(100vw - 16px\)/);
+    assert.match(css, /\.vehicle-gallery-card img \{ width: 128px; height: 96px; \}/);
+    assert.match(css, /\.vehicle-gallery-items \{[\s\S]*?overflow-x: auto/);
 });
 
 test('menu has exactly two exclusive selectors, simple name and no second gallery opener', () => {
