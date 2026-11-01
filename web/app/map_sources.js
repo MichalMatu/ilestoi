@@ -183,6 +183,7 @@ function buildMapSourceLayer(source) {
             transparent: false,
             version: '1.3.0',
             enhancementSettings: enhancementSettingsRevision,
+            updateWhenZooming: false,
             maxZoom: MAX_MAP_ZOOM,
             attribution: `Geoportal Wroclawia · ${source.year} · enhanced`,
         });
@@ -195,6 +196,7 @@ function buildMapSourceLayer(source) {
             format: 'image/png',
             transparent: false,
             version: source.version || '1.3.0',
+            updateWhenZooming: false,
             maxZoom: MAX_MAP_ZOOM,
             attribution: source.attribution || 'Geoportal.gov.pl / GUGiK',
         });
@@ -204,6 +206,7 @@ function buildMapSourceLayer(source) {
         return factory(source.url, {
             maxZoom: MAX_MAP_ZOOM,
             maxNativeZoom: source.maxNativeZoom || MAX_MAP_ZOOM,
+            updateWhenZooming: false,
             enhancementSettings: enhancementSettingsRevision,
             attribution: source.attribution || '',
         });
@@ -218,6 +221,7 @@ function buildMapLabelLayer() {
         format: 'image/png',
         transparent: true,
         version: '1.3.0',
+        updateWhenZooming: false,
         maxZoom: MAX_MAP_ZOOM,
         opacity: 0.6,
         pane: 'overlayPane',
