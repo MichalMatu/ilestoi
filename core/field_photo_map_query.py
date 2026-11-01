@@ -33,6 +33,7 @@ _MAP_COLUMNS = (
     "vehicle_insurance_checked_at",
     "vehicle_resolution_status",
     "vehicle_resolution_updated_at",
+    "vehicle_gallery_priority",
     "lat",
     "lon",
     "coordinate_source",
@@ -147,3 +148,35 @@ def list_map_field_photos(
         return result, None
     last = candidates[-1]
     return result, (str(last["created_at"]), str(last["id"]))
+
+
+def list_map_vehicle_gallery(
+    storage_dir: Path, *, bounds: tuple[float, float, float, float], private_dir: Path | None = None,
+) -> list[dict[str, Any]]:
+    """Bounded read-only public gallery, independent of normal map zoom."""
+    west, south, east, north = bounds
+    conditions = [
+        "issue_type = 'vehicle'", "public_review_status = 'approved'",
+        "vehicle_resolution_status = 'active'", "vehicle_gallery_priority > 0",
+        "lat >= ? AND lat <= ?",
+    ]
+    params: list[Any] = [south, north]
+    conditions.append("lon >= ? AND lon <= ?" if west <= east else "(lon >= ? OR lon <= ?)")
+    params.extend([west, east])
+    sql = (
+        f"SELECT {', '.join(_MAP_COLUMNS)} FROM field_photos WHERE "
+        + " AND ".join(conditions)
+        + " ORDER BY vehicle_gallery_priority DESC, created_at DESC, id DESC LIMIT 100"
+    )
+    connection = connect_database_read_only(database_path_for(storage_dir))
+    try:
+        rows = [dict(row) for row in connection.execute(sql, params)]
+    finally:
+        connection.close()
+    result: list[dict[str, Any]] = []
+    for row in rows:
+        try:
+            result.append(_map_photo(row, storage_dir, private_dir))
+        except (OSError, ValueError, FileNotFoundError, json.JSONDecodeError):
+            continue
+    return result

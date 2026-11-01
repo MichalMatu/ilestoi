@@ -118,6 +118,28 @@ def validated_vehicle_insurance_update(record: dict[str, Any], value: Any) -> st
     return vehicle_insurance_status(issue_type(record.get("issue_type")), value)
 
 
+def vehicle_gallery_priority(issue_type_text: str, value: Any = 0) -> int:
+    if type(value) is not int or value not in (0, 1, 2, 3):
+        raise ValueError("Nieprawidłowy priorytet galerii.")
+    if issue_type_text != config.DEFAULT_FIELD_PHOTO_ISSUE_TYPE and value:
+        raise ValueError("Galeria dotyczy tylko pojazdów.")
+    return value
+
+
+def vehicle_gallery_priority_from_record(record: dict[str, Any]) -> int:
+    return vehicle_gallery_priority(issue_type(record.get("issue_type")), record.get("vehicle_gallery_priority", 0))
+
+
+def validated_vehicle_gallery_priority_update(record: dict[str, Any], value: Any) -> int | None:
+    if value is None:
+        return None
+    if str(record.get("public_review_status")) != "approved":
+        raise ValueError("Wyróżniać można tylko zatwierdzone zdjęcia.")
+    if vehicle_resolution_status_from_record(record) != "active":
+        raise ValueError("Nie można wyróżniać usuniętego pojazdu.")
+    return vehicle_gallery_priority(issue_type(record.get("issue_type")), value)
+
+
 def validated_vehicle_resolution_update(record: dict[str, Any], value: Any) -> str | None:
     if value is None:
         return None
