@@ -114,7 +114,14 @@ function vehicleGalleryShouldSkipRequest(bbox, pending, loaded, loadedAt, now = 
 
 async function loadVehicleGallery() {
     if (vehicleGalleryDockMode() !== 'gallery') return;
-    const bbox = fieldPhotoViewportQuery().bbox;
+    const list = document.getElementById('vehicle-gallery-items');
+    let bbox;
+    try {
+        bbox = fieldPhotoViewportQuery().bbox;
+    } catch (_) {
+        if (list) list.textContent = t('gallery.error');
+        return;
+    }
     if (vehicleGalleryShouldSkipRequest(
         bbox, vehicleGalleryPendingBbox, vehicleGalleryLoadedBbox, vehicleGalleryLoadedAt
     )) return;
@@ -123,7 +130,6 @@ async function loadVehicleGallery() {
     vehicleGalleryRequest = controller;
     vehicleGalleryPendingBbox = bbox;
     const revision = ++vehicleGalleryRevision;
-    const list = document.getElementById('vehicle-gallery-items');
     if (list && !list.children.length) list.textContent = t('gallery.loading');
     try {
         const data = await apiJson(`${FIELD_PHOTOS_URL}/gallery?bbox=${encodeURIComponent(bbox)}`, {
