@@ -26,6 +26,7 @@ const TRANSLATIONS_EN = {
         'map.label': 'Interactive report map',
 
         // Interaktywny samouczek (PL/EN).
+        'intro.reopen': 'IleStoi story',
         'tour.reopen': 'Guided tour',
         'tour.progress': 'Step {current} of {total}',
         'tour.next': 'Next',
