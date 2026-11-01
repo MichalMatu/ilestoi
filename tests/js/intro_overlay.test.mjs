@@ -34,6 +34,7 @@ function setup({ stored = null, path = '/', search = '', hash = '' } = {}) {
 test('only the initial plain homepage shows intro', () => {
     assert.equal(setup().overlay.hidden, false);
     assert.equal(setup({ stored: '1' }).overlay.hidden, true);
+    assert.equal(setup({ search: '?lang=en' }).overlay.hidden, false);
     assert.equal(setup({ hash: '#photo=1' }).overlay.hidden, true);
     assert.equal(setup({ search: '?photo=1' }).overlay.hidden, true);
 });
