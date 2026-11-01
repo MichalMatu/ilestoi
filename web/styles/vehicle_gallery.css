@@ -1,24 +1,16 @@
 /* Optional gallery UI. This file does not change the original #year-slider rules. */
 .vehicle-gallery-dock {
-    position: fixed; z-index: 910; bottom: calc(25px + env(safe-area-inset-bottom));
+    position: fixed; z-index: 910; bottom: calc(24px + env(safe-area-inset-bottom));
     left: 12px; max-width: calc(100vw - 24px);
     font-family: var(--font, system-ui, sans-serif); color: var(--text);
 }
 .vehicle-gallery-dock[hidden], .vehicle-gallery-panel[hidden],
 .vehicle-gallery-map-dots[hidden] { display: none !important; }
-.vehicle-gallery-dock-toggle {
-    border: 1px solid var(--glass-border); width: 34px; height: 34px;
-    display: grid; place-items: center; border-radius: 10px;
-    color: var(--text-strong); background: var(--glass-panel-bg-strong);
-    box-shadow: var(--shadow-glass); backdrop-filter: var(--glass-blur);
-    font-size: 22px; cursor: pointer;
-}
 .vehicle-gallery-dock[data-mode="gallery"] {
     left: 50%; transform: translateX(-50%);
-    bottom: calc(70px + env(safe-area-inset-bottom));
+    bottom: calc(24px + env(safe-area-inset-bottom));
     width: min(440px, calc(100vw - 92px));
 }
-.vehicle-gallery-dock[data-mode="gallery"] > .vehicle-gallery-dock-toggle { display: none; }
 .vehicle-gallery-panel {
     border: 1px solid var(--glass-border); border-radius: 14px;
     padding: 10px; display: grid; gap: 9px;
@@ -71,3 +63,14 @@
 @media (prefers-reduced-motion: reduce) {
     .vehicle-gallery-panel { animation: none; }
 }
+
+/* The gallery is opened from the existing layer-menu row, not from the map. */
+.panel-map-gallery .vehicle-gallery-menu-open {
+    display: grid; place-items: center; justify-self: end;
+    width: 30px; height: 30px; padding: 0;
+    color: var(--text-strong); background: var(--surface-inset);
+    border: 1px solid var(--border); border-radius: 8px;
+    font-size: 16px; cursor: pointer;
+}
+.panel-map-gallery .vehicle-gallery-menu-open:hover { background: var(--primary-soft); }
+.panel-map-gallery .vehicle-gallery-menu-open:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }

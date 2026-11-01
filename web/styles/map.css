@@ -203,3 +203,11 @@
         max-width: calc(100vw - 24px);
     }
 }
+
+/* Mobile browser chrome can clip Leaflet's bottom-right +/- control.
+   Reserve a bottom inset for the entire zoom pair, not just its first button. */
+@media (max-width: 640px) {
+    #map .leaflet-bottom.leaflet-right {
+        bottom: calc(56px + env(safe-area-inset-bottom));
+    }
+}

@@ -24,7 +24,7 @@ function updateVehicleGalleryAvailability() {
     const allowed = vehicleGalleryIsAvailable();
     const control = document.getElementById('map-gallery-toggle');
     if (control) control.checked = vehicleGalleryEnabled;
-    dock.hidden = !allowed;
+    dock.hidden = !allowed || vehicleGalleryMode !== 'gallery';
     if (!allowed) {
         vehicleGalleryRequest?.abort();
         applyMapSourceSliderVisibility();
@@ -33,15 +33,6 @@ function updateVehicleGalleryAvailability() {
     dock.dataset.mode = vehicleGalleryMode;
     const panel = document.getElementById('vehicle-gallery-panel');
     if (panel) panel.hidden = vehicleGalleryMode !== 'gallery';
-    const toggle = document.getElementById('vehicle-gallery-dock-toggle');
-    if (toggle) {
-        toggle.textContent = vehicleGalleryMode === 'map' ? '☆' : (vehicleGalleryMode === 'gallery' ? '×' : '▤');
-        const key = vehicleGalleryMode === 'map' ? 'gallery.open'
-            : (vehicleGalleryMode === 'gallery' ? 'gallery.hide' : 'gallery.restore');
-        toggle.title = t(key);
-        toggle.setAttribute('aria-label', t(key));
-        toggle.setAttribute('aria-expanded', vehicleGalleryMode === 'gallery' ? 'true' : 'false');
-    }
     renderVehicleGalleryMapDots();
     applyMapSourceSliderVisibility();
     if (vehicleGalleryMode === 'gallery') scheduleVehicleGalleryLoad(true);
@@ -61,9 +52,11 @@ function setVehicleGalleryDockMode(mode) {
     updateVehicleGalleryAvailability();
 }
 
-function cycleVehicleGalleryDockMode() {
-    setVehicleGalleryDockMode(vehicleGalleryMode === 'map' ? 'gallery'
-        : vehicleGalleryMode === 'gallery' ? 'none' : 'map');
+function openVehicleGalleryFromMenu() {
+    if (!publicFeatureAllowed(PUBLIC_FEATURE_KEYS.vehicleGallery)) return;
+    if (!vehicleGalleryEnabled) setVehicleGalleryEnabled(true);
+    setVehicleGalleryDockMode('gallery');
+    closeAppMenu();
 }
 
 function renderVehicleGalleryMapDots() {

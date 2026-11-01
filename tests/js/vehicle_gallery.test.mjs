@@ -10,12 +10,10 @@ function buildDock() {
     const storage = new Map();
     const dock = { hidden: true, dataset: {} };
     const panel = { hidden: true };
-    const toggle = { textContent: '', setAttribute() {} };
     const menu = { checked: true };
     const elements = {
         'vehicle-gallery-dock': dock,
         'vehicle-gallery-panel': panel,
-        'vehicle-gallery-dock-toggle': toggle,
         'map-gallery-toggle': menu,
     };
     const context = {
@@ -32,31 +30,42 @@ function buildDock() {
             setItem: (key, value) => storage.set(key, String(value)),
         },
         applyMapSourceSliderVisibility() {},
+        closeAppMenu() {},
     };
     vm.runInNewContext(source, context);
-    return { context, dock, panel, toggle, menu, storage };
+    return { context, dock, panel, menu, storage };
 }
 
-test('dock cycles between map, gallery, clean map without changing existing slider markup', () => {
+test('gallery opens from menu and map mode has no floating star or dock', () => {
     const { context, dock, panel, storage } = buildDock();
     assert.equal(context.vehicleGalleryDockMode(), 'map');
-    assert.equal(panel.hidden, true);
-    context.cycleVehicleGalleryDockMode();
+    assert.equal(dock.hidden, true);
+    context.openVehicleGalleryFromMenu();
     assert.equal(context.vehicleGalleryDockMode(), 'gallery');
-    assert.equal(panel.hidden, false);
-    context.cycleVehicleGalleryDockMode();
-    assert.equal(context.vehicleGalleryDockMode(), 'none');
-    assert.equal(panel.hidden, true);
-    context.cycleVehicleGalleryDockMode();
-    assert.equal(context.vehicleGalleryDockMode(), 'map');
     assert.equal(dock.hidden, false);
+    assert.equal(panel.hidden, false);
+    context.setVehicleGalleryDockMode('none');
+    assert.equal(dock.hidden, true);
+    assert.equal(panel.hidden, true);
+    context.setVehicleGalleryDockMode('map');
+    assert.equal(dock.hidden, true);
     assert.equal(storage.get('test.dock'), 'map');
     const html = readFileSync(new URL('web/partials/app_shell.html', root), 'utf8');
     assert.match(html, /id="year-slider"/);
     assert.match(html, /id="year-range"/);
     assert.match(html, /id="vehicle-gallery-dock"/);
+    assert.doesNotMatch(html, /vehicle-gallery-dock-toggle/);
+    assert.match(html, /onclick="openVehicleGalleryFromMenu\(\)"/);
     const galleryCss = readFileSync(new URL('web/styles/vehicle_gallery.css', root), 'utf8');
     assert.doesNotMatch(galleryCss, /^\s*#year-slider\b/m);
+    assert.match(galleryCss, /bottom: calc\(24px \+ env\(safe-area-inset-bottom\)\)/);
+});
+
+test('mobile zoom buttons are given bottom inset, unaffected slider CSS', () => {
+    const mapCss = readFileSync(new URL('web/styles/map.css', root), 'utf8');
+    assert.match(mapCss, /#map \.leaflet-bottom\.leaflet-right\s*\{\s*bottom: calc\(56px/);
+    const sliderCss = readFileSync(new URL('web/styles/map_controls.css', root), 'utf8');
+    assert.match(sliderCss, /#year-slider\s*\{\s*position: fixed;/);
 });
 
 test('gallery can be turned off without hiding or restyling map slider', () => {

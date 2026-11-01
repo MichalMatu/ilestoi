@@ -111,12 +111,16 @@
                         <span class="layer-label" data-i18n="panel.baseMap">Pokaż wybór podkładu</span>
                         <span class="layer-count-badge" id="map-source-current-badge">POL</span>
                     </label>
-                    <label class="layer-toggle panel-map-gallery">
+                    <div class="layer-toggle panel-map-gallery">
                         <input type="checkbox" id="map-gallery-toggle" checked
                             onchange="setVehicleGalleryEnabled(this.checked)">
-                        <span class="layer-pin layer-pin--vehicle"></span>
-                        <span class="layer-label" data-i18n="gallery.menuToggle">Galeria wyróżnionych pojazdów</span>
-                    </label>
+                        <span class="layer-pin layer-pin--vehicle" aria-hidden="true"></span>
+                        <label for="map-gallery-toggle" class="layer-label" data-i18n="gallery.menuToggle">Galeria wyróżnionych pojazdów</label>
+                        <button type="button" class="vehicle-gallery-menu-open"
+                            onclick="openVehicleGalleryFromMenu()"
+                            data-i18n-attr="title:gallery.open;aria-label:gallery.open"
+                            title="Otwórz galerię" aria-label="Otwórz galerię">▣</button>
+                    </div>
                     <label class="layer-toggle" data-i18n-attr="title:layers.cadastralTooltip">
                         <input type="checkbox" id="toggle-cadastral-parcels"
                             onchange="toggleCadastralLayer(this.checked)">
@@ -221,10 +225,8 @@
         <div class="year-current" id="year-current" aria-live="polite" aria-atomic="true">POL</div>
     </div>
 
-    <!-- Optional gallery dock: separate from unchanged map-source slider. -->
+    <!-- Optional gallery dock: no floating launcher over the unchanged map-source slider. -->
     <aside id="vehicle-gallery-dock" class="vehicle-gallery-dock" hidden aria-label="Galeria wyróżnionych pojazdów">
-        <button id="vehicle-gallery-dock-toggle" type="button" class="vehicle-gallery-dock-toggle"
-            onclick="cycleVehicleGalleryDockMode()" aria-label="Otwórz galerię" title="Galeria">☆</button>
         <section id="vehicle-gallery-panel" class="vehicle-gallery-panel" hidden>
             <div class="vehicle-gallery-header">
                 <span data-i18n="gallery.title">Wraki pod lupą</span>
