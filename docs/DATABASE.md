@@ -25,6 +25,7 @@ ostatecznej decyzji moderacyjnej.
 - `issue_type`,
 - `vehicle_insurance_status`, `vehicle_insurance_checked_at`,
 - `vehicle_resolution_status`, `vehicle_resolution_updated_at`,
+- `vehicle_gallery_priority` (`0` = bez wyróżnienia, `1` = wyróżniony, `2` = wysoki priorytet, `3` = pilny),
 - `lat`, `lon`, `coordinate_source`, `position_updated_at`,
 - `public_review_status`, `reviewed_at`, `redactions_json`,
 - metadane oryginalu i publicznych pochodnych,

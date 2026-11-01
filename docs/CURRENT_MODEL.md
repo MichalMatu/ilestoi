@@ -49,6 +49,12 @@ zanonimizowany wpis sukcesu ukryty domyslnie filtrem warstwy pojazdow.
   "removed"`.
 - Publiczna mapa domyslnie ukrywa usuniete pojazdy, ale tray filtrow warstwy
   `Pojazdy` pozwala je pokazac albo wyswietlic tylko usuniete.
+- Administrator może wyróżnić wybrane zatwierdzone zdjęcie pojazdu do publicznej galerii
+  przez gwiazdkę na miniaturze w popupie mapy. Wyróżnienie ma poziom 1–3 i
+  automatycznie zastępuje poprzednią okładkę w istniejącej grupie zdjęć;
+  zdjęcia pojazdów usuniętych nie pojawiają się w galerii.
+- Publiczna galeria pobiera maksymalnie 100 kandydatów z bbox w odczycie SQLite,
+  po czym prezentuje maksymalnie 10 reprezentatywnych miniatur.
 - Zgloszenie PDF jest generowane na zadanie z listy `field_photo.id` i
   wspolrzednych grupy.
 - Backend odrzuca mieszane grupy, usuniete pojazdy, wspolrzedne inne niz
@@ -79,6 +85,7 @@ edycji nadal moga ograniczyc operacje.
 | `POST` | `/api/admin/login` | publiczny | rozpoczecie sesji administratora |
 | `POST` | `/api/admin/logout` | publiczny (cookie opcjonalne) | uniewaznienie biezacego tokenu i cookie |
 | `GET` | `/api/field-photos` | publiczny | mapa bez szkicow i odrzuconych; administrator omija publiczne filtry warstw |
+| `GET` | `/api/field-photos/gallery?bbox=...` | publiczny | wyróżnione, zatwierdzone aktywne pojazdy w obszarze mapy; funkcja może być wyłączona |
 | `GET` | `/api/field-photos/:id/public-image` | publiczny | zatwierdzony obraz publiczny |
 | `GET` | `/api/field-photos/:id/public-thumb` | publiczny | zatwierdzona miniatura publiczna |
 | `POST` | `/api/field-photos` | publiczny lub administrator | pojedynczy upload `multipart/form-data`; funkcja publiczna moze byc wylaczona |

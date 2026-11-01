@@ -8,14 +8,14 @@ from secrets import token_hex
 from typing import Any
 
 from core import config
+from core.field_photo_groups import vehicle_photo_group_records
 from core.field_photo_insurance import apply_vehicle_insurance_group_update
 from core.field_photo_metadata import (
+    validated_vehicle_gallery_priority_update,
     validated_vehicle_insurance_update,
     validated_vehicle_resolution_update,
-    validated_vehicle_gallery_priority_update,
 )
 from core.field_photo_resolution import apply_vehicle_resolution_group_update
-from core.field_photo_groups import vehicle_photo_group_records
 from core.field_photo_serialization import field_photo_summary
 from core.field_photo_store import list_field_records, save_field_records
 from core.photo_privacy import (

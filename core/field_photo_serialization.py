@@ -4,11 +4,11 @@ from typing import Any, Literal
 
 from core.field_photo_metadata import (
     issue_type,
+    vehicle_gallery_priority,
     vehicle_insurance_checked_at,
     vehicle_insurance_status,
     vehicle_resolution_status,
     vehicle_resolution_updated_at,
-    vehicle_gallery_priority,
 )
 from core.photo_privacy import is_approved, review_status
 

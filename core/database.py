@@ -9,11 +9,11 @@ from typing import Any
 
 from core import config
 from core.field_photo_metadata import (
+    vehicle_gallery_priority_from_record,
     vehicle_insurance_checked_at_from_record,
     vehicle_insurance_status_from_record,
     vehicle_resolution_status_from_record,
     vehicle_resolution_updated_at_from_record,
-    vehicle_gallery_priority_from_record,
 )
 from core.photo_privacy import safe_existing_child
 
