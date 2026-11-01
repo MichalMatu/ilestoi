@@ -443,3 +443,30 @@ a.map-popup-head-value {
         aspect-ratio: 16 / 7;
     }
 }
+
+/* Additive admin-only nomination overlay; never changes the photo grid tracks. */
+.map-popup-nomination-wrap { position: relative; min-width: 0; }
+.map-popup-nomination-wrap .map-popup-photo { height: 100%; }
+.map-popup-nomination {
+    position: absolute; top: 5px; right: 5px; z-index: 2;
+    display: grid; place-items: center; width: 29px; height: 29px;
+    border: 1px solid rgba(255,255,255,.55); border-radius: 50%;
+    color: #fff4bd; font-size: 20px; line-height: 1; cursor: pointer;
+    background: rgba(16,28,40,.75); box-shadow: 0 1px 4px rgba(0,0,0,.3);
+}
+.map-popup-nomination:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.map-popup-nomination[data-gallery-priority="2"] { color: #ffce74; }
+.map-popup-nomination[data-gallery-priority="3"] { color: #ff8b82; }
+.vehicle-gallery-nomination-menu {
+    position: fixed; z-index: 2600; min-width: 154px; padding: 4px;
+    display: grid; gap: 2px; background: var(--popup-surface);
+    border: 1px solid var(--popup-border); border-radius: 9px;
+    box-shadow: var(--shadow-glass);
+}
+.vehicle-gallery-nomination-menu button {
+    color: var(--popup-text); background: transparent; border: 0;
+    padding: 9px 11px; text-align: left; border-radius: 6px;
+    font: 600 12px var(--font); cursor: pointer;
+}
+.vehicle-gallery-nomination-menu button:hover,
+.vehicle-gallery-nomination-menu button:focus-visible { background: var(--popup-surface-muted); }

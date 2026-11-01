@@ -403,7 +403,7 @@ function vehiclePhotoPopup(group) {
                 popupElapsedAgeBadge(group.photos),
                 pendingCount ? popupHeaderBadge(t('vehicle.popup.pendingBadge', { n: pendingCount }), 'status') : '',
             ])}
-            ${popupPhotoSection('', previews, { className: 'map-popup-photo-grid--field', total: photoCount, showHeader: false })}
+            ${popupPhotoSection('', previews, { className: 'map-popup-photo-grid--field', total: photoCount, showHeader: false, nomination: adminAuthenticated })}
             ${vehicleGroupLinks(group)}
             ${popupActions(vehicleGroupActions(group))}
     `, mapPopupMediaModifiers(previews, 'map-popup--vehicle-photo'));

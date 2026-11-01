@@ -14,6 +14,8 @@ function fieldPhotoPreview(photo, index = 0, ts = Date.now()) {
         : (popupTimestampMs(photo?.submitted_at) !== null ? String(photo.submitted_at) : '');
     return {
         source: 'field',
+        photo_id: String(photo.id || ''),
+        gallery_priority: Number(photo.vehicle_gallery_priority) || 0,
         label: capturedAt || addedAt || String(index + 1),
         date_kind: capturedAt ? 'captured' : (addedAt ? 'added' : 'unknown'),
         public_image: cacheBustedUrl(publicUrl, ts),

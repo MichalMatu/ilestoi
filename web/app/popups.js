@@ -242,6 +242,8 @@ function photoPreviewGalleryItems(previews) {
                 title: String(display.name || ''),
                 badge: String(display.badge || display.name || ''),
                 detail: String(display.detail || ''),
+                photoId: String(photo.photo_id || ''),
+                galleryPriority: Number(photo.gallery_priority) || 0,
             };
         }).filter(item => item.url && item.thumb)
         : [];
@@ -297,7 +299,7 @@ function mapPopupMediaModifiers(previews, modifiers = [], options = {}) {
     ];
 }
 
-function popupPhotoGrid(previews, { className = '', max = MAP_POPUP_PREVIEW_MAX_IMAGES } = {}) {
+function popupPhotoGrid(previews, { className = '', max = MAP_POPUP_PREVIEW_MAX_IMAGES, nomination = false } = {}) {
     const maxItems = Number.isFinite(Number(max)) ? Math.max(0, Number(max)) : MAP_POPUP_PREVIEW_MAX_IMAGES;
     const galleryItems = photoPreviewGalleryItems(previews);
     const photos = galleryItems.slice(0, maxItems);
@@ -321,12 +323,22 @@ function popupPhotoGrid(previews, { className = '', max = MAP_POPUP_PREVIEW_MAX_
                 const label = escapeHtml(photo.title || '');
                 const badge = escapeHtml(photo.badge || photo.title || '');
                 const detail = escapeHtml(photo.detail || '');
-                return `
+                const preview = `
                     <button type="button" class="map-popup-photo" data-photo-preview-url="${publicUrl}" data-photo-preview-title="${label}" data-photo-preview-detail="${detail}" data-photo-gallery-index="${index}" title="${detail || label}" aria-label="${label || escapeHtml(t('modal.photoPreview.title'))}">
                         <img src="${thumbUrl}" loading="lazy" alt="">
                         ${badge ? `<span>${badge}</span>` : ''}
                     </button>
                 `;
+                if (!nomination || !adminAuthenticated || !photo.photoId) return preview;
+                const photoId = escapeHtml(photo.photoId);
+                const level = photo.galleryPriority;
+                return `<div class="map-popup-nomination-wrap">
+                    ${preview}
+                    <button type="button" class="map-popup-nomination" data-gallery-photo-id="${photoId}"
+                        data-gallery-priority="${level}" aria-label="${escapeHtml(t('gallery.nominate'))}"
+                        title="${escapeHtml(t('gallery.nominate'))}" onclick="openVehicleGalleryNomination(this); event.stopPropagation()">${level ? '★' : '☆'}</button>
+                </div>`;
+
             }).join('')}
         </div>
     `;
