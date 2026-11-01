@@ -7,7 +7,9 @@ function hasSeenIleStoiIntro() {
 ileStoiIntroState.seenOnEntry = hasSeenIleStoiIntro();
 function shouldShowIleStoiIntro() {
     if (location.pathname !== '/' && location.pathname !== '/index.html') return false;
-    if (location.search || location.hash) return false; // Do not interrupt photo/deep links.
+    if (location.hash) return false;
+    const params = new URLSearchParams(location.search);
+    if ([...params.keys()].some(key => key !== 'lang')) return false; // Do not interrupt deep links.
     return !hasSeenIleStoiIntro();
 }
 function ileStoiIntroSuppressAutomaticTour() {
