@@ -24,6 +24,8 @@ function updateVehicleGalleryPanelVisibility() {
     const panel = document.getElementById('vehicle-gallery-panel');
     if (dock) dock.hidden = !visible;
     if (panel) panel.hidden = !visible;
+    // Only while the dock is visible: keep Leaflet +/- above its mobile footprint.
+    document.body.classList.toggle('vehicle-gallery-visible', visible);
 }
 
 function updateVehicleGalleryAvailability() {

@@ -29,6 +29,7 @@ function buildDock({ saved = {}, galleryAllowed = true } = {}) {
     const access = { galleryAllowed };
     const mapHandlers = new Map();
     const documentHandlers = new Map();
+    const bodyClasses = new Set();
     const context = {
         MAP_DOCK_MODE_STORAGE_KEY: 'test.dock',
         PUBLIC_FEATURE_KEYS: { vehicleGallery: 'vehicle_gallery' },
@@ -44,6 +45,12 @@ function buildDock({ saved = {}, galleryAllowed = true } = {}) {
         safeFieldPhotoId: id => String(id).replace(/[^A-Za-z0-9_-]/g, ''),
         loadFieldPhotos: () => { context.focusLoadCount = (context.focusLoadCount || 0) + 1; },
         document: {
+            body: {
+                classList: {
+                    toggle: (name, enabled) => enabled ? bodyClasses.add(name) : bodyClasses.delete(name),
+                    contains: name => bodyClasses.has(name),
+                },
+            },
             getElementById: id => elements[id] || null,
             addEventListener: (name, handler) => documentHandlers.set(name, handler),
         },
@@ -63,7 +70,7 @@ function buildDock({ saved = {}, galleryAllowed = true } = {}) {
         dockHidden: dock.hidden,
         panelHidden: panel.hidden,
     });
-    return { context, access, storage, galleryRow, gallery, selector, slider, dock, panel, mapHandlers, documentHandlers, state };
+    return { context, access, storage, galleryRow, gallery, selector, slider, dock, panel, mapHandlers, documentHandlers, bodyClasses, state };
 }
 
 test('default map mode preserves original slider and unchecks gallery', () => {
@@ -288,4 +295,22 @@ test('gallery cards are photo-only; priority remains accessible but does not con
     assert.match(source, /button\.append\(img\);/);
     assert.doesNotMatch(css, /\.vehicle-gallery-card span/);
     assert.doesNotMatch(css, /\.vehicle-gallery-card \{[^}]*gap: /);
+});
+
+test('visible mobile gallery reserves zoom space and restores original zoom positioning when hidden', () => {
+    const ui = buildDock();
+    const css = readFileSync(new URL('web/styles/vehicle_gallery.css', root), 'utf8');
+    assert.match(css, /body\.vehicle-gallery-visible #map \.leaflet-bottom\.leaflet-right/);
+    assert.match(css, /bottom: calc\(212px \+ env\(safe-area-inset-bottom\)\)/);
+    assert.equal(ui.bodyClasses.has('vehicle-gallery-visible'), false);
+    ui.context.setVehicleGalleryDockMode('gallery');
+    assert.equal(ui.bodyClasses.has('vehicle-gallery-visible'), true);
+    ui.mapHandlers.get('popupopen')();
+    assert.equal(ui.bodyClasses.has('vehicle-gallery-visible'), false);
+    ui.mapHandlers.get('popupclose')();
+    assert.equal(ui.bodyClasses.has('vehicle-gallery-visible'), true);
+    ui.context.setVehicleGalleryDockMode('map');
+    assert.equal(ui.bodyClasses.has('vehicle-gallery-visible'), false);
+    ui.context.setVehicleGalleryDockMode('none');
+    assert.equal(ui.bodyClasses.has('vehicle-gallery-visible'), false);
 });

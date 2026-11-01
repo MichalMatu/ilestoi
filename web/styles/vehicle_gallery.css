@@ -56,6 +56,11 @@
     .vehicle-gallery-panel { animation: none; }
 }
 @media (max-width: 600px) {
+    /* Zoom pair previously sat underneath the 151px photo dock. Keep both
+       clickable only in visible gallery mode; the old year slider is untouched. */
+    body.vehicle-gallery-visible #map .leaflet-bottom.leaflet-right {
+        bottom: calc(212px + env(safe-area-inset-bottom));
+    }
     .vehicle-gallery-dock[data-mode="gallery"] {
         width: calc(100vw - 16px);
         max-width: calc(100vw - 16px);
