@@ -22,13 +22,6 @@
     from { opacity: .3; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
 }
-.vehicle-gallery-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-weight: 750; font-size: 13px; }
-.vehicle-gallery-actions { display: flex; gap: 4px; }
-.vehicle-gallery-actions button {
-    width: 30px; height: 30px; padding: 0; border-radius: 8px;
-    background: var(--surface-inset); color: var(--text-strong); border: 1px solid var(--border);
-    font-size: 17px; cursor: pointer;
-}
 .vehicle-gallery-items {
     display: flex; gap: 8px; min-height: 62px; max-height: min(25vh, 180px);
     overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: thin;
@@ -62,4 +55,14 @@
 .vehicle-gallery-dock button:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) {
     .vehicle-gallery-panel { animation: none; }
+}
+@media (max-width: 600px) {
+    .vehicle-gallery-dock[data-mode="gallery"] {
+        width: calc(100vw - 16px);
+        max-width: calc(100vw - 16px);
+    }
+    .vehicle-gallery-panel { padding: 8px; gap: 6px; }
+    .vehicle-gallery-items { gap: 6px; }
+    .vehicle-gallery-card { flex-basis: 128px; }
+    .vehicle-gallery-card img { width: 128px; height: 96px; }
 }
