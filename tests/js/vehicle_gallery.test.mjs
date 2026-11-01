@@ -27,13 +27,18 @@ function buildDock({ saved = {}, galleryAllowed = true } = {}) {
         'vehicle-gallery-panel': panel,
     };
     const access = { galleryAllowed };
+    const mapHandlers = new Map();
+    const documentHandlers = new Map();
     const context = {
         MAP_DOCK_MODE_STORAGE_KEY: 'test.dock',
         PUBLIC_FEATURE_KEYS: { vehicleGallery: 'vehicle_gallery' },
         publicFeatureAllowed: () => access.galleryAllowed,
         t: key => key,
-        map: { on() {} },
-        document: { getElementById: id => elements[id] || null, addEventListener() {} },
+        map: { on: (name, handler) => mapHandlers.set(name, handler) },
+        document: {
+            getElementById: id => elements[id] || null,
+            addEventListener: (name, handler) => documentHandlers.set(name, handler),
+        },
         window: { clearTimeout() {}, setTimeout() { return 1; } },
         localStorage: {
             getItem: key => storage.get(key) ?? null,
@@ -50,7 +55,7 @@ function buildDock({ saved = {}, galleryAllowed = true } = {}) {
         dockHidden: dock.hidden,
         panelHidden: panel.hidden,
     });
-    return { context, access, storage, galleryRow, gallery, selector, slider, dock, panel, state };
+    return { context, access, storage, galleryRow, gallery, selector, slider, dock, panel, mapHandlers, documentHandlers, state };
 }
 
 test('default map mode preserves original slider and unchecks gallery', () => {
@@ -137,6 +142,39 @@ test('gallery hide/show buttons and popup focus update the single panel mode', (
     ui.context.setVehicleGalleryDockMode('map');
     assert.equal(ui.state().mode, 'map');
     assert.equal(ui.storage.get('test.dock'), 'map');
+});
+
+test('headerless gallery can be closed from map or Escape without changing other modes', () => {
+    const ui = buildDock();
+    const mapTap = ui.mapHandlers.get('click');
+    const onKeyDown = ui.documentHandlers.get('keydown');
+    assert.equal(typeof mapTap, 'function');
+    assert.equal(typeof onKeyDown, 'function');
+    ui.context.setVehicleGalleryDockMode('gallery');
+    mapTap();
+    assert.equal(ui.state().mode, 'none');
+    assert.equal(ui.storage.get('test.dock'), 'none');
+    ui.context.setVehicleGalleryDockMode('gallery');
+    onKeyDown({ key: 'Enter' });
+    assert.equal(ui.state().mode, 'gallery');
+    onKeyDown({ key: 'Escape' });
+    assert.equal(ui.state().mode, 'none');
+    ui.context.setVehicleGalleryDockMode('map');
+    mapTap();
+    onKeyDown({ key: 'Escape' });
+    assert.equal(ui.state().mode, 'map');
+});
+
+test('mobile gallery is photo-first: no header, broad dock and larger scrolling cards', () => {
+    const html = readFileSync(new URL('web/partials/app_shell.html', root), 'utf8');
+    const css = readFileSync(new URL('web/styles/vehicle_gallery.css', root), 'utf8');
+    assert.match(html, /id="vehicle-gallery-items"[^>]*role="list"/);
+    assert.match(html, /id="vehicle-gallery-map-dots"/);
+    assert.doesNotMatch(html, /vehicle-gallery-header|vehicle-gallery-actions/);
+    assert.doesNotMatch(css, /\\.vehicle-gallery-header|\\.vehicle-gallery-actions/);
+    assert.match(css, /@media \\(max-width: 600px\\) \\{[\\s\\S]*?width: calc\\(100vw - 16px\\)/);
+    assert.match(css, /\\.vehicle-gallery-card img \\{ width: 128px; height: 96px; \\}/);
+    assert.match(css, /\\.vehicle-gallery-items \\{[\\s\\S]*?overflow-x: auto/);
 });
 
 test('menu has exactly two exclusive selectors, simple name and no second gallery opener', () => {
