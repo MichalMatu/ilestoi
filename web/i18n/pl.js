@@ -27,6 +27,7 @@ const TRANSLATIONS_PL = {
         'map.label': 'Interaktywna mapa zgłoszeń',
 
         // Interaktywny samouczek (PL/EN).
+        'intro.reopen': 'Historia IleStoi',
         'tour.reopen': 'Samouczek',
         'tour.progress': 'Krok {current} z {total}',
         'tour.next': 'Dalej',
