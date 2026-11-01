@@ -497,6 +497,7 @@ def review_field_photo(
     redactions: Any = None,
     vehicle_insurance_status: Any = None,
     vehicle_resolution_status: Any = None,
+    vehicle_gallery_priority: Any = None,
     private_dir: Path | None = None,
 ) -> dict[str, Any]:
     with _FIELD_PHOTO_MUTATION_LOCK:
@@ -512,6 +513,7 @@ def review_field_photo(
             redactions=redactions,
             vehicle_insurance_status=vehicle_insurance_status,
             vehicle_resolution_status=vehicle_resolution_status,
+            vehicle_gallery_priority=vehicle_gallery_priority,
         )
 
 

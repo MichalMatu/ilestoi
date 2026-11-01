@@ -21,6 +21,7 @@ DEFAULT_PUBLIC_LAYERS: dict[str, bool] = {
 DEFAULT_PUBLIC_FEATURES: dict[str, bool] = {
     "report_pdfs": True,
     "photo_uploads": True,
+    "vehicle_gallery": True,
 }
 DEFAULT_MAP_VIEW: dict[str, float | int] = {
     "lat": 51.107883,

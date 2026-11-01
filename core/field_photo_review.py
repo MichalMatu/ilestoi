@@ -12,8 +12,10 @@ from core.field_photo_insurance import apply_vehicle_insurance_group_update
 from core.field_photo_metadata import (
     validated_vehicle_insurance_update,
     validated_vehicle_resolution_update,
+    validated_vehicle_gallery_priority_update,
 )
 from core.field_photo_resolution import apply_vehicle_resolution_group_update
+from core.field_photo_groups import vehicle_photo_group_records
 from core.field_photo_serialization import field_photo_summary
 from core.field_photo_store import list_field_records, save_field_records
 from core.photo_privacy import (
@@ -128,14 +130,17 @@ def review_field_photo_record(
     redactions: Any = None,
     vehicle_insurance_status: Any = None,
     vehicle_resolution_status: Any = None,
+    vehicle_gallery_priority: Any = None,
 ) -> dict[str, Any]:
     validated_vehicle_insurance_status = validated_vehicle_insurance_update(record, vehicle_insurance_status)
     validated_vehicle_resolution_status = validated_vehicle_resolution_update(record, vehicle_resolution_status)
+    validated_gallery_priority = validated_vehicle_gallery_priority_update(record, vehicle_gallery_priority)
     review_updated = status is not None
     if (
         not review_updated
         and validated_vehicle_insurance_status is None
         and validated_vehicle_resolution_status is None
+        and validated_gallery_priority is None
     ):
         raise ValueError("Brak decyzji do zapisania.")
     with _reversible_public_derivatives(record, record_dir, enabled=review_updated):
@@ -153,6 +158,7 @@ def review_field_photo_record(
 
         group_update_requested = (
             validated_vehicle_insurance_status is not None or validated_vehicle_resolution_status is not None
+            or validated_gallery_priority is not None
         )
         records = _records_with_anchor_snapshot(storage_dir, record) if group_update_requested else [record]
         records_to_save = {str(record["id"]): record}
@@ -177,6 +183,13 @@ def review_field_photo_record(
             resolution_updated_ids = [str(updated["id"]) for updated in resolution_records]
             records_to_save.update((str(updated["id"]), updated) for updated in resolution_records)
 
+        if validated_gallery_priority is not None:
+            for item in vehicle_photo_group_records(records, record):
+                item["vehicle_gallery_priority"] = validated_gallery_priority if item["id"] == record["id"] else 0
+                records_to_save[str(item["id"])] = item
+        if validated_vehicle_resolution_status == "removed":
+            for item in records_to_save.values():
+                item["vehicle_gallery_priority"] = 0
         save_field_records(storage_dir, list(records_to_save.values()))
 
     result = {"status": "ok", "photo": field_photo_summary(record) if is_approved(record) else {"id": record["id"]}}

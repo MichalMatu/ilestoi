@@ -216,6 +216,7 @@ def handle_review_photo(handler, route: tuple[str, tuple[str, ...]]) -> None:
             redactions=data.get("redactions") if "redactions" in data else None,
             vehicle_insurance_status=data.get("vehicle_insurance_status"),
             vehicle_resolution_status=data.get("vehicle_resolution_status"),
+            vehicle_gallery_priority=data.get("vehicle_gallery_priority"),
             private_dir=core_config.PRIVATE_PHOTOS_DIR,
         )
         http_responses.send_json(handler, 200, result)

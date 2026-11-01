@@ -13,7 +13,7 @@ from app.http import responses as http_responses
 from core import config as core_config
 from core.cadastral import cadastral_feature_info_params, parse_cadastral_feature_info
 from core.field_photo_clusters import list_map_photo_clusters
-from core.field_photo_map_query import list_map_field_photos
+from core.field_photo_map_query import list_map_field_photos, list_map_vehicle_gallery
 from core.field_photo_store import validate_photo_id
 from core.geo import validate_coordinates
 from core.http_response import read_limited_response_bytes, response_content_type
@@ -145,6 +145,30 @@ def handle_field_photo_clusters(handler) -> None:
             "Field photo clusters lookup failed",
             exc,
             public_error="Nie udało się pobrać skupisk zgłoszeń.",
+        )
+
+
+def handle_vehicle_gallery(handler) -> None:
+    params = parse_qs(urlsplit(handler.path).query, keep_blank_values=True)
+    try:
+        if set(params) != {"bbox"}:
+            raise ValueError("Galeria wymaga tylko parametru bbox.")
+        bounds, _, _ = _field_photo_list_query(handler.path)
+        if bounds is None:
+            raise ValueError("Brak granic mapy.")
+    except ValueError as exc:
+        http_responses.send_json(handler, 400, {"status": "error", "error": str(exc)})
+        return
+    if not access.public_feature_allowed(handler, "vehicle_gallery") or not access.public_layer_allowed(handler, "vehicles"):
+        http_responses.send_json(handler, 200, {"status": "ok", "photos": []})
+        return
+    try:
+        photos = list_map_vehicle_gallery(core_config.FIELD_PHOTOS_DIR, bounds=bounds)
+        http_responses.send_json(handler, 200, {"status": "ok", "photos": photos})
+    except Exception as exc:
+        http_responses.send_internal_error(
+            handler, 500, "Vehicle gallery lookup failed", exc,
+            public_error="Nie udało się pobrać galerii.",
         )
 
 
