@@ -1,5 +1,6 @@
 /* Gallery dock is deliberately additive: the existing year slider markup and CSS stay intact. */
-let vehicleGalleryMode = 'map';
+let vehicleGalleryMode = 'gallery';
+let vehicleGalleryDefaultFallbackAllowed = true;
 let vehicleGalleryRequest = null;
 let vehicleGalleryDebounce = null;
 let vehicleGalleryRevision = 0;
@@ -10,7 +11,10 @@ let vehicleGalleryLoadedAt = 0;
 const VEHICLE_GALLERY_REUSE_MS = 5000;
 try {
     const stored = localStorage.getItem(MAP_DOCK_MODE_STORAGE_KEY);
-    if (['map', 'gallery', 'none'].includes(stored)) vehicleGalleryMode = stored;
+    if (['map', 'gallery', 'none'].includes(stored)) {
+        vehicleGalleryMode = stored;
+        vehicleGalleryDefaultFallbackAllowed = false;
+    }
 } catch (_) {}
 
 function vehicleGalleryIsAvailable() {
@@ -19,7 +23,7 @@ function vehicleGalleryIsAvailable() {
 
 function vehicleGalleryDockMode() {
     return vehicleGalleryMode === 'gallery' && !vehicleGalleryIsAvailable()
-        ? 'none' : vehicleGalleryMode;
+        ? (vehicleGalleryDefaultFallbackAllowed ? 'map' : 'none') : vehicleGalleryMode;
 }
 
 function updateVehicleGalleryPanelVisibility() {
@@ -65,6 +69,7 @@ function setVehicleGalleryDockMode(mode) {
     if (!['map', 'gallery', 'none'].includes(mode)) return;
     if (mode === 'gallery' && !vehicleGalleryIsAvailable()) return;
     vehicleGalleryMode = mode;
+    vehicleGalleryDefaultFallbackAllowed = false;
     try { localStorage.setItem(MAP_DOCK_MODE_STORAGE_KEY, mode); } catch (_) {}
     updateVehicleGalleryAvailability();
 }
@@ -149,6 +154,7 @@ async function loadVehicleGallery() {
             if (unique.length >= 10) break;
         }
         renderVehicleGalleryItems(unique);
+        vehicleGalleryFallbackOnEmptyDefault(unique);
         vehicleGalleryLoadedBbox = bbox;
         vehicleGalleryLoadedAt = Date.now();
     } catch (_error) {
@@ -160,6 +166,15 @@ async function loadVehicleGallery() {
             vehicleGalleryPendingBbox = '';
         }
     }
+}
+
+// Only a successfully loaded, empty *default* gallery falls back to the map selector.
+// Explicitly saved gallery preferences, or request failures, never trigger this.
+function vehicleGalleryFallbackOnEmptyDefault(photos) {
+    if (photos.length || !vehicleGalleryDefaultFallbackAllowed || vehicleGalleryDockMode() !== 'gallery') return;
+    vehicleGalleryMode = 'map';
+    vehicleGalleryDefaultFallbackAllowed = false;
+    updateVehicleGalleryAvailability();
 }
 
 function renderVehicleGalleryItems(photos) {
