@@ -222,9 +222,17 @@ def _ai_report_fields(handler) -> dict[str, str]:
     """Accept a small, explicit JSON contract; never accept uploaded/private photos."""
     data = http_request_body.read_json_body(handler)
     allowed = {
-        "photo_ids", "lat", "lon", "reporter_name", "reporter_email",
-        "reporter_phone", "reporter_address", "location_description",
-        "observed_at", "vehicle_description", "crop_m",
+        "photo_ids",
+        "lat",
+        "lon",
+        "reporter_name",
+        "reporter_email",
+        "reporter_phone",
+        "reporter_address",
+        "location_description",
+        "observed_at",
+        "vehicle_description",
+        "crop_m",
     }
     if set(data) - allowed:
         raise ValueError("Nieznane pola formularza zgłoszenia.")
