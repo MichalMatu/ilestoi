@@ -1,4 +1,5 @@
 """Regression tests for the AI-facing JSON PDF adapter (no live DB or WMS)."""
+
 import io
 import json
 import unittest
@@ -22,19 +23,22 @@ class AiReportApiTests(unittest.TestCase):
         self.assertNotIn("send-email", json.dumps(paths).lower())
 
     def test_ai_and_browser_pdf_routes_share_one_rate_limit_bucket(self):
-        a = rate_limit.matching_rule('POST', '/api/ai/report-pdf')
-        b = rate_limit.matching_rule('POST', '/api/field-photo-reports/report-pdf')
+        a = rate_limit.matching_rule("POST", "/api/ai/report-pdf")
+        b = rate_limit.matching_rule("POST", "/api/field-photo-reports/report-pdf")
         self.assertIsNotNone(a)
         self.assertEqual(a.name, b.name)
         self.assertEqual(a.limit, 12)
 
     def test_json_form_is_normalized_for_existing_generator(self):
-        request = FakeRequest({
-            "photo_ids": ["photo_1", "photo_2"],
-            "lat": 51.09, "lon": 17.03,
-            "reporter_name": "Test",
-            "location_description": "Test location",
-        })
+        request = FakeRequest(
+            {
+                "photo_ids": ["photo_1", "photo_2"],
+                "lat": 51.09,
+                "lon": 17.03,
+                "reporter_name": "Test",
+                "location_description": "Test location",
+            }
+        )
         fields = public._ai_report_fields(request)
         self.assertEqual(json.loads(fields["photo_ids"]), ["photo_1", "photo_2"])
         self.assertEqual(public._report_photo_ids(fields), ["photo_1", "photo_2"])
@@ -54,7 +58,9 @@ class AiReportApiTests(unittest.TestCase):
 
     def test_json_handler_uses_shared_generator_and_never_sends_email(self):
         payload = {
-            "photo_ids": ["photo_1"], "lat": "51.09", "lon": "17.03",
+            "photo_ids": ["photo_1"],
+            "lat": "51.09",
+            "lon": "17.03",
             "reporter_name": "Example Reporter",
             "reporter_email": "example@example.com",
             "reporter_phone": "123456789",
@@ -69,9 +75,11 @@ class AiReportApiTests(unittest.TestCase):
             patch.object(public, "validate_field_photo_report_selection"),
             patch.object(public, "_report_cadastral_context", return_value=(None, "")),
             patch.object(public, "_report_address_context", return_value=None),
-            patch.object(public, "create_field_photo_report_pdf",
-                         return_value={"status": "ok", "pdf_base64": "JVBERg==",
-                                       "pdf_filename": "report.pdf"}) as render,
+            patch.object(
+                public,
+                "create_field_photo_report_pdf",
+                return_value={"status": "ok", "pdf_base64": "JVBERg==", "pdf_filename": "report.pdf"},
+            ) as render,
             patch.object(public.http_responses, "send_json") as send,
         ):
             public.handle_ai_report_pdf(handler)
