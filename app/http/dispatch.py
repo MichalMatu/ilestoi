@@ -1,6 +1,7 @@
 from urllib.parse import unquote, urlsplit
 
 from app.http import admin as http_admin
+from app.http import ai_api as http_ai_api
 from app.http import assets as http_assets
 from app.http import health as http_health
 from app.http import location as http_location
@@ -51,6 +52,7 @@ def handle_head(handler) -> bool:
 
 def handle_static_api_get(handler, path: str) -> bool:
     handlers = {
+        "/api/ai/openapi.json": lambda: http_ai_api.handle_openapi(handler),
         "/api/health/live": lambda: http_health.handle_liveness(handler),
         "/api/health/ready": lambda: http_health.handle_readiness(handler),
         "/api/admin/status": lambda: http_admin.handle_admin_status(handler),
@@ -197,6 +199,9 @@ def handle_post(handler) -> None:
         return
     if request_path == "/api/admin/photo-retention/run":
         http_request_body.dispatch_json_request(handler, http_retention.handle_run_photo_retention, handler)
+        return
+    if request_path == "/api/ai/report-pdf":
+        http_request_body.dispatch_json_request(handler, http_public.handle_ai_report_pdf, handler)
         return
     if request_path == "/api/field-photo-reports/report-pdf":
         if http_request_body.reject_wrong_content_type(handler, "multipart/form-data"):
