@@ -24,7 +24,7 @@ class AiReportApiTests(unittest.TestCase):
     def test_json_form_is_normalized_for_existing_generator(self):
         request = FakeRequest({
             "photo_ids": ["photo_1", "photo_2"],
-            "lat": "51.09", "lon": "17.03",
+            "lat": 51.09, "lon": 17.03,
             "reporter_name": "Test",
             "location_description": "Test location",
         })
@@ -42,8 +42,8 @@ class AiReportApiTests(unittest.TestCase):
             public._ai_report_fields(FakeRequest({"photo_ids": [123]}))
 
     def test_rejects_non_string_field_values(self):
-        with self.assertRaisesRegex(ValueError, "tekst"):
-            public._ai_report_fields(FakeRequest({"photo_ids": ["photo_1"], "lat": 51.09}))
+        with self.assertRaisesRegex(ValueError, "typ"):
+            public._ai_report_fields(FakeRequest({"photo_ids": ["photo_1"], "reporter_name": 123}))
 
     def test_json_handler_uses_shared_generator_and_never_sends_email(self):
         payload = {
