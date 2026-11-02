@@ -73,6 +73,7 @@ Haslo administratora pochodzi z `WRECKSCANNER_ADMIN_PASSWORD` albo z lokalnego p
 
 - [docs/START.md](docs/START.md) - uruchamianie, zatrzymanie, smoke test i haslo administratora.
 - [docs/CURRENT_MODEL.md](docs/CURRENT_MODEL.md) - aktualny model danych, endpointy i audyt braku starych artefaktow.
+- [docs/AI_API.md](docs/AI_API.md) - generowanie PDF ze zweryfikowanych zdjec przez klientow AI; schemat OpenAPI.
 - [docs/DATABASE.md](docs/DATABASE.md) - aktualny kontrakt SQLite, migracje i walidacja integralnosci.
 - [docs/PUBLIC_RUNTIME.md](docs/PUBLIC_RUNTIME.md) - porty publicznych uslug i konfiguracja Cloudflare Tunnel.
 - [docs/BACKUP.md](docs/BACKUP.md) - lokalny backup i restore danych.
