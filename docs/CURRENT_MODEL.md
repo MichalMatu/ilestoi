@@ -77,6 +77,8 @@ edycji nadal moga ograniczyc operacje.
 
 | Metoda | Sciezka | Dostep | Zastosowanie |
 | --- | --- | --- | --- |
+| `GET` | `/api/ai/openapi.json` | publiczny | schemat OpenAPI generatora dla klientow AI |
+| `POST` | `/api/ai/report-pdf` | publiczny lub administrator | JSON -> PDF Base64 przez istniejacy zweryfikowany generator |
 | `GET` | `/api/health/live` | publiczny | liveness procesu HTTP |
 | `GET` | `/api/health/ready` | publiczny | gotowosc SQLite, migracji, plikow i dysku |
 | `GET` | `/api/settings` | publiczny | aktywne ustawienia i wartosci domyslne |
@@ -119,8 +121,8 @@ Nieznane trasy API zwracaja JSON `404`, a `PUT`, `TRACE` i `CONNECT` - `405`.
 
 Kazda mutacja przechodzi kontrole same-origin na podstawie `Origin` i
 `Sec-Fetch-Site`. Trasy JSON wymagaja `application/json` i maja limit body 1 MiB;
-upload zdjecia oraz generator PDF przyjmuja wylacznie `multipart/form-data` i
-maja osobne, nizsze limity domenowe. Limity per klient wynosza: logowanie 5/10
+upload zdjecia i przegladarkowy generator PDF przyjmuja `multipart/form-data` i
+maja osobne, nizsze limity domenowe. Nowy adapter AI przyjmuje `application/json` z limitem 1 MiB, korzysta z tych samych ograniczen i walidacji generatora. Limity per klient wynosza: logowanie 5/10
 min, upload 30/h, operacje tokenu wlasciciela 120/15 min, zgloszenia prywatnosci
 10/h, raporty 12/15 min, lookupy mapowe 180/10 min, kafle proxy 2400/10 min.
 
@@ -128,7 +130,7 @@ min, upload 30/h, operacje tokenu wlasciciela 120/15 min, zgloszenia prywatnosci
 `vehicle_resolution_status` bez zmiany statusu moderacji lub redakcji. Taka
 aktualizacja obejmuje cala grupe pojazdu w promieniu grupowania mapy.
 
-Nie ma publicznego ani administracyjnego API `/api/wrecks`.
+Nie ma publicznego ani administracyjnego API `/api/wrecks`. Kontrakt AI: [AI_API.md](AI_API.md).
 
 ## Zakazane artefakty
 
