@@ -218,15 +218,42 @@ def handle_delete_field_photos_by_owner(handler) -> None:
         )
 
 
-def handle_field_photo_report_pdf(handler) -> None:
+def _ai_report_fields(handler) -> dict[str, str]:
+    """Accept a small, explicit JSON contract; never accept uploaded/private photos."""
+    data = http_request_body.read_json_body(handler)
+    allowed = {
+        "photo_ids", "lat", "lon", "reporter_name", "reporter_email",
+        "reporter_phone", "reporter_address", "location_description",
+        "observed_at", "vehicle_description", "crop_m",
+    }
+    if set(data) - allowed:
+        raise ValueError("Nieznane pola formularza zgłoszenia.")
+    if not isinstance(data.get("photo_ids"), list):
+        raise ValueError("photo_ids musi być tablicą identyfikatorów zdjęć.")
+    if any(not isinstance(item, str) for item in data["photo_ids"]):
+        raise ValueError("Identyfikatory zdjęć muszą być tekstem.")
+    fields = {"photo_ids": json.dumps(data["photo_ids"])}
+    for key in allowed - {"photo_ids"}:
+        value = data.get(key)
+        if value is not None:
+            if not isinstance(value, str):
+                raise ValueError(f"Pole {key} musi być tekstem.")
+            fields[key] = value
+    return fields
+
+
+def _handle_report_pdf(handler, *, json_input: bool) -> None:
     if not access.require_public_feature(
         handler, "report_pdfs", "Generowanie raportów przez niezalogowanych jest teraz wyłączone."
     ):
         return
     request_slot_acquired = False
     try:
-        fields, files = http_request_body.read_multipart_form(handler, core_config.MAX_REPORT_PDF_BODY_BYTES)
-        reject_report_pdf_files(files)
+        if json_input:
+            fields = _ai_report_fields(handler)
+        else:
+            fields, files = http_request_body.read_multipart_form(handler, core_config.MAX_REPORT_PDF_BODY_BYTES)
+            reject_report_pdf_files(files)
         if not _REPORT_REQUEST_SEMAPHORE.acquire(blocking=False):
             http_responses.send_json(
                 handler,
@@ -260,7 +287,7 @@ def handle_field_photo_report_pdf(handler) -> None:
         http_responses.send_json(handler, 413, {"error": str(e)})
     except FileNotFoundError as e:
         http_responses.send_json(handler, 404, {"error": str(e)})
-    except ValueError as e:
+    except (ValueError, TypeError) as e:
         http_responses.send_json(handler, 400, {"error": str(e)})
     except Exception as exc:
         http_responses.send_internal_error(
@@ -273,6 +300,14 @@ def handle_field_photo_report_pdf(handler) -> None:
     finally:
         if request_slot_acquired:
             _REPORT_REQUEST_SEMAPHORE.release()
+
+
+def handle_field_photo_report_pdf(handler) -> None:
+    _handle_report_pdf(handler, json_input=False)
+
+
+def handle_ai_report_pdf(handler) -> None:
+    _handle_report_pdf(handler, json_input=True)
 
 
 def handle_create_field_photo(handler) -> None:
