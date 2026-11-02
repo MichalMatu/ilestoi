@@ -236,9 +236,12 @@ def _ai_report_fields(handler) -> dict[str, str]:
     for key in allowed - {"photo_ids"}:
         value = data.get(key)
         if value is not None:
-            if not isinstance(value, str):
-                raise ValueError(f"Pole {key} musi być tekstem.")
-            fields[key] = value
+            if key in {"lat", "lon", "crop_m"} and type(value) in {int, float}:
+                fields[key] = str(value)
+            elif isinstance(value, str):
+                fields[key] = value
+            else:
+                raise ValueError(f"Nieprawidłowy typ pola {key}.")
     return fields
 
 
