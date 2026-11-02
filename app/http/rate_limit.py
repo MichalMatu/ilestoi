@@ -73,7 +73,7 @@ _RULES = (
     RateLimitRule(
         name="report-pdf",
         methods=frozenset({"POST"}),
-        exact_paths=frozenset({"/api/field-photo-reports/report-pdf"}),
+        exact_paths=frozenset({"/api/field-photo-reports/report-pdf", "/api/ai/report-pdf"}),
         prefixes=(),
         limit=12,
         window_seconds=15 * 60,
