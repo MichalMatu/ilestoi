@@ -4,7 +4,7 @@ import json
 import unittest
 from unittest.mock import patch
 
-from app.http import ai_api, public
+from app.http import ai_api, public, rate_limit
 
 
 class FakeRequest:
@@ -20,6 +20,13 @@ class AiReportApiTests(unittest.TestCase):
         self.assertIn("get", paths["/api/field-photos"])
         self.assertIn("post", paths["/api/ai/report-pdf"])
         self.assertNotIn("send-email", json.dumps(paths).lower())
+
+    def test_ai_and_browser_pdf_routes_share_one_rate_limit_bucket(self):
+        a = rate_limit.matching_rule('POST', '/api/ai/report-pdf')
+        b = rate_limit.matching_rule('POST', '/api/field-photo-reports/report-pdf')
+        self.assertIsNotNone(a)
+        self.assertEqual(a.name, b.name)
+        self.assertEqual(a.limit, 12)
 
     def test_json_form_is_normalized_for_existing_generator(self):
         request = FakeRequest({
