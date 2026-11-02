@@ -29,8 +29,8 @@ Example payload (all personal and observation data are placeholders):
 ```json
 {
   "photo_ids": ["EXACT_APPROVED_PHOTO_ID"],
-  "lat": "51.000000",
-  "lon": "17.000000",
+  "lat": 51.000000,
+  "lon": 17.000000,
   "reporter_name": "REPLACE_WITH_REAL_NAME",
   "reporter_email": "person@example.invalid",
   "reporter_phone": "REPLACE_WITH_REAL_PHONE",
@@ -38,7 +38,7 @@ Example payload (all personal and observation data are placeholders):
   "location_description": "REPLACE_WITH_EXACT_LOCATION",
   "observed_at": "2026-10-28T10:00",
   "vehicle_description": "REPLACE_WITH_VERIFIED_OBSERVATIONS",
-  "crop_m": "7.5"
+  "crop_m": 7.5
 }
 ```
 
