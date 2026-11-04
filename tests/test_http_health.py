@@ -1,10 +1,12 @@
 import json
 import unittest
 from io import BytesIO
-from types import SimpleNamespace
+from pathlib import Path
+from tempfile import TemporaryDirectory
 from unittest.mock import patch
 
 from app.http import health
+from core.database import apply_migrations, connect_database, validate_readiness_database
 
 
 class FakeHandler:
@@ -42,17 +44,10 @@ class HttpHealthContractTests(unittest.TestCase):
 
     def test_readiness_checks_database_and_storage_without_paths(self):
         handler = FakeHandler()
-        database = SimpleNamespace(
-            quick_check=["ok"],
-            applied_migrations=["001"],
-            field_photos=2,
-            settings=4,
-            privacy_requests=1,
-        )
         disk = SimpleNamespace(free=10 * 1024**3)
 
         with (
-            patch.object(health, "validate_runtime_database", return_value=database),
+            patch.object(health, "validate_readiness_database", return_value=None),
             patch.object(health.shutil, "disk_usage", return_value=disk),
             patch.object(health.os, "access", return_value=True),
         ):
@@ -70,7 +65,7 @@ class HttpHealthContractTests(unittest.TestCase):
         handler = FakeHandler()
 
         with (
-            patch.object(health, "validate_runtime_database", side_effect=ValueError("/secret/path corrupt")),
+            patch.object(health, "validate_readiness_database", side_effect=ValueError("/secret/path corrupt")),
             patch.object(health.http_responses, "log_exception") as log_exception,
         ):
             health.handle_readiness(handler)
@@ -79,6 +74,34 @@ class HttpHealthContractTests(unittest.TestCase):
         self.assertNotIn("/secret/path", json.dumps(handler.payload))
         self.assertEqual(handler.payload["status"], "error")
         log_exception.assert_called_once()
+
+    def test_readiness_database_fast_probe_checks_schema_without_file_audit(self):
+        with TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            db = root / "test.sqlite3"
+            with self.assertRaises(ValueError):
+                validate_readiness_database(database_path=db)
+            connection = connect_database(db)
+            try:
+                apply_migrations(connection)
+            finally:
+                connection.close()
+            # No photo directories exist: the full integrity check can remain
+            # a separate audit, while the readiness probe stays lightweight.
+            validate_readiness_database(database_path=db)
+
+    def test_readiness_database_rejects_missing_migration(self):
+        with TemporaryDirectory() as tmp:
+            db = Path(tmp) / "test.sqlite3"
+            connection = connect_database(db)
+            try:
+                apply_migrations(connection)
+                with connection:
+                    connection.execute("DELETE FROM schema_migrations")
+            finally:
+                connection.close()
+            with self.assertRaisesRegex(ValueError, "migracje"):
+                validate_readiness_database(database_path=db)
 
 
 if __name__ == "__main__":
