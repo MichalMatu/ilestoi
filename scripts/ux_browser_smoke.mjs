@@ -16,13 +16,12 @@ assert.ok(existsSync(chrome), 'Set CHROME_BIN to a Chrome or Chromium executable
 
 const probe = `
 (() => {
-    let error = '';
     try {
         const mobile = matchMedia('(max-width: 720px)').matches;
         const drawer = document.getElementById('app-menu-drawer');
         const tabs = Array.from(document.querySelectorAll('[data-ux-tab]'));
         const panels = Array.from(document.querySelectorAll('[data-ux-panel]'));
-        document.getElementById('app-menu-toggle').click();
+        if (drawer.hidden) document.getElementById('app-menu-toggle').click();
         const open = !drawer.hidden;
         const before = panels.map(panel => panel.hidden);
         document.getElementById('ux-tab-layers').click();
@@ -36,9 +35,11 @@ const probe = `
             mobile, open, before, after, expanded,
             viewport: innerWidth, drawerWidth: Math.round(rect.width),
             drawerBottom: Math.round(innerHeight - rect.bottom),
+            mapLeft: Math.round(document.getElementById('map').getBoundingClientRect().left),
+            scrimHidden: document.getElementById('app-menu-scrim').hidden,
             tabSelected: tabs.map(tab => tab.getAttribute('aria-selected')),
             controlsIntact: Boolean(source && report && document.getElementById('vehicle-insurance-select')),
-            browserErrors: error
+            browserErrors: (window.__uxSmokeErrors || []).slice(0, 6)
         };
     } catch (caught) {
         window.__uxProbe = { failure: String(caught) };
@@ -61,6 +62,9 @@ function page() {
         localStorage.setItem('ilestoi-intro-v1-seen', '1');
         localStorage.setItem('ilestoi-onboarding-v1-complete', '1');
         window.WRECKSCANNER_APP_SETTINGS = { map_view: { center: [51.107883, 17.038538], zoom: 13 } };
+        window.__uxSmokeErrors = [];
+        window.addEventListener('error', e => window.__uxSmokeErrors.push(String(e.message).slice(0, 160)));
+        window.addEventListener('unhandledrejection', e => window.__uxSmokeErrors.push(String(e.reason).slice(0, 160)));
     </script>`;
     html = html.replace('<!-- app-settings-bootstrap -->', firstVisitDisabled);
     html = html.replace('<!-- page-head-metadata -->', '<title>IleStoi UX browser smoke</title>');
@@ -146,11 +150,15 @@ try {
             assert.deepEqual(result.before, [false, true, true]);
             assert.deepEqual(result.after, [true, false, true]);
             assert.equal(result.expanded, true);
+            assert.equal(result.scrimHidden, false);
             assert.ok(result.drawerWidth >= result.viewport - 2, JSON.stringify(result));
             assert.ok(Math.abs(result.drawerBottom) <= 2, JSON.stringify(result));
         } else {
             assert.equal(result.mobile, false);
             assert.deepEqual(result.after, [false, false, false]);
+            assert.ok(result.drawerWidth >= 350, JSON.stringify(result));
+            assert.ok(result.mapLeft >= 350, JSON.stringify(result));
+            assert.equal(result.scrimHidden, true);
         }
         console.log('PASS', name, JSON.stringify(result));
     }
