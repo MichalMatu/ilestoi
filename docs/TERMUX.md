@@ -52,8 +52,10 @@ tail -n 30 "$HOME/.local/state/ilestoi-ops/health-watch.log"
 tail -n 30 "$HOME/boot-services.log"
 ```
 
-`live=200` oznacza działający proces HTTP, `ready=200` gotowość SQLite,
-plików i dysku. Z zewnątrz `https://ilestoi.pl/` powinno dawać 200,
+`live=200` oznacza działający proces HTTP, `ready=200` szybki odczyt SQLite,
+zgodność migracji, dostępność wymaganych tabel i wolne miejsce. Pełną integralność
+SQLite, klucze obce i istnienie plików zdjęć weryfikuje osobna diagnostyka
+`python scripts/diagnose_data.py --strict` przed wydaniem i podczas backupu. Z zewnątrz `https://ilestoi.pl/` powinno dawać 200,
 a `wreckscanner.pl` i `dlugostoi.pl` — 308 do `ilestoi.pl`.
 Automatyczne zapytania z telefonu mogą otrzymać antybotowe 403 nawet,
 gdy publiczna strona działa; **nie traktować samego 403 jako awarii**.
