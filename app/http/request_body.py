@@ -3,7 +3,7 @@ from urllib.parse import urlsplit
 
 from app import config
 from app.http import responses as http_responses
-from core.uploads import UploadedFile, parse_multipart_form
+from core.uploads import UploadedFile, parse_multipart_stream
 
 
 class PayloadTooLargeError(ValueError):
@@ -105,5 +105,4 @@ def read_multipart_form(handler, max_body_bytes: int) -> tuple[dict[str, str], l
         raise ValueError("Brak danych formularza.")
     if length > max_body_bytes:
         raise PayloadTooLargeError("Formularz przekracza limit rozmiaru pakietu.")
-    body = handler.rfile.read(length)
-    return parse_multipart_form(content_type, body, max_body_bytes=max_body_bytes)
+    return parse_multipart_stream(content_type, handler.rfile, length, max_body_bytes=max_body_bytes)
