@@ -35,6 +35,7 @@ test('mobile map panel has three distinct accessible tabs and sections', () => {
 
 test('responsive shell changes visibility without losing state or rebuilding Leaflet', () => {
     const mobile = { matches: true, addEventListener: () => {} };
+    const desktop = { matches: false, addEventListener: () => {} };
     const tabNames = ['vehicles', 'layers', 'tools'];
     function el(name, dataKey, dataValue) {
         const attributes = {};
@@ -60,7 +61,17 @@ test('responsive shell changes visibility without losing state or rebuilding Lea
         addEventListener() {},
         body: { classList: { toggle() {} } },
     };
-    const ctx = { document, window: { matchMedia: () => mobile }, t: k => k };
+    let dockOpened = false;
+    const ctx = {
+        document,
+        window: { matchMedia: query => query.includes('max-width') ? mobile : desktop },
+        t: k => k,
+        isAppMenuOpen: () => dockOpened,
+        setAppMenuOpen: () => { dockOpened = true; },
+        updateAppMenuState: () => {},
+        syncPageIsolation: () => {},
+        requestAnimationFrame: callback => callback(),
+    };
     vm.createContext(ctx);
     vm.runInContext(js, ctx);
     assert.deepEqual(panels.map(p => p.hidden), [false, true, true]);
@@ -73,7 +84,11 @@ test('responsive shell changes visibility without losing state or rebuilding Lea
     vm.runInContext('updateUxMapPanelState()', ctx);
     assert.deepEqual(panels.map(p => p.hidden), [false, false, false]);
     assert.equal(vm.runInContext("setUxMapPanelTab('unknown')", ctx), false);
+    desktop.matches = true;
+    vm.runInContext('updateUxMapResponsiveLayout()', ctx);
+    assert.equal(dockOpened, true, 'large desktop activates the persistent dock');
 });
+
 
 test('quick report action reuses authorized upload flow and public feature gate', () => {
     assert.match(js, /openFieldPhotoUploadFromPanel\(\)/);
