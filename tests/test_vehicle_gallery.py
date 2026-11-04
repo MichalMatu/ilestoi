@@ -131,6 +131,7 @@ class VehicleGalleryTests(unittest.TestCase):
         for index in range(12):
             self.seed(f"{index:08x}", priority=1, lon=17.0 + index * 0.001)
         statements: list[str] = []
+
         def monitored_connection(path):
             connection = connect_database_read_only(path)
             connection.set_trace_callback(statements.append)
