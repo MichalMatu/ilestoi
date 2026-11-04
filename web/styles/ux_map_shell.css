@@ -1,4 +1,54 @@
 /* IleStoi map-shell UX sprint. Scoped UI, no map engine or server changes. */
+
+/* The map shell is light and readable; existing dialogs/data components keep their own tokens. */
+.app-menu-drawer {
+    --surface-overlay: rgba(248, 251, 255, 0.98);
+    --surface-subtle: #ffffff;
+    --surface-control: #edf3fa;
+    --surface-control-strong: #e4edf8;
+    --surface-inset: #f3f7fc;
+    --surface-glass-highlight: rgba(255, 255, 255, 0.75);
+    --glass-control-bg: rgba(255, 255, 255, 0.93);
+    --glass-control-bg-hover: #edf4ff;
+    --text: #21354c;
+    --text-strong: #11253d;
+    --text-soft: #425873;
+    --muted: #65758b;
+    --muted-strong: #3d5068;
+    --border: rgba(43, 81, 126, 0.16);
+    --border-strong: rgba(43, 81, 126, 0.28);
+    --primary-soft: rgba(10, 100, 255, 0.13);
+    color-scheme: light;
+}
+
+.app-menu-drawer .panel-photo-cta {
+    color: white;
+}
+
+.app-menu-drawer .layer-toggle input:checked::after {
+    border-color: #ffffff;
+}
+
+.app-menu-drawer .vehicle-filter-choice-grid select {
+    color-scheme: light;
+}
+
+.app-menu-drawer .ux-map-group {
+    box-shadow: 0 5px 18px rgba(30, 65, 112, 0.06);
+}
+
+#year-slider {
+    --glass-panel-bg: rgba(249, 251, 255, 0.95);
+    --glass-border: rgba(35, 65, 105, 0.20);
+    --text: #20344f;
+    --text-strong: #0e2441;
+    --text-soft: #405675;
+    --surface-inset: #f0f5fc;
+    --border: rgba(43, 81, 126, 0.15);
+    --primary-soft: rgba(10, 100, 255, 0.13);
+    color-scheme: light;
+}
+
 .ux-sheet-handle,
 .ux-panel-tabs {
     display: none;
@@ -109,13 +159,43 @@
 }
 
 .ux-map-open-filters {
-    background: var(--glass-panel-bg-strong);
-    color: var(--text-strong);
+    background: rgba(248, 251, 255, 0.96);
+    color: #182e49;
     backdrop-filter: var(--glass-blur-soft);
 }
 
 .ux-map-open-filters:hover {
-    background: var(--surface-control-strong);
+    background: #e8f0fb;
+}
+
+@media (min-width: 1120px) {
+    .app-menu-drawer {
+        width: 352px;
+        border-radius: 0;
+        border-right: 1px solid var(--border);
+    }
+
+    .app-menu-scrim {
+        display: none !important;
+    }
+
+    body.app-menu-open #map {
+        margin-left: 352px;
+        min-width: 0;
+    }
+
+    body.app-menu-open .ux-map-quick-actions {
+        left: 372px;
+    }
+
+    body.app-menu-open #year-slider,
+    body.app-menu-open .vehicle-gallery-dock[data-mode="gallery"] {
+        left: calc(50% + 176px);
+    }
+
+    .ux-sheet-close {
+        display: none;
+    }
 }
 
 @media (max-width: 720px) {
