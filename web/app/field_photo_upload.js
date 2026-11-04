@@ -136,13 +136,15 @@ function restoreFieldPhotoLocationPickFocus(target) {
 }
 
 function updatePanelFieldPhotoLocationPickUi() {
-    const button = document.getElementById('panel-add-field-photo');
-    if (button) {
+    for (const id of ['panel-add-field-photo', 'map-add-field-photo']) {
+        const button = document.getElementById(id);
+        if (!button) continue;
         button.classList.toggle('is-picking-location', fieldPhotoLocationPickActive);
         button.setAttribute('aria-pressed', fieldPhotoLocationPickActive ? 'true' : 'false');
         button.title = t(fieldPhotoLocationPickActive ? 'panel.addPhotoPickingTitle' : 'panel.addPhotoTitle');
         const label = button.querySelector('[data-panel-add-photo-label]');
-        if (label) label.textContent = t(fieldPhotoLocationPickActive ? 'panel.addPhotoPicking' : 'panel.addPhoto');
+        const restingLabel = id === 'map-add-field-photo' ? 'ux.addReport' : 'panel.addPhoto';
+        if (label) label.textContent = t(fieldPhotoLocationPickActive ? 'panel.addPhotoPicking' : restingLabel);
     }
     const mapContainer = fieldPhotoLocationPickMapContainer();
     mapContainer?.classList.toggle('is-picking-field-photo-location', fieldPhotoLocationPickActive);
