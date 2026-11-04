@@ -1,16 +1,16 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
 
 from core import config
-from core.field_photos import list_field_photo_records
+from core.database import connect_database_read_only
+from core.field_photo_store import database_path_for
 from core.photo_privacy import safe_child
 
 
-def _private_size(record: dict[str, Any], private_dir: Path) -> int:
+def _private_size(private_original_file: str | None, private_dir: Path) -> int:
     try:
-        path = safe_child(private_dir, record.get("private_original_file"))
+        path = safe_child(private_dir, private_original_file)
     except (TypeError, ValueError):
         return 0
     try:
@@ -19,35 +19,32 @@ def _private_size(record: dict[str, Any], private_dir: Path) -> int:
         return 0
 
 
-def _pending_record_owner(record: dict[str, Any]) -> str:
-    return str(record.get("submission_owner") or "").strip()
-
-
-def _is_pending(record: dict[str, Any]) -> bool:
-    return str(record.get("public_review_status") or "").strip().lower() in {"draft", "pending"}
-
-
 def pending_submission_usage(
     *,
     owner: str | None,
     field_photos_dir: Path,
     private_dir: Path,
 ) -> dict[str, int]:
+    """Read only matching quota rows; never decode or repair unrelated photos."""
     owner = str(owner or "").strip()
-    total_bytes = 0
-    total_items = 0
+    where = "public_review_status IN ('draft', 'pending')"
+    params: list[str] = []
+    if owner:
+        where += " AND TRIM(COALESCE(submission_owner, '')) = ?"
+        params.append(owner)
 
-    for record in list_field_photo_records(field_photos_dir, private_dir=private_dir):
-        if not _is_pending(record):
-            continue
-        if owner and _pending_record_owner(record) != owner:
-            continue
-        total_items += 1
-        total_bytes += _private_size(record, private_dir)
+    connection = connect_database_read_only(database_path_for(field_photos_dir))
+    try:
+        originals = [
+            row["private_original_file"]
+            for row in connection.execute(f"SELECT private_original_file FROM field_photos WHERE {where}", params)
+        ]
+    finally:
+        connection.close()
 
     return {
-        "bytes": total_bytes,
-        "items": total_items,
+        "bytes": sum(_private_size(original, private_dir) for original in originals),
+        "items": len(originals),
         "max_bytes": config.PENDING_SUBMISSION_MAX_BYTES,
         "max_items": config.PENDING_SUBMISSION_MAX_ITEMS,
     }
