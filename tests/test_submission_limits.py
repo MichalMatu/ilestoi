@@ -4,6 +4,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 from core.database import migrate_json_to_database
+from core.field_photo_store import connection_for
 from core.submission_limits import pending_submission_usage
 
 
@@ -76,6 +77,60 @@ class PendingSubmissionLimitTests(unittest.TestCase):
 
             self.assertEqual(usage["items"], 1)
             self.assertEqual(usage["bytes"], 10)
+
+
+    def test_uses_read_only_sqlite_projection_for_drafts_and_pending(self):
+        with TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            private_dir = root / "prywatne_zdjecia"
+            field_dir = root / "zdjecia_terenowe"
+            private_dir.mkdir()
+            field_dir.mkdir()
+
+            for filename, payload in (("draft.jpg", b"a" * 5), ("other.jpg", b"b" * 9)):
+                (private_dir / filename).write_bytes(payload)
+
+            rows = [
+                ("pending", "public:a", "draft.jpg"),
+                ("draft", " public:a ", "missing.jpg"),
+                ("pending", "public:b", "other.jpg"),
+                ("approved", "public:a", "other.jpg"),
+                ("rejected", "public:a", "other.jpg"),
+            ]
+            conn = connection_for(field_dir)
+            try:
+                with conn:
+                    for index, (status, owner, original) in enumerate(rows):
+                        conn.execute(
+                            """INSERT INTO field_photos (
+                                id, created_at, issue_type, lat, lon, coordinate_source,
+                                public_review_status, original_filename, content_type,
+                                format, size_bytes, submission_owner, private_original_file
+                            ) VALUES (?, ?, 'vehicle', 51.1, 17.2, 'map', ?, 'source.jpg',
+                                      'image/jpeg', 'JPEG', 1, ?, ?)""",
+                            (
+                                f"photo_20261104T010101Z_{index:08x}",
+                                "2026-11-04T01:01:01Z",
+                                status,
+                                owner,
+                                original,
+                            ),
+                        )
+            finally:
+                conn.close()
+
+            # No record.json or public derivative files exist; this path must not
+            # load full photo records, repair files or write to the database.
+            owned = pending_submission_usage(owner="public:a", field_photos_dir=field_dir, private_dir=private_dir)
+            everyone = pending_submission_usage(owner=None, field_photos_dir=field_dir, private_dir=private_dir)
+            injected = pending_submission_usage(
+                owner="public:a' OR '1'='1", field_photos_dir=field_dir, private_dir=private_dir
+            )
+
+            self.assertEqual((owned["items"], owned["bytes"]), (2, 5))
+            self.assertEqual((everyone["items"], everyone["bytes"]), (3, 14))
+            self.assertEqual((injected["items"], injected["bytes"]), (0, 0))
+            self.assertEqual(list(field_dir.iterdir()), [])
 
 
 if __name__ == "__main__":
