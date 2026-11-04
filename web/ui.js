@@ -64,8 +64,9 @@ function syncPageIsolation() {
     if (topModal) {
         topModal.setAttribute('aria-hidden', 'false');
         allowed = new Set([topModal]);
-    } else if (isAppMenuOpen()) {
-        // Keep both the active menu and its guided tour reachable by assistive technology.
+    } else if (isAppMenuOpen() && (!isPersistentDesktopMenu() || tourOpen)) {
+        // On large screens the dock is nonmodal; map remains accessible.
+        // Guided tour and smaller-screen drawer still isolate background content.
         allowed = new Set([
             document.getElementById('app-menu'),
             document.getElementById('app-menu-scrim'),
@@ -110,6 +111,10 @@ function isAppMenuOpen() {
     return Boolean(document.body?.classList.contains('app-menu-open'));
 }
 
+function isPersistentDesktopMenu() {
+    return window.matchMedia('(min-width: 1120px)').matches;
+}
+
 function updateAppMenuState() {
     const isOpen = isAppMenuOpen();
     const toggle = document.getElementById('app-menu-toggle');
@@ -122,7 +127,7 @@ function updateAppMenuState() {
         toggle.title = label;
     }
     if (drawer) drawer.hidden = !isOpen;
-    if (scrim) scrim.hidden = !isOpen;
+    if (scrim) scrim.hidden = !isOpen || isPersistentDesktopMenu();
 }
 
 function setAppMenuOpen(open, options = {}) {
@@ -136,12 +141,15 @@ function setAppMenuOpen(open, options = {}) {
     document.body?.classList.toggle('app-menu-open', nextOpen);
     updateAppMenuState();
     syncPageIsolation();
-    if (nextOpen && !wasOpen) {
+    if (nextOpen && !wasOpen && options.focus !== false) {
         const drawer = document.getElementById('app-menu-drawer');
         const initialFocus = visibleFocusableElements(drawer)[0];
         requestAnimationFrame(() => focusWithoutScroll(initialFocus));
     } else if (!nextOpen && wasOpen && options.restoreFocus !== false && !topOpenModalBackdrop()) {
         restoreOverlayFocus(appMenuReturnFocus || document.getElementById('app-menu-toggle'));
+    }
+    if (typeof map !== 'undefined' && typeof map.invalidateSize === 'function') {
+        requestAnimationFrame(() => map.invalidateSize({ pan: false }));
     }
 }
 
@@ -315,7 +323,7 @@ document.addEventListener('keydown', event => {
         cycleOverlayFocus(event, focusable);
         return;
     }
-    if (!isAppMenuOpen()) return;
+    if (!isAppMenuOpen() || isPersistentDesktopMenu()) return;
     const toggle = document.getElementById('app-menu-toggle');
     const drawer = document.getElementById('app-menu-drawer');
     cycleOverlayFocus(event, [toggle, ...visibleFocusableElements(drawer)].filter(Boolean));
@@ -337,7 +345,7 @@ document.addEventListener('keydown', event => {
         closeModal();
         return;
     }
-    if (isAppMenuOpen()) closeAppMenu();
+    if (isAppMenuOpen() && !isPersistentDesktopMenu()) closeAppMenu();
 });
 
 function confirmAction({ title, message, confirmLabel } = {}) {
