@@ -84,6 +84,7 @@ function onboardingTourSteps(marker) {
             title: 'tour.addTitle',
             description: 'tour.addBody',
             menu: true,
+            tab: 'vehicles',
             target: () => onboardingTourTarget('#panel-add-field-photo') ||
                 document.getElementById('app-menu-drawer'),
         },
@@ -91,6 +92,7 @@ function onboardingTourSteps(marker) {
             title: 'tour.layersTitle',
             description: 'tour.layersBody',
             menu: true,
+            tab: 'layers',
             target: () => document.querySelector('#map-layer-controls .layer-toggle--vehicle') ||
                 document.getElementById('map-layer-controls'),
         },
@@ -98,6 +100,7 @@ function onboardingTourSteps(marker) {
             title: 'tour.sourcesTitle',
             description: 'tour.sourcesBody',
             menu: true,
+            tab: 'tools',
             target: '#panel-map-source',
         },
         { title: 'tour.doneTitle', description: 'tour.doneBody' }
@@ -181,6 +184,7 @@ function showOnboardingTourStep(index) {
             state.previewOpened = false;
         }
         if (!isAppMenuOpen()) setAppMenuOpen(true, { restoreFocus: false });
+        if (typeof setUxMapPanelTab === 'function') setUxMapPanelTab(step.tab || 'vehicles');
     } else if (isAppMenuOpen()) {
         closeAppMenu({ restoreFocus: false });
     }
