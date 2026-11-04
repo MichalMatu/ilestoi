@@ -2,9 +2,10 @@ from __future__ import annotations
 
 import tempfile
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 
-from core.database import apply_migrations, connect_database
+from core.database import apply_migrations, connect_database, connect_database_read_only
 from core.field_photo_map_query import list_map_vehicle_gallery
 from core.field_photo_metadata import vehicle_gallery_priority
 from core.field_photo_review import review_field_photo_record
@@ -125,6 +126,23 @@ class VehicleGalleryTests(unittest.TestCase):
         rows = list_map_vehicle_gallery(self.storage, bounds=(16.9, 51.0, 17.1, 51.2))
         self.assertEqual([r["id"] for r in rows], [first, second])
         self.assertEqual(rows[0]["first_observed_at"], "2026-05-01T00:00:00Z")
+
+    def test_gallery_uses_one_batched_age_query_for_multiple_covers(self) -> None:
+        for index in range(12):
+            self.seed(f"{index:08x}", priority=1, lon=17.0 + index * 0.001)
+        statements: list[str] = []
+        def monitored_connection(path):
+            connection = connect_database_read_only(path)
+            connection.set_trace_callback(statements.append)
+            return connection
+
+        with patch("core.field_photo_map_query.connect_database_read_only", side_effect=monitored_connection):
+            rows = list_map_vehicle_gallery(self.storage, bounds=(16.9, 51.0, 17.2, 51.2))
+        self.assertEqual(len(rows), 12)
+        self.assertTrue(all(item["first_observed_at"] == "2026-11-01T09:00:00Z" for item in rows))
+        sql_statements = [statement for statement in statements if "SELECT" in statement.upper()]
+        self.assertEqual(len(sql_statements), 2)
+        self.assertEqual(sum("WITH covers" in statement for statement in sql_statements), 1)
 
     def test_pending_cannot_be_nominated(self) -> None:
         photo_id = self.seed("dddddddd", status="pending")
