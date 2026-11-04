@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import tempfile
 import unittest
-from unittest.mock import patch
 from pathlib import Path
+from unittest.mock import patch
 
 from core.database import apply_migrations, connect_database, connect_database_read_only
 from core.field_photo_map_query import list_map_vehicle_gallery
