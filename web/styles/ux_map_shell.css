@@ -1,0 +1,247 @@
+/* IleStoi map-shell UX sprint. Scoped UI, no map engine or server changes. */
+.ux-sheet-handle,
+.ux-panel-tabs {
+    display: none;
+}
+
+.ux-sheet-close {
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    flex: 0 0 auto;
+    padding: 0;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-full);
+    background: var(--surface-control);
+    color: var(--text);
+    font: 700 1.35rem var(--font);
+    cursor: var(--cursor-action);
+}
+
+.ux-sheet-close:hover {
+    background: var(--surface-control-strong);
+}
+
+.ux-sheet-close:focus-visible,
+.ux-panel-tab:focus-visible,
+.ux-map-add-report:focus-visible,
+.ux-map-open-filters:focus-visible,
+.ux-sheet-handle:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+}
+
+.ux-map-group {
+    display: grid;
+    gap: 8px;
+    min-width: 0;
+    padding: 10px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--surface-subtle);
+}
+
+.ux-map-group-title {
+    color: var(--text-strong);
+    font: 800 0.88rem/1.3 var(--font);
+}
+
+.ux-map-group .layer-toggle--vehicle {
+    background: transparent;
+}
+
+.ux-map-group .vehicle-filter-choice-grid {
+    padding: 10px 4px 4px;
+}
+
+.ux-map-group .vehicle-filter-choice-grid label {
+    font-size: 0.78rem;
+}
+
+.ux-map-quick-actions {
+    position: fixed;
+    top: var(--space-4);
+    left: calc(var(--control-hit-target) + 32px);
+    z-index: 850;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    pointer-events: none;
+}
+
+.ux-map-add-report,
+.ux-map-open-filters {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: var(--control-hit-target);
+    padding: 0 16px;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-control);
+    box-shadow: var(--shadow-glass);
+    font: 800 0.9rem var(--font);
+    cursor: var(--cursor-action);
+    pointer-events: auto;
+    white-space: nowrap;
+}
+
+.ux-map-add-report {
+    background: var(--primary);
+    color: white;
+    border-color: transparent;
+}
+
+.ux-map-add-report:hover {
+    background: var(--primary-hover);
+}
+
+.ux-map-add-report.is-picking-location {
+    background: var(--warning);
+    color: var(--surface-canvas);
+}
+
+.ux-map-add-icon {
+    font-size: 1.4rem;
+    font-weight: 600;
+    line-height: 1;
+}
+
+.ux-map-open-filters {
+    background: var(--glass-panel-bg-strong);
+    color: var(--text-strong);
+    backdrop-filter: var(--glass-blur-soft);
+}
+
+.ux-map-open-filters:hover {
+    background: var(--surface-control-strong);
+}
+
+@media (max-width: 720px) {
+    .app-menu-drawer {
+        top: auto;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: min(67dvh, 650px);
+        max-height: calc(100dvh - 12px);
+        border-right: 0;
+        border-top: 1px solid var(--border-strong);
+        border-radius: 22px 22px 0 0;
+    }
+
+    body.ux-sheet-expanded .app-menu-drawer {
+        height: calc(100dvh - 12px);
+    }
+
+    .ux-sheet-handle {
+        display: flex;
+        flex: 0 0 24px;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        padding: 0;
+        border: 0;
+        background: transparent;
+        cursor: var(--cursor-action);
+    }
+
+    .ux-sheet-handle span {
+        width: 46px;
+        height: 5px;
+        border-radius: 5px;
+        background: var(--border-strong);
+    }
+
+    .app-menu-drawer-header {
+        min-height: 44px;
+        padding: 0 16px;
+        justify-content: space-between;
+    }
+
+    .app-menu-title-wrap {
+        margin-left: 0;
+    }
+
+    .app-menu-drawer-scroll {
+        padding-top: 8px;
+        scrollbar-gutter: auto;
+    }
+
+    .app-menu-map-panel {
+        gap: 12px;
+    }
+
+    .ux-panel-tabs {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 5px;
+        position: sticky;
+        top: 0;
+        z-index: 2;
+        padding: 5px;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-control);
+        background: var(--surface-overlay);
+        backdrop-filter: var(--glass-blur-soft);
+    }
+
+    .ux-panel-tab {
+        min-width: 0;
+        min-height: 44px;
+        padding: 6px 4px;
+        border: 0;
+        border-radius: var(--radius-md);
+        color: var(--text-soft);
+        background: transparent;
+        font: 750 0.84rem var(--font);
+        cursor: var(--cursor-action);
+    }
+
+    .ux-panel-tab[aria-selected="true"] {
+        background: var(--primary-soft);
+        color: var(--text-strong);
+        box-shadow: inset 0 0 0 1px var(--primary);
+    }
+
+    .ux-map-group {
+        padding: 8px;
+    }
+
+    .ux-map-group-title {
+        font-size: 0.84rem;
+    }
+
+    .ux-map-quick-actions {
+        top: 10px;
+        right: 10px;
+        left: calc(var(--control-hit-target) + 18px);
+        justify-content: space-between;
+    }
+
+    .ux-map-add-report,
+    .ux-map-open-filters {
+        min-height: 42px;
+        padding: 0 11px;
+        font-size: 0.79rem;
+    }
+
+    .ux-map-add-icon {
+        font-size: 1.1rem;
+    }
+}
+
+@media (max-width: 360px) {
+    .ux-map-quick-actions {
+        left: 63px;
+        gap: 4px;
+    }
+
+    .ux-map-add-report,
+    .ux-map-open-filters {
+        padding-inline: 7px;
+        font-size: 0.72rem;
+    }
+}
