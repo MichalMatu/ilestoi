@@ -2,7 +2,8 @@
   "private": true,
   "scripts": {
     "lint:web": "node scripts/lint_web.mjs",
-    "test:web": "node --test tests/js/*.test.mjs"
+    "test:web": "node --test tests/js/*.test.mjs",
+    "test:ux:browser": "node scripts/ux_browser_smoke.mjs"
   },
   "devDependencies": {
     "@eslint/js": "9.39.4",
