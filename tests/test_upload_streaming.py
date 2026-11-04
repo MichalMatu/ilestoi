@@ -1,6 +1,5 @@
 import unittest
 from io import BytesIO
-from unittest.mock import patch
 
 from app.http import request_body
 from core.uploads import parse_multipart_form, parse_multipart_stream
@@ -12,8 +11,7 @@ def multipart_body(content: bytes) -> bytes:
         b'Content-Disposition: form-data; name="lat"\r\n\r\n'
         b"51.1\r\n--sample\r\n"
         b'Content-Disposition: form-data; name="file"; filename="photo.jpg"\r\n'
-        b"Content-Type: image/jpeg\r\n\r\n"
-        + content + b"\r\n--sample--\r\n"
+        b"Content-Type: image/jpeg\r\n\r\n" + content + b"\r\n--sample--\r\n"
     )
 
 
@@ -42,9 +40,7 @@ class MultipartStreamingTests(unittest.TestCase):
     def test_stream_rejects_oversize_before_read(self):
         stream = TrackingStream(multipart_body(b"a"))
         with self.assertRaisesRegex(ValueError, "limit"):
-            parse_multipart_stream(
-                "multipart/form-data; boundary=sample", stream, 4000, max_body_bytes=100
-            )
+            parse_multipart_stream("multipart/form-data; boundary=sample", stream, 4000, max_body_bytes=100)
         self.assertEqual(stream.requested_sizes, [])
 
     def test_stream_rejects_truncated_body(self):
