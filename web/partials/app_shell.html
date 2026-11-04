@@ -16,10 +16,16 @@
         data-i18n-attr="aria-label:appMenu.close" aria-label="Zamknij menu" onclick="closeAppMenu()"></button>
     <aside class="app-menu-drawer" id="app-menu-drawer" hidden aria-label="Menu aplikacji"
         data-i18n-attr="aria-label:appMenu.label">
+        <button class="ux-sheet-handle" id="ux-sheet-handle" type="button" aria-expanded="false"
+            data-i18n-attr="aria-label:ux.expandSheet" aria-label="Rozwiń panel">
+            <span aria-hidden="true"></span>
+        </button>
         <div class="app-menu-drawer-header">
             <div class="app-menu-title-wrap">
                 <button type="button" class="app-menu-brand" id="app-menu-title" onclick="closeAppMenu()">IleStoi.pl</button>
             </div>
+            <button type="button" class="ux-sheet-close" id="ux-sheet-close"
+                data-i18n-attr="aria-label:ux.closePanel" aria-label="Zamknij panel">&times;</button>
         </div>
 
         <div class="app-menu-drawer-scroll" id="app-menu-drawer-scroll">
@@ -35,9 +41,23 @@
                 <span data-panel-add-photo-label data-i18n="panel.addPhoto">Dodaj zdjęcie</span>
             </button>
 
+            <div class="ux-panel-tabs" role="tablist" aria-label="Sekcje panelu mapy" data-i18n-attr="aria-label:ux.panelSections">
+                <button type="button" class="ux-panel-tab" id="ux-tab-vehicles" role="tab"
+                    data-ux-tab="vehicles" aria-selected="true" aria-controls="ux-panel-vehicles"
+                    data-i18n="ux.tabVehicles">Pojazdy</button>
+                <button type="button" class="ux-panel-tab" id="ux-tab-layers" role="tab"
+                    data-ux-tab="layers" aria-selected="false" aria-controls="ux-panel-layers"
+                    data-i18n="ux.tabLayers">Warstwy</button>
+                <button type="button" class="ux-panel-tab" id="ux-tab-tools" role="tab"
+                    data-ux-tab="tools" aria-selected="false" aria-controls="ux-panel-tools"
+                    data-i18n="ux.tabTools">Narzędzia</button>
+            </div>
+
             <section class="panel-section panel-layers">
                 <div id="map-layer-controls" class="map-layer-controls is-loading-public-layers" aria-label="Warstwy mapy"
                     data-i18n-attr="aria-label:layers.label">
+                    <section class="ux-map-group" id="ux-panel-vehicles" data-ux-panel="vehicles" role="tabpanel" aria-labelledby="ux-tab-vehicles">
+                        <h2 class="ux-map-group-title" id="ux-heading-vehicles" data-i18n="ux.groupVehicles">Pojazdy i filtry</h2>
                     <div class="layer-toggle layer-toggle--vehicle">
                         <label class="layer-toggle-row">
                             <input type="checkbox" id="toggle-vehicles" checked
@@ -80,6 +100,9 @@
                                 </label>
                         </div>
                     </div>
+                    </section>
+                    <section class="ux-map-group" id="ux-panel-layers" data-ux-panel="layers" role="tabpanel" aria-labelledby="ux-tab-layers">
+                        <h2 class="ux-map-group-title" id="ux-heading-layers" data-i18n="ux.groupLayers">Warstwy mapy</h2>
                     <label class="layer-toggle">
                         <input type="checkbox" id="toggle-field-photo-infrastructure" checked
                             onchange="toggleFieldPhotoIssueFilter('infrastructure', this.checked)">
@@ -101,6 +124,24 @@
                         <span class="layer-label" data-i18n="layers.fieldPhotoPending">Do weryfikacji</span>
                         <span class="layer-count-badge" id="layer-count-field-photo-pending">0</span>
                     </label>
+                    <label class="layer-toggle" data-i18n-attr="title:layers.cadastralTooltip">
+                        <input type="checkbox" id="toggle-cadastral-parcels"
+                            onchange="toggleCadastralLayer(this.checked)">
+                        <span class="layer-pin layer-pin--cadastral"></span>
+                        <span class="layer-label" data-i18n="layers.cadastral">Granice działek</span>
+                    </label>
+                    <label class="layer-toggle" data-i18n-attr="title:layers.streetLabelsTooltip"
+                        title="Nazwy ulic na ortofotomapie (mapa OSM ma własne etykiety)">
+                        <input type="checkbox" id="toggle-street-labels" checked
+                            onchange="toggleMapLabelLayer(this.checked)">
+                        <span class="layer-pin layer-pin--street-labels" aria-hidden="true">Aa</span>
+                        <span class="layer-label" data-i18n="layers.streetLabels">Nazwy ulic</span>
+                        <span class="layer-unavailable-note" id="street-labels-unavailable"
+                            data-i18n="layers.streetLabelsUnavailable" hidden>OSM ma własne nazwy</span>
+                    </label>
+                    </section>
+                    <section class="ux-map-group" id="ux-panel-tools" data-ux-panel="tools" role="tabpanel" aria-labelledby="ux-tab-tools">
+                        <h2 class="ux-map-group-title" id="ux-heading-tools" data-i18n="ux.groupTools">Narzędzia</h2>
                     <label class="layer-toggle panel-map-source" id="panel-map-source"
                         data-i18n-attr="title:panel.baseMapSliderToggle"
                         title="Pokaż wybór podkładu mapy">
@@ -117,26 +158,12 @@
                         <span class="layer-pin layer-pin--vehicle" aria-hidden="true"></span>
                         <span class="layer-label" data-i18n="gallery.menuToggle">Galeria pojazdów</span>
                     </label>
-                    <label class="layer-toggle" data-i18n-attr="title:layers.cadastralTooltip">
-                        <input type="checkbox" id="toggle-cadastral-parcels"
-                            onchange="toggleCadastralLayer(this.checked)">
-                        <span class="layer-pin layer-pin--cadastral"></span>
-                        <span class="layer-label" data-i18n="layers.cadastral">Granice działek</span>
-                    </label>
-                    <label class="layer-toggle" data-i18n-attr="title:layers.streetLabelsTooltip"
-                        title="Nazwy ulic na ortofotomapie (mapa OSM ma własne etykiety)">
-                        <input type="checkbox" id="toggle-street-labels" checked
-                            onchange="toggleMapLabelLayer(this.checked)">
-                        <span class="layer-pin layer-pin--street-labels" aria-hidden="true">Aa</span>
-                        <span class="layer-label" data-i18n="layers.streetLabels">Nazwy ulic</span>
-                        <span class="layer-unavailable-note" id="street-labels-unavailable"
-                            data-i18n="layers.streetLabelsUnavailable" hidden>OSM ma własne nazwy</span>
-                    </label>
+                    </section>
                 </div>
             </section>
         </section>
 
-        <nav class="app-menu-drawer-section" aria-label="Menu aplikacji"
+        <nav class="app-menu-drawer-section ux-tools-nav" aria-label="Menu aplikacji"
             data-i18n-attr="aria-label:appMenu.label">
             <button type="button" class="app-menu-drawer-item" onclick="openParkingCostsModal(); closeAppMenu()">
                 <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -186,6 +213,17 @@
     </aside>
 
     <div id="status" class="global-status-toast" role="status" aria-live="polite" aria-atomic="true"></div>
+
+    <div class="ux-map-quick-actions" aria-label="Szybkie działania mapy" data-i18n-attr="aria-label:ux.quickActions">
+        <button type="button" id="map-add-field-photo" class="ux-map-add-report"
+            data-i18n-attr="title:panel.addPhotoTitle" title="Wskaż miejsce zdjęcia na mapie"
+            aria-pressed="false" hidden>
+            <span aria-hidden="true" class="ux-map-add-icon">+</span>
+            <span data-panel-add-photo-label data-i18n="ux.addReport">Dodaj zgłoszenie</span>
+        </button>
+        <button type="button" id="map-open-filters" class="ux-map-open-filters"
+            data-i18n="ux.openFilters">Filtry</button>
+    </div>
 
     <!-- Interactive Map -->
     <main id="map" tabindex="0" aria-label="Interaktywna mapa"
