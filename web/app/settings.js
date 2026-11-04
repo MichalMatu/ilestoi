@@ -168,10 +168,11 @@ function updatePublicFeatureControlVisibility() {
     const contextFieldPhotoButton = document.getElementById('context-add-field-photos');
     const fieldPhotoUploadAvailable = photoUploadsAllowed && fieldPhotoAnyIssueAllowed();
     if (contextFieldPhotoButton) contextFieldPhotoButton.hidden = !fieldPhotoUploadAvailable;
-    const panelPhotoUploadButton = document.getElementById('panel-add-field-photo');
-    if (panelPhotoUploadButton) {
-        panelPhotoUploadButton.hidden = !fieldPhotoUploadAvailable;
-        panelPhotoUploadButton.disabled = !fieldPhotoUploadAvailable;
+    for (const id of ['panel-add-field-photo', 'map-add-field-photo']) {
+        const button = document.getElementById(id);
+        if (!button) continue;
+        button.hidden = !fieldPhotoUploadAvailable;
+        button.disabled = !fieldPhotoUploadAvailable;
     }
     if (!fieldPhotoUploadAvailable) cancelFieldPhotoLocationPick({ clearStatus: true });
 }
