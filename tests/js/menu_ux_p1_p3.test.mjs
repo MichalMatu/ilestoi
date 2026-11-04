@@ -18,7 +18,7 @@ test('drawer has a separately scrolling center with fixed header and footer', ()
     const first = html.indexOf('class="app-menu-drawer-header"');
     const scrollStart = html.indexOf('class="app-menu-drawer-scroll"');
     const map = html.indexOf('class="app-menu-map-panel"');
-    const nav = html.indexOf('class="app-menu-drawer-section"');
+    const nav = html.indexOf('class="app-menu-drawer-section ux-tools-nav"');
     const footer = html.indexOf('class="app-menu-drawer-footer"');
     assert.ok(first >= 0 && first < scrollStart && scrollStart < map && map < nav && nav < footer);
     assert.match(html.slice(nav, footer), /<\/nav>\s*<\/div>/);
