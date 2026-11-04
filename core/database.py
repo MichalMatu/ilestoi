@@ -416,6 +416,27 @@ def _foreign_key_violation(row: sqlite3.Row) -> str:
     return f"table={row[0]}, rowid={row[1]}, parent={row[2]}, fk={row[3]}"
 
 
+def validate_readiness_database(
+    *,
+    database_path: Path = config.DATABASE_PATH,
+    migrations_dir: Path = config.DATABASE_MIGRATIONS_DIR,
+    migrations_root_dir: Path = ROOT_DIR,
+) -> None:
+    """Fast read-only readiness probe; full file/integrity audit is a separate gate."""
+    expected = {path.stem for path in migration_paths(migrations_dir, root_dir=migrations_root_dir)}
+    if not expected:
+        raise ValueError("Nie znaleziono definicji migracji SQLite.")
+    connection = connect_database_read_only(database_path)
+    try:
+        applied = applied_migrations(connection)
+        if applied != expected:
+            raise ValueError("Niespójne migracje aktywnej bazy SQLite.")
+        for table in ("field_photos", "settings", "privacy_requests"):
+            connection.execute(f"SELECT 1 FROM {table} LIMIT 1").fetchone()
+    finally:
+        connection.close()
+
+
 def validate_runtime_database(
     *,
     root_dir: Path = ROOT_DIR,
