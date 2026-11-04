@@ -178,33 +178,48 @@ def _gallery_observation_date(record: dict[str, Any], now: datetime) -> datetime
     return None
 
 
-def _gallery_group_first_observed(
+def _gallery_first_observed_batch(
     connection: Any,
-    nominated: dict[str, Any],
+    nominated: list[dict[str, Any]],
     now: datetime,
-) -> str | None:
-    """Oldest documented observation of this *group*, not its cover photo."""
-    lat, lon = float(nominated["lat"]), float(nominated["lon"])
+) -> dict[str, str]:
+    """One bounded SQL query for nearby evidence of up to 100 cover photos."""
+    if not nominated:
+        return {}
     radius = config.FIELD_PHOTO_GROUP_RADIUS_M
-    lat_margin = radius / 111_320.0 * 1.1
-    lon_margin = radius / max(abs(lon_meters_per_degree(lat)), 0.000001) * 1.1
-    candidates = connection.execute(
-        """SELECT issue_type, lat, lon, captured_at, created_at, submitted_at
-           FROM field_photos WHERE issue_type = 'vehicle'
-             AND public_review_status = 'approved'
-             AND vehicle_resolution_status = 'active'
-             AND lat BETWEEN ? AND ? AND lon BETWEEN ? AND ?""",
-        (lat - lat_margin, lat + lat_margin, lon - lon_margin, lon + lon_margin),
-    )
-    dates = [
-        observed
-        for record in candidates
-        if same_vehicle_photo_group(nominated, dict(record))
-        for observed in [_gallery_observation_date(dict(record), now)]
-        if observed is not None
-    ]
-    earliest = min(dates, default=None)
-    return earliest.isoformat().replace("+00:00", "Z") if earliest is not None else None
+    values = ", ".join(["(?, ?, ?, ?, ?)"] * len(nominated))
+    params: list[Any] = []
+    by_id: dict[str, dict[str, Any]] = {}
+    for row in nominated:
+        photo_id = str(row["id"])
+        lat, lon = float(row["lat"]), float(row["lon"])
+        by_id[photo_id] = row
+        params.extend(
+            (photo_id, lat, lon, radius / 111_320.0 * 1.1, radius / max(abs(lon_meters_per_degree(lat)), 0.000001) * 1.1)
+        )
+    query = f"""
+        WITH covers(photo_id, lat, lon, lat_margin, lon_margin) AS (VALUES {values})
+        SELECT covers.photo_id AS nominated_id,
+               p.issue_type, p.lat, p.lon, p.captured_at, p.created_at, p.submitted_at
+        FROM covers JOIN field_photos AS p
+          ON p.lat BETWEEN covers.lat - covers.lat_margin AND covers.lat + covers.lat_margin
+         AND p.lon BETWEEN covers.lon - covers.lon_margin AND covers.lon + covers.lon_margin
+        WHERE p.issue_type = 'vehicle'
+          AND p.public_review_status = 'approved'
+          AND p.vehicle_resolution_status = 'active'
+    """
+    earliest: dict[str, datetime] = {}
+    for source in connection.execute(query, params):
+        cover_id = str(source["nominated_id"])
+        candidate = dict(source)
+        if not same_vehicle_photo_group(by_id[cover_id], candidate):
+            continue
+        observed = _gallery_observation_date(candidate, now)
+        if observed is not None and (cover_id not in earliest or observed < earliest[cover_id]):
+            earliest[cover_id] = observed
+    return {
+        photo_id: observed.isoformat().replace("+00:00", "Z") for photo_id, observed in earliest.items()
+    }
 
 
 def _gallery_sort_key(photo: dict[str, Any]) -> tuple[int, datetime, str]:
@@ -245,11 +260,12 @@ def list_map_vehicle_gallery(
     try:
         rows = [dict(row) for row in connection.execute(sql, params)]
         now = datetime.now(timezone.utc)
+        first_observed = _gallery_first_observed_batch(connection, rows, now)
         result: list[dict[str, Any]] = []
         for row in rows:
             try:
                 public_photo = _map_photo(row, storage_dir, private_dir)
-                public_photo["first_observed_at"] = _gallery_group_first_observed(connection, row, now)
+                public_photo["first_observed_at"] = first_observed.get(str(row["id"]))
                 result.append(public_photo)
             except (OSError, ValueError, FileNotFoundError, json.JSONDecodeError):
                 continue
