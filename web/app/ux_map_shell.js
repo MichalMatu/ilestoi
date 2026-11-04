@@ -1,6 +1,7 @@
 /* Responsive IleStoi map shell. The existing map, filters and upload handlers stay authoritative. */
 const UX_MAP_PANEL_NAMES = ['vehicles', 'layers', 'tools'];
 const uxMapPanelMedia = window.matchMedia('(max-width: 720px)');
+const uxMapDesktopMedia = window.matchMedia('(min-width: 1120px)');
 let uxMapPanelActive = 'vehicles';
 let uxMapSheetExpanded = false;
 
@@ -70,7 +71,21 @@ document.getElementById('map-open-filters')?.addEventListener('click', () => {
     setAppMenuOpen(true);
 });
 
-uxMapPanelMedia.addEventListener('change', updateUxMapPanelState);
+function updateUxMapResponsiveLayout() {
+    updateUxMapPanelState();
+    if (uxMapDesktopMedia.matches && !isAppMenuOpen()) {
+        setAppMenuOpen(true, { focus: false, restoreFocus: false });
+    } else {
+        updateAppMenuState();
+        syncPageIsolation();
+        if (typeof map !== 'undefined' && typeof map.invalidateSize === 'function') {
+            requestAnimationFrame(() => map.invalidateSize({ pan: false }));
+        }
+    }
+}
+
+uxMapPanelMedia.addEventListener('change', updateUxMapResponsiveLayout);
+uxMapDesktopMedia.addEventListener('change', updateUxMapResponsiveLayout);
 document.addEventListener('langchange', () => setUxMapSheetExpanded(uxMapSheetExpanded));
-updateUxMapPanelState();
 setUxMapSheetExpanded(false);
+updateUxMapResponsiveLayout();
