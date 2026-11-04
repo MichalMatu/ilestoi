@@ -27,24 +27,34 @@ test('drawer has a separately scrolling center with fixed header and footer', ()
     assert.match(panel, /\.app-menu-drawer-footer\s*\{[^}]*flex:\s*0 0 auto/s);
 });
 
-test('map menu has no redundant section headings and preserves the existing control order', () => {
+test('map menu groups filters, layers and tools without losing existing controls', () => {
     const vehicle = html.indexOf('id="toggle-vehicles"');
     const pending = html.indexOf('id="toggle-field-photo-pending"');
-    const source = html.indexOf('id="map-source-slider-toggle"');
     const cadastral = html.indexOf('id="toggle-cadastral-parcels"');
     const streets = html.indexOf('id="toggle-street-labels"');
-    assert.ok(vehicle >= 0 && vehicle < pending && pending < source &&
-        source < cadastral && cadastral < streets);
-    assert.doesNotMatch(html, /app-menu-group-title|layers\.reportsGroup|layers\.appearanceGroup/);
-    assert.doesNotMatch(panel, /\.app-menu-group-title/);
-    for (const bundle of [pl, en]) {
-        assert.doesNotMatch(bundle, /'layers\.(?:reportsGroup|appearanceGroup)'/);
-    }
+    const source = html.indexOf('id="map-source-slider-toggle"');
+    const gallery = html.indexOf('id="map-gallery-toggle"');
+    const vehiclesGroup = html.indexOf('data-ux-panel="vehicles"');
+    const layersGroup = html.indexOf('data-ux-panel="layers"');
+    const toolsGroup = html.indexOf('data-ux-panel="tools"');
+    assert.ok(vehiclesGroup >= 0 && vehiclesGroup < vehicle &&
+        vehicle < layersGroup && layersGroup < pending &&
+        pending < cadastral && cadastral < streets &&
+        streets < toolsGroup && toolsGroup < source && source < gallery);
+    assert.match(html, /data-i18n="ux.groupVehicles"/);
+    assert.match(html, /data-i18n="ux.groupLayers"/);
+    assert.match(html, /data-i18n="ux.groupTools"/);
     assert.match(html, /data-i18n="panel.baseMap">Pokaż wybór podkładu/);
     assert.match(html, /onchange="setMapSourceSliderVisible\(this.checked\)"/);
     assert.match(maps, /function setMapSourceSliderVisible\(visible\)/);
     assert.match(html, /id="street-labels-unavailable"[^>]*hidden/);
     assert.match(maps, /unavailable\.hidden = supported/);
+    for (const bundle of [pl, en]) {
+        for (const key of ['ux.tabVehicles', 'ux.tabLayers', 'ux.tabTools',
+            'ux.addReport', 'ux.groupVehicles', 'ux.groupLayers', 'ux.groupTools']) {
+            assert.ok(bundle.includes("'" + key + "':"), key);
+        }
+    }
 });
 
 test('vehicle filters use exactly four always-visible accessible selectors', () => {
