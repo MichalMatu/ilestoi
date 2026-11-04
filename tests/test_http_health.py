@@ -2,6 +2,7 @@ import json
 import unittest
 from io import BytesIO
 from pathlib import Path
+from types import SimpleNamespace
 from tempfile import TemporaryDirectory
 from unittest.mock import patch
 
