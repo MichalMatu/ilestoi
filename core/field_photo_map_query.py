@@ -195,7 +195,13 @@ def _gallery_first_observed_batch(
         lat, lon = float(row["lat"]), float(row["lon"])
         by_id[photo_id] = row
         params.extend(
-            (photo_id, lat, lon, radius / 111_320.0 * 1.1, radius / max(abs(lon_meters_per_degree(lat)), 0.000001) * 1.1)
+            (
+                photo_id,
+                lat,
+                lon,
+                radius / 111_320.0 * 1.1,
+                radius / max(abs(lon_meters_per_degree(lat)), 0.000001) * 1.1,
+            )
         )
     query = f"""
         WITH covers(photo_id, lat, lon, lat_margin, lon_margin) AS (VALUES {values})
@@ -217,9 +223,7 @@ def _gallery_first_observed_batch(
         observed = _gallery_observation_date(candidate, now)
         if observed is not None and (cover_id not in earliest or observed < earliest[cover_id]):
             earliest[cover_id] = observed
-    return {
-        photo_id: observed.isoformat().replace("+00:00", "Z") for photo_id, observed in earliest.items()
-    }
+    return {photo_id: observed.isoformat().replace("+00:00", "Z") for photo_id, observed in earliest.items()}
 
 
 def _gallery_sort_key(photo: dict[str, Any]) -> tuple[int, datetime, str]:
