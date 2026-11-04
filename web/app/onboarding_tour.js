@@ -185,7 +185,7 @@ function showOnboardingTourStep(index) {
         }
         if (!isAppMenuOpen()) setAppMenuOpen(true, { restoreFocus: false });
         if (typeof setUxMapPanelTab === 'function') setUxMapPanelTab(step.tab || 'vehicles');
-    } else if (isAppMenuOpen()) {
+    } else if (isAppMenuOpen() && !isPersistentDesktopMenu()) {
         closeAppMenu({ restoreFocus: false });
     }
     if (step.focusMarker && state.marker && map.hasLayer(state.marker)) {
@@ -282,7 +282,7 @@ function maybeStartOnboardingTour() {
     const path = window.location.pathname;
     if (path !== '/' && path !== '/index.html') return;
     if (new URLSearchParams(window.location.search).has('photo')) return;
-    if (onboardingTourSeen() || isAppMenuOpen()) return;
+    if (onboardingTourSeen() || (isAppMenuOpen() && !isPersistentDesktopMenu())) return;
     if (typeof topOpenModalBackdrop === 'function' && topOpenModalBackdrop()) return;
     startOnboardingTour();
 }
