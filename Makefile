@@ -81,7 +81,7 @@ help:
 		printf '%s\n' '  Na Termuxie: sv restart $(RUNIT_SERVICE)'; \
 	fi
 	@if [ "$(SYSTEMD_MANAGED)" = '1' ]; then \
-		printf '%s\n' 
+		printf '%s\n' \
 			'' \
 			'  Ten katalog obsluguje systemd. Zmiany stanu wykonuj przez:' \
 			'  sudo systemctl stop|start|restart $(SYSTEMD_UNIT)' \
