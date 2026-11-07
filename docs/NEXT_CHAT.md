@@ -7,7 +7,8 @@ Read `AGENTS.md`, `docs/TERMUX_DEVELOPMENT_FLOW.md` and `docs/checkpoints/2026-1
 - Repository: `MichalMatu/ilestoi`.
 - Entry released `main`: `83afe2ec0cba36a3facd497a9738cc3e4c57bbc6`.
 - Audit fix branch: `fix/audit-make-help-20261107`.
-- Candidate source QA SHA: `bdf3b16d2aba6b25634f91aa0cdd350ffaa6bef3` (subsequent checkpoint/handoff documentation commits are docs-only, verify).
+- First QA candidate: `bdf3b16d2aba6b25634f91aa0cdd350ffaa6bef3` (before additional deploy docs/test contract correction).
+- Updated code/test candidate: `cb7eacb252a7af2c2aa76d0907342dbcb6ba82a8` (subsequent checkpoint/handoff commits are docs-only; inspect current branch diff).
 - Previous production installation and candidate QA are **not automatically accepted**. Read exact contemporary evidence.
 
 ## Targeted Local Agent
@@ -22,12 +23,16 @@ Read `AGENTS.md`, `docs/TERMUX_DEVELOPMENT_FLOW.md` and `docs/checkpoints/2026-1
 - An immutable task file and Git publish do not count as execution; read **terminal** result JSON and command return code. If a task ends UNKNOWN, investigate without replay.
 - Never redirect ordinary IleStoi Host Ops to Mac. Only explicitly unavailable browser tests may use Mac with selected host identity.
 
+- Review draft: [PR #37](https://github.com/MichalMatu/ilestoi/pull/37), do not merge ahead of production acceptance.
+- Follow-up native QA of updated candidate uses a **new** task ID; read its exact result, never treat the v1 result as covering the later test changes.
+
 ## Work already done
 
 - Verified 281-file entry tree; 135 main commits in last 7 days, 238 in last 30/90 days; recent upload, gallery, health and AI API changes reviewed at history level.
 - Fixed actual Makefile systemd-help line continuation and added an execution-based regression test.
 - Corrected overstated readiness documentation in START/CURRENT_MODEL/DEPLOY.
 - Removed obsolete absolute development directories from README/START, with isolation instructions.
+- Corrected alternate systemd deployment runbook to remove mutating post-deploy E2E and promote `main` only after guarded candidate acceptance; strengthened documentation tests.
 - Minimal Linux Sandbox shell reproduction: old exit 2, corrected exit 0.
 - No merge, production cutover, tag, database or media mutation. The `fix/disable-automatic-actions-20261105` branch remains unrelated and untouched.
 
