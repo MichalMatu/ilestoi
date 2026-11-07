@@ -124,9 +124,12 @@ generuje PDF z tymczasowymi cropami mapy oraz statusem OC/UFG, zapisuje w
 powiekszeniu 200%, a na koncu wylogowuje administratora oraz usuwa testowy rekord
 i pliki.
 
-Liveness odpowiada tylko na pytanie, czy proces HTTP dziala. Readiness sprawdza
-aktywne SQLite, migracje, odwolania do plikow i bezpieczna rezerwe dysku; tylko
-wynik readiness `200` dopuszcza ruch po starcie lub restarcie:
+Liveness odpowiada tylko na pytanie, czy proces HTTP dziala. Readiness wykonuje
+szybki, tylko do odczytu test aktywnej SQLite (migracje i wymagane tabele),
+sprawdza uprawnienia katalogu aplikacji i bezpieczna rezerwe dysku. Nie sprawdza
+integralnosci wszystkich rekordow ani istnienia plikow zdjec. Te kontrole
+wykonuje oddzielna diagnostyka danych opisana w [TERMUX.md](TERMUX.md).
+Tylko wynik readiness `200` dopuszcza ruch po starcie lub restarcie:
 
 ```bash
 curl -fsS http://127.0.0.1:8001/api/health/live
