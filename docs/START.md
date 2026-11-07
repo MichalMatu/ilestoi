@@ -2,11 +2,15 @@
 
 ## Runtime I Instalacja
 
+Ponizsze komendy uruchamiaj w osobnym checkoutcie developerskim; na Samsungu
+nie instaluj zaleznosci ani nie uruchamiaj drugiego serwera w produkcyjnym
+`~/WreckScanner/WreckScanner`. Zobacz [TERMUX_DEVELOPMENT_FLOW.md](TERMUX_DEVELOPMENT_FLOW.md).
+
 - Python `3.11-3.13` (CI sprawdza 3.11 i 3.13),
 - Node.js `20+` do lintowania frontendu (CI uzywa Node.js 22).
 
 ```bash
-cd /home/test/Desktop/WreckScanner
+cd /path/to/isolated/ilestoi-checkout
 python3 -m venv .venv
 ./.venv/bin/python -m pip install -r requirements-dev.txt
 npm ci
@@ -41,7 +45,7 @@ zmieniajace stan przez `make` sa przeznaczone wylacznie dla lokalnego watchera:
 Sprawdzenie:
 
 ```bash
-pgrep -af "/home/test/Desktop/WreckScanner/server.py"
+pgrep -af "$(pwd)/server.py"
 ```
 
 Restart:
