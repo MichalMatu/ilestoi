@@ -118,8 +118,11 @@ make smoke
 make e2e-report
 ```
 
-Liveness potwierdza dzialanie procesu. Dopiero readiness `200` potwierdza, ze
-baza, migracje, pliki i przestrzen dyskowa pozwalaja bezpiecznie kierowac ruch.
+Liveness potwierdza dzialanie procesu. Readiness `200` potwierdza szybki odczyt
+SQLite, zgodnosc migracji i wymaganych tabel oraz podstawowy stan katalogu
+i miejsca na dysku. Nie sprawdza integralnosci rekordow, kluczy obcych ani
+istnienia plikow zdjec — wymaga to oddzielnego `--validate-only`/audytu danych
+przed wdrozeniem.
 
 `make e2e-report` wymaga dzialajacego WMS i Chromium. Test tworzy tymczasowe
 zdjecie, generuje raport PDF z cropami mapy i statusem OC/UFG, a potem usuwa
