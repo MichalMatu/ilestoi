@@ -19,7 +19,9 @@ Read `AGENTS.md`, `docs/TERMUX_DEVELOPMENT_FLOW.md` and `docs/checkpoints/2026-1
   `.agent/hosts/android-termux-10520/supervisor/6be16f1d-194b-4f07-b377-3d4bb218fcd7/task-results/`.
 - Preflight v1 `ilestoi-general-audit-preflight-20261107-v1` failed validation before execution (timeout reserve). Do **not** reuse this ID.
 - Preflight v2 `ilestoi-general-audit-preflight-20261107-v2` requests live read-only Git/worktree, service, health and Makefile diagnostics.
-- QA `ilestoi-general-audit-candidate-qa-20261107-v1` requests a disposable worktree on exact candidate SHA, focused/full Python unittest, JS tests, Ruff, architecture and offline lint, plus before/after production read-only checks.
+- QA `ilestoi-general-audit-candidate-qa-20261107-v1` has a terminal **FAILED** result *before tests*: live production `HEAD=83afe2ec0cba36a3facd497a9738cc3e4c57bbc6` and `status` clean, but fetched branch had advanced from immutable requested `bdf3b16d...` to `548c645...`; no tests ran. Do not reuse task ID or count as application test failure.
+- QA `ilestoi-general-audit-candidate-docs-qa-20261107-v2` requests focused updated documentation and Makefile tests at `cb7eacb252a7af2c2aa76d0907342dbcb6ba82a8`.
+- QA `ilestoi-general-audit-candidate-full-qa-20261107-v3` requests the full Python and JS/architecture/Ruff/npm gate at the same immutable source SHA. Its ancestor-safe fetch guard accommodates later documentation-only commits. Read actual terminal results before declaring any gate PASS.
 - An immutable task file and Git publish do not count as execution; read **terminal** result JSON and command return code. If a task ends UNKNOWN, investigate without replay.
 - Never redirect ordinary IleStoi Host Ops to Mac. Only explicitly unavailable browser tests may use Mac with selected host identity.
 
