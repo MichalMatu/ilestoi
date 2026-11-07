@@ -67,13 +67,18 @@ class DocumentationContractTests(unittest.TestCase):
         self.assertIn("systemctl enable --now wreckscanner.service", doc)
         self.assertIn("./scripts/check.sh", doc)
         self.assertIn("scripts/backup_data.py run", doc)
-        self.assertIn("git describe --exact-match --tags HEAD", doc)
+        self.assertIn("git rev-parse HEAD", doc)
+        self.assertNotIn("git describe --exact-match --tags HEAD", doc)
+        self.assertIn("Nie przesuwaj `main` ani nie publikuj taga", doc)
         self.assertIn("scripts/migrate_json_to_db.py --validate-only", doc)
         self.assertIn("historyczne JSON-y nie sa zrodlem prawdy", doc)
         self.assertIn("/api/health/live", doc)
         self.assertIn("/api/health/ready", doc)
         self.assertIn("make smoke", doc)
         self.assertIn("make e2e-report", doc)
+        deploy_smoke = doc.split("## Po Deployu\n", 1)[1].split("```bash\n", 1)[1].split("\n```", 1)[0]
+        self.assertNotIn("make e2e-report", deploy_smoke)
+        self.assertIn("nigdy przeciw aktywnej produkcji", doc)
         self.assertIn("Rollback", doc)
 
     def test_public_runtime_validates_cloudflare_ingress_before_restart(self):
