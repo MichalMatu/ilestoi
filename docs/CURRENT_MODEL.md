@@ -80,7 +80,7 @@ edycji nadal moga ograniczyc operacje.
 | `GET` | `/api/ai/openapi.json` | publiczny | schemat OpenAPI generatora dla klientow AI |
 | `POST` | `/api/ai/report-pdf` | publiczny lub administrator | JSON -> PDF Base64 przez istniejacy zweryfikowany generator |
 | `GET` | `/api/health/live` | publiczny | liveness procesu HTTP |
-| `GET` | `/api/health/ready` | publiczny | gotowosc SQLite, migracji, plikow i dysku |
+| `GET` | `/api/health/ready` | publiczny | szybki odczyt SQLite, zgodnosc migracji i tabel, prawa katalogu, wolne miejsce; bez audytu plikow zdjec |
 | `GET` | `/api/settings` | publiczny | aktywne ustawienia i wartosci domyslne |
 | `POST` | `/api/settings` | administrator | zapis ustawien aplikacji |
 | `GET` | `/api/admin/status` | publiczny | stan logowania bez ujawniania sekretow |

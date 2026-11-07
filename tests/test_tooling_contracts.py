@@ -139,6 +139,13 @@ esac
         self.assertIn("SUBMAKE := $(MAKE)", makefile)
         self.assertNotIn("$(MAKE)", recipes)
 
+    def test_make_help_prints_systemd_instructions_without_shell_errors(self):
+        result = self.run_make("help", "SYSTEMD_MANAGED=1", "RUNIT_MANAGED=0")
+
+        self.assertEqual(result.returncode, 0, msg=result.stderr)
+        self.assertIn("Ten katalog obsluguje systemd", result.stdout)
+        self.assertIn("sudo systemctl stop|start|restart wreckscanner.service", result.stdout)
+
     def test_make_guards_watcher_mutations_on_a_systemd_host(self):
         makefile = (ROOT_DIR / "Makefile").read_text(encoding="utf-8")
 

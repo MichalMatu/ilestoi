@@ -25,10 +25,11 @@ i [backup/restore](docs/BACKUP.md).
 ## Start
 
 Wspierany runtime to Python `3.11-3.13` (sprawdzany w CI). Termux z Pythonem `3.14` przeszedł pełne testy jednostkowe, ale nie należy do macierzy CI. Node.js `20+` jest potrzebny tylko do
-kontroli frontendu; CI uzywa Node.js 22. Przygotowanie lokalnego srodowiska:
+kontroli frontendu; CI uzywa Node.js 22. Przygotowanie lokalnego srodowiska **w osobnym checkoutcie developerskim**
+(nie w dzialajacym katalogu produkcyjnym Termuxa):
 
 ```bash
-cd /home/test/Desktop/WreckScanner
+cd /path/to/isolated/ilestoi-checkout
 python3 -m venv .venv
 ./.venv/bin/python -m pip install -r requirements-dev.txt
 npm ci
@@ -37,7 +38,7 @@ npm ci
 Reczne uruchomienie na hoscie bez aktywnego supervisora:
 
 ```bash
-cd /home/test/Desktop/WreckScanner
+cd /path/to/isolated/ilestoi-checkout
 ./.venv/bin/python server.py
 ```
 

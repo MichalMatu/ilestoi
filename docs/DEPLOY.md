@@ -85,7 +85,7 @@ stat -c '%U:%G %a %n' prywatne_zdjecia wreckscanner.sqlite3
 ```bash
 git status --short --branch
 test -z "$(git status --porcelain)"
-git describe --exact-match --tags HEAD
+git rev-parse HEAD
 ./scripts/check.sh
 ./.venv/bin/python scripts/diagnose_data.py --strict
 ./.venv/bin/python scripts/migrate_json_to_db.py --validate-only
@@ -100,7 +100,12 @@ curl -fsS http://127.0.0.1:8001/api/health/ready
 test "$backup_status" -eq 0
 ```
 
-Deployuj wylacznie czysty, otagowany baseline z `main`. Walidacja
+Wdrażaj wyłącznie sprawdzonego, niezmiennego kandydata z krótkotrwałej gałęzi
+`feature/*` lub `fix/*`. Nie przesuwaj `main` ani nie publikuj taga przed
+akceptacją tej samej wersji w produkcji. Dopiero po kontrolowanym wdrożeniu,
+potwierdzeniu działania i rollbacku doprowadź `main` do dokładnego SHA
+wdrożonego kandydata; następnie opublikuj tag zgodnie z
+[TERMUX_DEVELOPMENT_FLOW.md](TERMUX_DEVELOPMENT_FLOW.md). Walidacja
 `migrate_json_to_db.py --validate-only` sprawdza aktywne SQLite przez
 `quick_check`, `foreign_key_check`, komplet migracji i odwolania do plikow;
 historyczne JSON-y nie sa zrodlem prawdy.
@@ -115,11 +120,17 @@ sudo systemctl restart wreckscanner.service
 curl -fsS http://127.0.0.1:8001/api/health/live
 curl -fsS http://127.0.0.1:8001/api/health/ready
 make smoke
-make e2e-report
 ```
 
-Liveness potwierdza dzialanie procesu. Dopiero readiness `200` potwierdza, ze
-baza, migracje, pliki i przestrzen dyskowa pozwalaja bezpiecznie kierowac ruch.
+`make e2e-report` wykonuje mutacje danych (upload, review i usunięcie
+rekordu testowego). Uruchamiaj je wyłącznie przeciw izolowanej bazie i serwerowi
+testowemu, nigdy przeciw aktywnej produkcji bez odrębnego zakresu wdrożenia.
+
+Liveness potwierdza dzialanie procesu. Readiness `200` potwierdza szybki odczyt
+SQLite, zgodnosc migracji i wymaganych tabel oraz podstawowy stan katalogu
+i miejsca na dysku. Nie sprawdza integralnosci rekordow, kluczy obcych ani
+istnienia plikow zdjec — wymaga to oddzielnego `--validate-only`/audytu danych
+przed wdrozeniem.
 
 `make e2e-report` wymaga dzialajacego WMS i Chromium. Test tworzy tymczasowe
 zdjecie, generuje raport PDF z cropami mapy i statusem OC/UFG, a potem usuwa
@@ -138,4 +149,4 @@ testowe pliki po sobie.
    `prywatne_zdjecia/` na odtworzone wersje.
 6. Przelacz `ExecStart`/symlink release na poprzedni baseline i uruchom usluge:
    `sudo systemctl start wreckscanner.service`.
-7. Wykonaj `make smoke` i `make e2e-report`.
+7. Wykonaj odczytowy `make smoke`; mutujące E2E przeprowadź w izolowanej kopii danych.

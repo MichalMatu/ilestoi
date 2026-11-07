@@ -2,11 +2,15 @@
 
 ## Runtime I Instalacja
 
+Ponizsze komendy uruchamiaj w osobnym checkoutcie developerskim; na Samsungu
+nie instaluj zaleznosci ani nie uruchamiaj drugiego serwera w produkcyjnym
+`~/WreckScanner/WreckScanner`. Zobacz [TERMUX_DEVELOPMENT_FLOW.md](TERMUX_DEVELOPMENT_FLOW.md).
+
 - Python `3.11-3.13` (CI sprawdza 3.11 i 3.13),
 - Node.js `20+` do lintowania frontendu (CI uzywa Node.js 22).
 
 ```bash
-cd /home/test/Desktop/WreckScanner
+cd /path/to/isolated/ilestoi-checkout
 python3 -m venv .venv
 ./.venv/bin/python -m pip install -r requirements-dev.txt
 npm ci
@@ -41,7 +45,7 @@ zmieniajace stan przez `make` sa przeznaczone wylacznie dla lokalnego watchera:
 Sprawdzenie:
 
 ```bash
-pgrep -af "/home/test/Desktop/WreckScanner/server.py"
+pgrep -af "$(pwd)/server.py"
 ```
 
 Restart:
@@ -124,9 +128,12 @@ generuje PDF z tymczasowymi cropami mapy oraz statusem OC/UFG, zapisuje w
 powiekszeniu 200%, a na koncu wylogowuje administratora oraz usuwa testowy rekord
 i pliki.
 
-Liveness odpowiada tylko na pytanie, czy proces HTTP dziala. Readiness sprawdza
-aktywne SQLite, migracje, odwolania do plikow i bezpieczna rezerwe dysku; tylko
-wynik readiness `200` dopuszcza ruch po starcie lub restarcie:
+Liveness odpowiada tylko na pytanie, czy proces HTTP dziala. Readiness wykonuje
+szybki, tylko do odczytu test aktywnej SQLite (migracje i wymagane tabele),
+sprawdza uprawnienia katalogu aplikacji i bezpieczna rezerwe dysku. Nie sprawdza
+integralnosci wszystkich rekordow ani istnienia plikow zdjec. Te kontrole
+wykonuje oddzielna diagnostyka danych opisana w [TERMUX.md](TERMUX.md).
+Tylko wynik readiness `200` dopuszcza ruch po starcie lub restarcie:
 
 ```bash
 curl -fsS http://127.0.0.1:8001/api/health/live
