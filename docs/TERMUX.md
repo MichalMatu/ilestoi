@@ -63,10 +63,15 @@ gdy publiczna strona działa; **nie traktować samego 403 jako awarii**.
 `healthwatch` sprawdza co 180 sekund lokalny readiness, publiczny URL
 i dostęp do Internetu. Automatyczny restart **tylko `cloudflared`**
 może nastąpić dopiero po trzech kolejnych odpowiedziach
-502/503/504/520–524 z publicznego URL, przy lokalnym `ready=200`
+502/503/504/520–524/530 z publicznego URL, przy lokalnym `ready=200`
 i działającym wyjściu TCP 443; odstęp między restartami wynosi
 minimum 30 minut. 403, timeout DNS lub utrata Wi-Fi nie wyzwalają
-restartu. Oddzielna kontrola publiczna z zewnątrz działa co godzinę,
+restartu. Znacznik `$PREFIX/var/service/cloudflared/down` jest traktowany
+jako **jawne wyłączenie**: healthwatch rejestruje ten stan w health-last.json
+i logu, ale nie usuwa znacznika i nie restartuje tunelu. Przywrócenie
+po niezamierzonym wyłączeniu wymaga zweryfikowania przyczyny oraz
+kontrolowanego `sv up` po usunięciu znacznika z zachowaniem dowodu.
+Oddzielna kontrola publiczna z zewnątrz działa co godzinę,
 z powiadomieniem tylko o potwierdzonym błędzie.
 
 Restart pojedynczej usługi jedynie gdy jest konieczny:
