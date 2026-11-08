@@ -193,6 +193,19 @@ Odbiór po fizycznym restarcie telefonu:
    Wtedy potrzebny jest niezależny monitor z innego urządzenia
    albo przeniesienie tunelu/serwera na host z gwarantowanym autostartem.
 
+Dostępny jest read-only odbiór z kodem wyjścia i JSON:
+```sh
+python3 -B deploy/termux/ilestoi-reliability-check.py --require-boot-record
+python3 -B deploy/termux/ilestoi-reliability-check.py \
+  --require-boot-record --min-coverage-seconds 7200 --max-gap-seconds 300
+```
+Narzędzie raportuje niezgodny `boot_id`, nieświeży heartbeat,
+przerwę w monitorowaniu i zatrzymane procesy; publiczne 403 oznacza
+`public_edge_antibot_ambiguous=true` i wymaga dodatkowego
+zewnętrznego testu. Sam licznik 7200 sekund nie dowodzi, że ekran był
+wygaszony przez ten czas — sprawdź to podczas kontrolowanego testu
+na telefonie.
+
 Nie traktuj manualnego wykonania `00-services` ani testu
 symulowanego `runit` jako dowodu fizycznego rebootu lub dwugodzinnego
 testu z wygaszonym ekranem. Te dwie bramki muszą mieć osobną datę i
