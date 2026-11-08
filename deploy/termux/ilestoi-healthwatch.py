@@ -184,6 +184,14 @@ def cycle(previous, *, now=None, current_boot=None):
             down_failures = 0
 
     age = prior_timestamp(previous, now)
+    gap = age is not None and age > CHECK_INTERVAL_SECONDS * 3 and same_boot
+    max_gap = safe_number(previous.get("max_monitor_gap_seconds")) if same_boot else 0
+    if same_boot and age is not None:
+        max_gap = max(max_gap, age)
+    gap_events = int(safe_number(previous.get("monitor_gap_events"))) if same_boot else 0
+    first_check = previous.get("monitor_first_utc") if same_boot else None
+    if not isinstance(first_check, str) or not first_check:
+        first_check = datetime.fromtimestamp(now, timezone.utc).isoformat()
     result = {
         "utc": datetime.fromtimestamp(now, timezone.utc).isoformat(),
         "boot_id": current_boot,
@@ -196,10 +204,12 @@ def cycle(previous, *, now=None, current_boot=None):
         "consecutive_runit_down": down_failures,
         "last_restart_epoch": last_restart,
         "monitor_gap_seconds": age,
+        "max_monitor_gap_seconds": max_gap,
+        "monitor_gap_events": min(1000000, gap_events + int(gap)),
+        "monitor_first_utc": first_check,
         "action": action,
     }
     atomic_write(result)
-    gap = age is not None and age > CHECK_INTERVAL_SECONDS * 3
     if (
         (action != "observe" and action != previous.get("action"))
         or action.startswith(("cloudflared_up_", "cloudflared_restart_"))
