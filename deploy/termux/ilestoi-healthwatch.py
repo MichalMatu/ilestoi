@@ -8,9 +8,12 @@ state.mkdir(mode=0o700,parents=True,exist_ok=True)
 status=state/'health-last.json'
 log=state/'health-watch.log'
 sv=str(Path(os.environ.get('PREFIX','/data/data/com.termux/files/usr'))/'var/service/cloudflared')
+PUBLIC_TUNNEL_ERRORS=frozenset(('502','503','504','520','521','522','523','524','530'))
 errors=0
 last_restart=0
 previous=''
+def eligible_tunnel_failure(ready,public,internet,disabled):
+    return not disabled and ready=='200' and internet=='ok' and public in PUBLIC_TUNNEL_ERRORS
 def probe(url):
     try:
         with urllib.request.urlopen(urllib.request.Request(url,headers={'User-Agent':'IleStoi-HealthWatch/1'}),timeout=8) as r:
@@ -32,12 +35,13 @@ while True:
     ready=probe('http://127.0.0.1:8001/api/health/ready')
     public=probe('https://ilestoi.pl/api/health/live')
     internet=internet_probe()
-    if ready=='200' and internet=='ok' and public in ('502','503','504','520','521','522','523','524'):
+    disabled=(Path(sv)/'down').exists()
+    if eligible_tunnel_failure(ready,public,internet,disabled):
         errors+=1
     else:
         errors=0
     now=time.time()
-    action='observe'
+    action='cloudflared_explicitly_disabled' if disabled else 'observe'
     if errors>=3 and now-last_restart>1800:
         try:
             p=subprocess.run(['sv','restart',sv],capture_output=True,text=True,timeout=20)
@@ -46,12 +50,12 @@ while True:
             action='restart_'+type(e).__name__
         last_restart=now
         errors=0
-    v={'utc':datetime.now(timezone.utc).isoformat(),'ready':ready,'public':public,'internet':internet,'consecutive_public_failures':errors,'action':action}
+    v={'utc':datetime.now(timezone.utc).isoformat(),'ready':ready,'public':public,'internet':internet,'cloudflared_disabled_marker':disabled,'consecutive_public_failures':errors,'action':action}
     tmp=state/'health-last.json.tmp'
     with tmp.open('w') as f:json.dump(v,f)
     os.chmod(tmp,0o600)
     os.replace(tmp,status)
-    label=f"ready={ready} public={public} internet={internet} action={action}"
+    label=f"ready={ready} public={public} internet={internet} disabled={disabled} action={action}"
     if label!=previous:
         note(label)
         previous=label
