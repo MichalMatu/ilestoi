@@ -6,8 +6,8 @@ Android force-stop/OS process eviction is outside the reach of an in-app monitor
 """
 
 import json
-import os
 import math
+import os
 import socket
 import subprocess
 import time
@@ -141,7 +141,9 @@ def cycle(previous, *, now=None, current_boot=None):
     now = time.time() if now is None else now
     current_boot = boot_id() if current_boot is None else current_boot
     same_boot = previous.get("boot_id") == current_boot
-    old_public = min(FAILURE_THRESHOLD, int(safe_number(previous.get("consecutive_public_failures")))) if same_boot else 0
+    old_public = (
+        min(FAILURE_THRESHOLD, int(safe_number(previous.get("consecutive_public_failures")))) if same_boot else 0
+    )
     old_down = min(DOWN_THRESHOLD, int(safe_number(previous.get("consecutive_runit_down")))) if same_boot else 0
     last_restart = safe_number(previous.get("last_restart_epoch"))
     if last_restart > now:
