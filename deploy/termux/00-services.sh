@@ -30,7 +30,7 @@ if [ -r /proc/sys/kernel/random/boot_id ]; then
   read -r boot_id < /proc/sys/kernel/random/boot_id || :
 fi
 log "boot orchestration begin boot_id=$boot_id"
-if ! "$PREFIX/bin/termux-wake-lock" >/dev/null 2>&1; then
+if ! "$PREFIX/bin/timeout" -k 2s 8s "$PREFIX/bin/termux-wake-lock" >/dev/null 2>&1; then
   log "wake-lock request unavailable; inspect Android power restrictions"
 fi
 
