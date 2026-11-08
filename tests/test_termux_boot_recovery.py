@@ -74,8 +74,9 @@ class RecoveryPolicyTests(unittest.TestCase):
             (1, "fail: /tmp/cloudflared", "supervisor_unavailable"),
         ]
         for rc, out, expected in cases:
-            with self.subTest(out=out), patch.object(
-                self.watch.subprocess, "run", return_value=SimpleNamespace(returncode=rc, stdout=out)
+            with (
+                self.subTest(out=out),
+                patch.object(self.watch.subprocess, "run", return_value=SimpleNamespace(returncode=rc, stdout=out)),
             ):
                 self.assertEqual(self.watch.runit_status(Path("/tmp/cloudflared")), expected)
 
@@ -135,9 +136,7 @@ class RecoveryCycleTests(unittest.TestCase):
 
     def test_configuration_missing_blocks_restart(self):
         self.config.unlink()
-        result, calls = self.run_cycle(
-            {"boot_id": "test-boot", "consecutive_public_failures": 2}
-        )
+        result, calls = self.run_cycle({"boot_id": "test-boot", "consecutive_public_failures": 2})
         self.assertEqual(result["action"], "cloudflared_config_missing")
         self.assertEqual(len(calls), 0)
 
@@ -154,7 +153,6 @@ class RecoveryCycleTests(unittest.TestCase):
         self.assertEqual(second["max_monitor_gap_seconds"], 1000)
         self.assertEqual(second["monitor_gap_events"], 1)
         self.assertEqual(second["monitor_first_utc"], first["monitor_first_utc"])
-
 
     def test_clock_correction_and_invalid_counters(self):
         last = {
@@ -216,9 +214,7 @@ class AcceptanceEvidenceTests(unittest.TestCase):
 
 class BootEntrypointTests(unittest.TestCase):
     def test_shell_syntax(self):
-        completed = subprocess.run(
-            ["bash", "-n", str(BOOT)], capture_output=True, text=True, timeout=8, check=False
-        )
+        completed = subprocess.run(["bash", "-n", str(BOOT)], capture_output=True, text=True, timeout=8, check=False)
         self.assertEqual(completed.returncode, 0, completed.stderr)
 
     def test_boot_does_not_override_intentional_shutdown(self):
@@ -256,17 +252,19 @@ class BootEntrypointTests(unittest.TestCase):
             (binary / "termux-wake-lock").write_text(f"#!{shell}\nexit 0\n")
             (binary / "curl").write_text(f"#!{shell}\nprintf 200\n")
             (binary / "sv").write_text(
-                f'#!{shell}\n'
+                f"#!{shell}\n"
                 'if [ "$1" = status ]; then printf "run: mock-service (pid 100) 10s\\n"; exit 0; fi\n'
                 'if [ "$1" = up ]; then echo "$2" >> "$MOCK_SERVICE_UP_LOG"; exit 0; fi\n'
-                'exit 1\n'
+                "exit 1\n"
             )
             (binary / "service-daemon").write_text(f"#!{shell}\nexit 0\n")
             for name in ("termux-wake-lock", "curl", "sv", "service-daemon"):
                 (binary / name).chmod(0o700)
-            source = BOOT.read_text().replace(
-                "HOME=/data/data/com.termux/files/home", f"HOME={home}"
-            ).replace("PREFIX=/data/data/com.termux/files/usr", f"PREFIX={prefix}")
+            source = (
+                BOOT.read_text()
+                .replace("HOME=/data/data/com.termux/files/home", f"HOME={home}")
+                .replace("PREFIX=/data/data/com.termux/files/usr", f"PREFIX={prefix}")
+            )
             script = root / "boot.sh"
             script.write_text(source)
             events = root / "up.log"
