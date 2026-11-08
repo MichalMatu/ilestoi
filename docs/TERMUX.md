@@ -142,6 +142,29 @@ Android może zakończyć Termuxa (poprzednio odnotowano
 optymalizacji baterii. Weryfikacja po pełnym fizycznym restarcie
 i test kilkugodzinny z wygaszonym ekranem pozostają odrębne.
 
+## Incydent tunelu 2026-11-08
+
+Na S22 backend odpowiadał `ready=200`, a publiczny adres `530`.
+O godzinie 11:41:54 UTC proces `cloudflared` został zatrzymany przez
+`SIGTERM`, przy zachowanym starszym znaczniku `cloudflared/down`.
+Po zachowaniu i usunięciu znacznika ujawniła się druga przyczyna:
+aktywny wariant `--token-file` wskazywał na **nieistniejący plik**
+(ponowne wyjścia procesu i komunikat użycia). Stary skrypt zachowano
+prywatnie w `~/.local/state/ilestoi-ops/`, bez publikowania sekretów.
+
+Przywrócono usługę przez istniejące `~/.cloudflared/config.yml`
+i zgodne lokalne poświadczenia JSON. Ingress przeszedł walidację;
+runit potwierdził stabilny PID, backend i publiczny URL zwróciły HTTP 200
+o 15:54 UTC. Skrypt wersjonowany w
+`deploy/termux/cloudflared.run` używa odtąd tej samej jawnej konfiguracji,
+bez zależności od nieistniejącego pliku tokenu.
+
+Przed każdą zmianą definicji usługi sprawdzaj obecność wymaganych plików,
+`ingress validate`, znacznik `down` i zachowaj starą definicję.
+Nie przywracaj starego skryptu tokenowego automatycznie po restarcie
+telefonu. Odbiór rzeczywistego rebootu i długiego okresu z wygaszonym
+ekranem nadal pozostaje odrębnym testem.
+
 ## Cofnięcie zmian
 
 Prywatny punkt przywracania operacji:
