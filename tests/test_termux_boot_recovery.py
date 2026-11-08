@@ -15,6 +15,7 @@ from unittest.mock import patch
 ROOT = Path(__file__).resolve().parents[1]
 BOOT = ROOT / "deploy/termux/00-services.sh"
 WATCH = ROOT / "deploy/termux/ilestoi-healthwatch.py"
+RELIABILITY = ROOT / "deploy/termux/ilestoi-reliability-check.py"
 
 
 def load_watch():
@@ -146,6 +147,15 @@ class RecoveryCycleTests(unittest.TestCase):
         self.assertEqual(result["monitor_gap_seconds"], 1000)
         self.assertIn("gap_seconds=1000", (self.state / "health-watch.log").read_text())
 
+    def test_monitor_max_gap_persists_after_monitor_resumes(self):
+        last = {"boot_id": "test-boot", "utc": datetime.fromtimestamp(8000, timezone.utc).isoformat()}
+        first, _ = self.run_cycle(last, public="403", now=9000)
+        second, _ = self.run_cycle(first, public="403", now=9090)
+        self.assertEqual(second["max_monitor_gap_seconds"], 1000)
+        self.assertEqual(second["monitor_gap_events"], 1)
+        self.assertEqual(second["monitor_first_utc"], first["monitor_first_utc"])
+
+
     def test_clock_correction_and_invalid_counters(self):
         last = {
             "boot_id": "test-boot",
@@ -157,6 +167,51 @@ class RecoveryCycleTests(unittest.TestCase):
         self.assertEqual(result["consecutive_public_failures"], 1)
         self.assertEqual(result["last_restart_epoch"], 10000)
         self.assertEqual(len(calls), 0)
+
+
+class AcceptanceEvidenceTests(unittest.TestCase):
+    def setUp(self):
+        spec = importlib.util.spec_from_file_location("testable_ilestoi_reliability", RELIABILITY)
+        self.check = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(self.check)
+
+    def health(self, *, utc=10000, start=2000, gap=90, events=0, boot="test-boot"):
+        return {
+            "utc": datetime.fromtimestamp(utc, timezone.utc).isoformat(),
+            "monitor_first_utc": datetime.fromtimestamp(start, timezone.utc).isoformat(),
+            "boot_id": boot,
+            "ready": "200",
+            "cloudflared_disabled_marker": False,
+            "max_monitor_gap_seconds": gap,
+            "monitor_gap_events": events,
+        }
+
+    def test_two_hours_screenoff_coverage_passes_without_gaps(self):
+        checks, metrics = self.check.acceptance(
+            self.health(), boot_id="test-boot", now=10030, min_coverage_seconds=7200
+        )
+        self.assertTrue(all(checks.values()), (checks, metrics))
+
+    def test_reboot_or_stale_monitor_cannot_pass(self):
+        for health, boot in [
+            (self.health(boot="old-boot"), "new-boot"),
+            (self.health(utc=9000), "test-boot"),
+        ]:
+            with self.subTest(health=health["boot_id"], boot=boot):
+                checks, _ = self.check.acceptance(health, boot_id=boot, now=10030)
+                self.assertFalse(all(checks.values()))
+
+    def test_silent_doze_pause_fails_continuity_gate(self):
+        checks, _ = self.check.acceptance(
+            self.health(gap=650, events=1), boot_id="test-boot", now=10030, min_coverage_seconds=7200
+        )
+        self.assertFalse(checks["no_excessive_gap"])
+
+    def test_short_observation_not_a_two_hour_pass(self):
+        checks, _ = self.check.acceptance(
+            self.health(start=7000), boot_id="test-boot", now=10030, min_coverage_seconds=7200
+        )
+        self.assertFalse(checks["monitor_coverage"])
 
 
 class BootEntrypointTests(unittest.TestCase):
