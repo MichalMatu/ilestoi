@@ -181,7 +181,7 @@ class BootEntrypointTests(unittest.TestCase):
             binary = prefix / "bin"
             binary.mkdir(parents=True)
             home.mkdir()
-            for name in ("date", "flock", "mkdir", "mv", "wc", "sleep"):
+            for name in ("date", "flock", "mkdir", "mv", "wc", "sleep", "timeout"):
                 target = shutil.which(name)
                 if not target:
                     self.skipTest(f"{name} binary unavailable")
