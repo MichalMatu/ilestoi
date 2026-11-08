@@ -142,6 +142,62 @@ Android może zakończyć Termuxa (poprzednio odnotowano
 optymalizacji baterii. Weryfikacja po pełnym fizycznym restarcie
 i test kilkugodzinny z wygaszonym ekranem pozostają odrębne.
 
+## Autostart po restarcie i stan uśpienia — 2026-11-08
+
+Wersjonowany skrypt `deploy/termux/00-services.sh` korzysta z blokady
+`~/.local/state/ilestoi-ops/boot.lock` i nie tworzy drugich procesów
+aplikacji. Uruchamia jedynie nadzór `service-daemon` (gdy niedostępny)
+oraz wysyła `sv up` do istniejących usług bez znacznika `down`.
+Próba `termux-wake-lock` ma limit 8 sekund i nie blokuje startu,
+gdy Android odrzuci/nie obsłuży żądania. Następnie skrypt czeka maksymalnie
+90 sekund na lokalny backend i tunel, akceptując publiczne 200 albo
+antybotowe 403. Wynik zapisuje w
+`~/.local/state/ilestoi-ops/boot-last` razem z `boot_id`.
+Zapis jest dowodem uruchomienia *skryptu*, a nie potwierdzeniem, że
+Termux:Boot został wywołany podczas każdego rebootu.
+
+`ilestoi-healthwatch` działa pod tym samym standardowym `runit`.
+Co 90 sekund aktualizuje `health-last.json`, zapisuje identyfikator
+bieżącego uruchomienia Androida, rzeczywiste odstępy między pomiarami
+(`monitor_gap_seconds`) i stan nadzoru tunelu. Potwierdzony błąd
+502–504/520–524/530 powoduje maksymalnie jedną próbę restartu po
+trzech pomiarach; niedziałający nadzorowany proces (bez `down`)
+powoduje `sv up` po dwóch pomiarach. Licznik limitu 30 minut pozostaje
+w pliku stanu po restarcie samego monitora. 403, utrata Internetu i
+niedostępny lokalny backend nie wyzwalają restartu. Automat nigdy nie
+usuwa `down`, nie uruchamia `cloudflared` ręcznie i nie próbuje
+naprawiać niedziałającego całego menedżera `runit` z poziomu jego
+własnej usługi.
+
+**Wymagana konfiguracja Androida:** Termux:Boot musi być zainstalowany
+z tym samym podpisem co Termux i przynajmniej raz otwarty z ikony
+programu (warunek aktywacji odbiornika boot). W ustawieniach baterii
+Samsunga ustaw dla **Termux i Termux:Boot** działanie bez ograniczeń;
+usuń je z listy aplikacji w głębokim uśpieniu. Jeśli Android oferuje
+opcję ograniczania procesów potomnych, sprawdź ją osobno w Opcjach
+programisty. Sam wake lock nie chroni przed wymuszonym zatrzymaniem
+aplikacji, limitem procesów potomnych ani ubiciem procesu przez system
+pod presją pamięci. W takich stanach nie istnieje niezawodny
+samorestart realizowany wyłącznie przez aplikację Termux.
+Dokumentacja Termux:Boot: https://github.com/termux/termux-boot
+
+Odbiór po fizycznym restarcie telefonu:
+1. Nie uruchamiaj strony drugim `nohup`; zachowaj standardowe `runit`.
+2. Po starcie Androida sprawdź `boot-last`, `boot_id`, `sv status`
+   dla `wreckscanner`, `cloudflared` i `ilestoi-healthwatch`,
+   następnie lokalne i publiczne health.
+3. Wygasz ekran na co najmniej 2 godziny; po odblokowaniu sprawdź
+   świeżość `health-last.json`, `monitor_gap_seconds`, identyfikatory
+   boot i komunikaty `LOW_MEMORY` / `TOO MANY EMPTY PROCS` w logach.
+4. Jeśli Android zakończy Termux, sam monitor nie może zgłosić awarii.
+   Wtedy potrzebny jest niezależny monitor z innego urządzenia
+   albo przeniesienie tunelu/serwera na host z gwarantowanym autostartem.
+
+Nie traktuj manualnego wykonania `00-services` ani testu
+symulowanego `runit` jako dowodu fizycznego rebootu lub dwugodzinnego
+testu z wygaszonym ekranem. Te dwie bramki muszą mieć osobną datę i
+rzeczywiste odczyty po wykonaniu.
+
 ## Incydent tunelu 2026-11-08
 
 Na S22 backend odpowiadał `ready=200`, a publiczny adres `530`.
