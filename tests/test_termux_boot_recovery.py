@@ -252,15 +252,16 @@ class BootEntrypointTests(unittest.TestCase):
             ):
                 (services / name).mkdir(parents=True)
             (services / "sshd/down").touch()
-            (binary / "termux-wake-lock").write_text("#!/bin/sh\nexit 0\n")
-            (binary / "curl").write_text("#!/bin/sh\nprintf 200\n")
+            shell = shutil.which("sh") or "/system/bin/sh"
+            (binary / "termux-wake-lock").write_text(f"#!{shell}\nexit 0\n")
+            (binary / "curl").write_text(f"#!{shell}\nprintf 200\n")
             (binary / "sv").write_text(
-                '#!/bin/sh\n'
+                f'#!{shell}\n'
                 'if [ "$1" = status ]; then printf "run: mock-service (pid 100) 10s\\n"; exit 0; fi\n'
                 'if [ "$1" = up ]; then echo "$2" >> "$MOCK_SERVICE_UP_LOG"; exit 0; fi\n'
                 'exit 1\n'
             )
-            (binary / "service-daemon").write_text("#!/bin/sh\nexit 0\n")
+            (binary / "service-daemon").write_text(f"#!{shell}\nexit 0\n")
             for name in ("termux-wake-lock", "curl", "sv", "service-daemon"):
                 (binary / name).chmod(0o700)
             source = BOOT.read_text().replace(
