@@ -1,5 +1,6 @@
 """Offline policy tests for the Termux healthwatch without starting its infinite loop."""
 import ast
+import subprocess
 import unittest
 from pathlib import Path
 
@@ -48,6 +49,19 @@ class TunnelHealthwatchPolicyTests(unittest.TestCase):
         for status in ("200", "301", "403", "404", "429", "TimeoutError", "URLError"):
             with self.subTest(status=status):
                 self.assertFalse(eligible("200", status, "ok", False))
+
+
+class CloudflaredRunnerContractTests(unittest.TestCase):
+    def test_uses_validated_named_config_without_token_file(self):
+        script = (WATCHER.parent / "cloudflared.run").read_text(encoding="utf-8")
+        self.assertIn('export HOME=/data/data/com.termux/files/home', script)
+        self.assertIn('cloudflared --config "$HOME/.cloudflared/config.yml" tunnel run', script)
+        self.assertNotIn("--token", script)
+
+    def test_shell_syntax(self):
+        script = WATCHER.parent / "cloudflared.run"
+        proc = subprocess.run(["sh", "-n", str(script)], capture_output=True, text=True, timeout=5, check=False)
+        self.assertEqual(proc.returncode, 0, proc.stderr)
 
 
 if __name__ == "__main__":
