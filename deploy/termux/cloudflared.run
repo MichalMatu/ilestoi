@@ -1,4 +1,4 @@
 #!/data/data/com.termux/files/usr/bin/sh
 set -eu
-umask 077
-exec "$PREFIX/bin/cloudflared" tunnel run ilestoi-phone 2>&1
+export HOME=/data/data/com.termux/files/home
+exec /data/data/com.termux/files/usr/bin/cloudflared --config "$HOME/.cloudflared/config.yml" tunnel run 2>&1
