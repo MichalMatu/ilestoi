@@ -7,7 +7,7 @@ Android force-stop/OS process eviction is outside the reach of an in-app monitor
 
 import json
 import os
-import re
+import math
 import socket
 import subprocess
 import time
@@ -129,13 +129,21 @@ def note(message):
         stream.write(datetime.now(timezone.utc).isoformat() + " " + message + "\n")
 
 
+def safe_number(value):
+    try:
+        parsed = float(value)
+        return parsed if math.isfinite(parsed) and parsed >= 0 else 0.0
+    except (TypeError, ValueError, OverflowError):
+        return 0.0
+
+
 def cycle(previous, *, now=None, current_boot=None):
     now = time.time() if now is None else now
     current_boot = boot_id() if current_boot is None else current_boot
-    same_boot = previous.get("boot_id") == current_boot and current_boot != "unknown"
-    old_public = int(previous.get("consecutive_public_failures") or 0) if same_boot else 0
-    old_down = int(previous.get("consecutive_runit_down") or 0) if same_boot else 0
-    last_restart = float(previous.get("last_restart_epoch") or 0)
+    same_boot = previous.get("boot_id") == current_boot
+    old_public = min(FAILURE_THRESHOLD, int(safe_number(previous.get("consecutive_public_failures")))) if same_boot else 0
+    old_down = min(DOWN_THRESHOLD, int(safe_number(previous.get("consecutive_runit_down")))) if same_boot else 0
+    last_restart = safe_number(previous.get("last_restart_epoch"))
     if last_restart > now:
         last_restart = now  # Wall clock corrected backwards; retain bounded cooldown.
 
@@ -193,7 +201,8 @@ def cycle(previous, *, now=None, current_boot=None):
     atomic_write(result)
     gap = age is not None and age > CHECK_INTERVAL_SECONDS * 3
     if (
-        action != "observe"
+        (action != "observe" and action != previous.get("action"))
+        or action.startswith(("cloudflared_up_", "cloudflared_restart_"))
         or gap
         or any(result.get(key) != previous.get(key) for key in ("ready", "public", "internet", "cloudflared_runit"))
     ):
