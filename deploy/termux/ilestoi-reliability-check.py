@@ -98,9 +98,8 @@ def main():
     path = STATE / "boot-last"
     if path.is_file():
         boot = dict(entry.split("=", 1) for entry in path.read_text().split() if "=" in entry)
-    checks["boot_record"] = (
-        not args.require_boot_record
-        or (boot.get("boot_id") == boot_id and boot.get("status") == "healthy")
+    checks["boot_record"] = not args.require_boot_record or (
+        boot.get("boot_id") == boot_id and boot.get("status") == "healthy"
     )
     services = {name: status(name) for name in ("wreckscanner", "cloudflared", "ilestoi-healthwatch")}
     checks["services_run"] = all(value == "run" for value in services.values())
