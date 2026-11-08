@@ -80,7 +80,8 @@ local_code=unavailable
 public_code=unavailable
 cloud_status=unavailable
 tries=0
-while [ "$tries" -lt 24 ]; do
+deadline=$((SECONDS+90))
+while [ "$SECONDS" -lt "$deadline" ]; do
   tries=$((tries+1))
   cloud_status=$("$PREFIX/bin/sv" status "$SVDIR/cloudflared" 2>/dev/null || :)
   local_code=$("$PREFIX/bin/curl" --max-time 4 --silent --output /dev/null --write-out '%{http_code}' http://127.0.0.1:8001/api/health/ready 2>/dev/null || :)
