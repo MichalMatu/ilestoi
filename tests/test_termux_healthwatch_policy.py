@@ -1,4 +1,5 @@
 """Offline policy tests for the Termux healthwatch without starting its infinite loop."""
+
 import ast
 import subprocess
 import unittest
@@ -11,12 +12,12 @@ def load_policy():
     tree = ast.parse(WATCHER.read_text(encoding="utf-8"))
     nodes = []
     for node in tree.body:
-        if isinstance(node, ast.Assign) and any(
-            isinstance(target, ast.Name) and target.id == "PUBLIC_TUNNEL_ERRORS"
-            for target in node.targets
+        if (
+            isinstance(node, ast.Assign)
+            and any(isinstance(target, ast.Name) and target.id == "PUBLIC_TUNNEL_ERRORS" for target in node.targets)
+            or isinstance(node, ast.FunctionDef)
+            and node.name == "eligible_tunnel_failure"
         ):
-            nodes.append(node)
-        elif isinstance(node, ast.FunctionDef) and node.name == "eligible_tunnel_failure":
             nodes.append(node)
     if len(nodes) != 2:
         raise AssertionError("Missing healthwatch policy declaration")
@@ -54,7 +55,7 @@ class TunnelHealthwatchPolicyTests(unittest.TestCase):
 class CloudflaredRunnerContractTests(unittest.TestCase):
     def test_uses_validated_named_config_without_token_file(self):
         script = (WATCHER.parent / "cloudflared.run").read_text(encoding="utf-8")
-        self.assertIn('export HOME=/data/data/com.termux/files/home', script)
+        self.assertIn("export HOME=/data/data/com.termux/files/home", script)
         self.assertIn('cloudflared --config "$HOME/.cloudflared/config.yml" tunnel run', script)
         self.assertNotIn("--token", script)
 
