@@ -1,5 +1,10 @@
 # IleStoi.pl na Termuxie (Samsung Android)
 
+> **Stan faktyczny na Samsungu S22, 14.11.2026 (audyt tylko do odczytu):** aplikacja IleStoi nadal działa pod techniczną nazwą `wreckscanner`, w `~/WreckScanner/WreckScanner`, korzysta z `wreckscanner.sqlite3`, `WRECKSCANNER_*` i domeny-aliasu `wreckscanner.pl`. `wreckscanner`, `ilestoi-healthwatch`, `cloudflared`, `sshd` i `mosquitto` = RUN; `wreckscanner-backup` = DOWN, a stary magazyn i hasło Restic **zostały usunięte**. `live=200`, `ready=200`. W poprzednim opisie Restic był aktywny — ta część poniżej jest **historią, nie stanem obecnym ani instrukcją jego uruchomienia**. Archiwa z Android Downloads zostały usunięte przez właściciela; `~/IleStoi-Backups` zawiera tylko historyczne kopie SQLite. Bieżąca kompletna kopia off-device **nie jest potwierdzona**. Pełny [checkpoint nazewnictwa i zależności](checkpoints/2026-11-14-s22-wreckscanner-final-audit.md).
+
+> **Rozbieżność Git/produkcja:** checkout S22 `b31b8f57684a1ff0e916de5f6e6146a78faaa831` jest o **16 commitów przed** `main` (`ea1b300351d6519ba387d08cb22d6aea2b204d2c`). Nie zakładaj zgodności `main` z produkcją i nie aktualizuj ani nie restartuj S22 w celu „naprawy” samej nazwy.
+
+
 Stan operacyjny: 29.10.2026, po migracji startu na `runit`.
 Katalog produkcyjny: `~/WreckScanner/WreckScanner`; zatwierdzona produkcja
 odzwierciedlona przez `main` (zamiast wycofanej gałęzi `work/dirty`). Python Termuxa 3.14, poza macierzą CI 3.11/3.13.

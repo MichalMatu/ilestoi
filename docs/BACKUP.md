@@ -1,5 +1,8 @@
 # Backup I Restore
 
+> **Uwaga — S22 14.11.2026:** instrukcje dotyczące działającego Restic/timera w tym pliku opisują **historyczne możliwości**, nie bieżącą konfigurację telefonu. `wreckscanner-backup` jest `down`, a `.backups/wreckscanner-restic` i `.restic_password` zostały usunięte na wcześniejsze polecenie właściciela. W Android Downloads nie ma już `Plain-20261114-v1` ani `Project-Native-20261114-v1`; zostały ręcznie usunięte wraz z koszem. `~/IleStoi-Backups` nadal istnieje, ale jego stare kopie SQLite bez zdjęć **nie są aktualnym, kompletnym punktem odtworzenia**. Nie ma potwierdzonej aktualnej kopii IleStoi poza S22. **Nie uruchamiaj automatycznych backupów, timera, Restic ani zmiany usług bez nowej zgody właściciela.** Szczegóły: [finalny audyt](checkpoints/2026-11-14-s22-wreckscanner-final-audit.md).
+
+
 Aktywny stan aplikacji tworza `wreckscanner.sqlite3`, publiczne pochodne w
 `zdjecia_terenowe/` i prywatne oryginaly w `prywatne_zdjecia/`. Historyczne
 `settings.json` oraz `zgloszenia_prywatnosci/` nie sa zrodlem prawdy i nie

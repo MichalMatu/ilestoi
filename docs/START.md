@@ -1,5 +1,7 @@
 # Start I Utrzymanie
 
+> **S22: nie uruchamiaj ponownie Restic ani harmonogramu backupu.** Aktywną aplikacją jest IleStoi, ale jej nazwy techniczne to `wreckscanner`, `WreckScanner` i `WRECKSCANNER_*`. Weryfikacja z 14.11.2026: `live=200`, `ready=200`, a `wreckscanner-backup` wyłączony. Zobacz [checkpoint](checkpoints/2026-11-14-s22-wreckscanner-final-audit.md). Polecenia systemd poniżej są dla Linux/Raspberry Pi, **nie** dla S22 Termux.
+
 ## Runtime I Instalacja
 
 - Python `3.11-3.13` (CI sprawdza 3.11 i 3.13),
