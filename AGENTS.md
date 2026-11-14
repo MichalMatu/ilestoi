@@ -1,5 +1,12 @@
 # Project Instructions
 
+## S22 status correction (2026-11-14; documentation-only proposal)
+
+The live Samsung S22 IleStoi checkout is `~/WreckScanner/WreckScanner`, SHA `b31b8f57684a1ff0e916de5f6e6146a78faaa831`. GitHub `main` at inspection was `ea1b300351d6519ba387d08cb22d6aea2b204d2c`: the *live S22 commit is 16 commits ahead of main* (GitHub ancestry compare). Do **not** assume `main` equals currently deployed production. This documentation proposal must not merge/rewrite production history or deploy code: a separate controlled reconciliation is required if production releases resume. The old identifiers `wreckscanner`, `wreckscanner.sqlite3`, `WRECKSCANNER_*`, `WreckScanner` paths and old domain aliases remain active runtime contracts; do not rename them as cleanup.
+
+`wreckscanner-backup` is disabled; `.backups/wreckscanner-restic` and `.restic_password` do **not** exist on S22, following the owner's cleanup. `~/IleStoi-Backups` still contains historical SQLite-only files, **not** a verified recoverable current off-device copy of SQLite+photos. The owner manually deleted Android Downloads recovery archives. The historical Restic requirement below is no longer satisfied. **Do not re-enable a backup scheduler or change any S22 service** as part of this documentation audit. See [the final S22 checkpoint](docs/checkpoints/2026-11-14-s22-wreckscanner-final-audit.md).
+
+
 ## Host routing for IleStoi.pl only (owner decision, 2026-10-26)
 
 - For implementation, code review, native tests and operational checks concerning **this IleStoi.pl repository**, select the **Android/Samsung Termux Local Agent** explicitly by its installed host/installation identity. Communicate through the private Local Agent host-task transport in `MichalMatu/local-agent` and use GitHub Connector for repository operations. This choice **does not apply to any other repository**; never silently route unrelated projects to the phone.

@@ -1,5 +1,7 @@
 # IleStoi.pl
 
+> **Aktualizacja operacyjna S22 — 14.11.2026:** IleStoi działa nadal z technicznymi identyfikatorami `WreckScanner`/`wreckscanner`, bez bieżącego magazynu Restic. Produkcyjny SHA na S22 jest o 16 commitów przed GitHub `main`; nie wdrażaj ani nie zmieniaj produkcji na podstawie tego dokumentu. [Końcowy audyt i aktualny stan](docs/checkpoints/2026-11-14-s22-wreckscanner-final-audit.md). Poniższe wymagania historyczne dotyczące lokalnego Restic nie opisują aktualnego S22.
+
 IleStoi.pl to lokalna aplikacja mapowa do dokumentowania pojazdow zalegajacych w przestrzeni publicznej. Wynik aplikacji jest materialem pomocniczym do weryfikacji, a nie decyzja o stanie prawnym pojazdu.
 
 Aktualna linia produkcyjna: `main` (stan wdrożony na Termuxie, oznaczany tagiem produkcyjnym). Historyczna wersja `v4.0` pozostaje zachowana w historii.
